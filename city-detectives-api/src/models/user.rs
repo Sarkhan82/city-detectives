@@ -13,7 +13,7 @@ pub struct User {
     pub password_hash: String,
 }
 
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Clone, Deserialize, Validate)]
 pub struct RegisterInput {
     #[validate(email)]
     pub email: String,
