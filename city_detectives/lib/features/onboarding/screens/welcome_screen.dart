@@ -1,9 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-/// Écran d'accueil placeholder – Story 1.1 (FR1).
-/// Affiche un premier écran au lancement (accueil ou connexion).
-class WelcomeScreen extends StatelessWidget {
+import 'package:city_detectives/core/router/app_router.dart';
+import 'package:city_detectives/core/services/auth_provider.dart';
+
+/// Écran d'accueil – Story 1.1 (FR1). Session persistante : si token existant → home.
+class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
+
+  @override
+  ConsumerState<WelcomeScreen> createState() => _WelcomeScreenState();
+}
+
+class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkSession());
+  }
+
+  Future<void> _checkSession() async {
+    final auth = ref.read(authServiceProvider);
+    final token = await auth.getStoredToken();
+    if (!mounted || token == null || token.isEmpty) return;
+    context.go(AppRouter.home);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,12 +57,10 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 32),
                   Semantics(
-                    label: 'Continuer vers la connexion ou l\'onboarding',
+                    label: 'Continuer vers l\'inscription',
                     button: true,
                     child: FilledButton(
-                      onPressed: () {
-                        // Placeholder – navigation vers connexion/onboarding en Story 1.2/1.3
-                      },
+                      onPressed: () => context.go(AppRouter.register),
                       child: const Text('Continuer'),
                     ),
                   ),
@@ -53,3 +73,4 @@ class WelcomeScreen extends StatelessWidget {
     );
   }
 }
+
