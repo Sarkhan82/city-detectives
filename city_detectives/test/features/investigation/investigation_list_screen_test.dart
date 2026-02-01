@@ -1,0 +1,139 @@
+// Story 2.1 – Tests widget écran liste enquêtes (présence liste, durée, difficulté, description).
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+
+import 'package:city_detectives/core/router/app_router.dart';
+import 'package:city_detectives/features/investigation/models/investigation.dart';
+import 'package:city_detectives/features/investigation/providers/investigation_list_provider.dart';
+import 'package:city_detectives/features/investigation/screens/investigation_list_screen.dart';
+
+/// Notifier factice pour tests – retourne une liste fixe sans appeler l'API.
+class FakeInvestigationListNotifier extends InvestigationListNotifier {
+  FakeInvestigationListNotifier(this._data);
+
+  final List<Investigation> _data;
+
+  @override
+  Future<List<Investigation>> build() async => _data;
+}
+
+/// Notifier factice qui simule une erreur (pour tester l'affichage erreur).
+class FakeErrorInvestigationListNotifier extends InvestigationListNotifier {
+  FakeErrorInvestigationListNotifier(this.message);
+
+  final String message;
+
+  @override
+  Future<List<Investigation>> build() async => throw Exception(message);
+}
+
+void main() {
+  testWidgets(
+    'InvestigationListScreen shows list with duration, difficulty, description',
+    (WidgetTester tester) async {
+      final mockList = [
+        const Investigation(
+          id: 'id-1',
+          titre: 'Le mystère du parc',
+          description: 'Une enquête familiale dans le parc central.',
+          durationEstimate: 45,
+          difficulte: 'facile',
+          isFree: true,
+        ),
+      ];
+      final router = GoRouter(
+        initialLocation: AppRouter.investigations,
+        routes: [
+          GoRoute(
+            path: AppRouter.investigations,
+            builder: (context, state) => const InvestigationListScreen(),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            investigationListProvider.overrideWith(
+              () => FakeInvestigationListNotifier(mockList),
+            ),
+          ],
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(InvestigationListScreen), findsOneWidget);
+      expect(find.text('Enquêtes'), findsOneWidget);
+      expect(find.text('Le mystère du parc'), findsOneWidget);
+      expect(
+        find.text('Une enquête familiale dans le parc central.'),
+        findsOneWidget,
+      );
+      expect(find.text('~45 min'), findsOneWidget);
+      expect(find.text('facile'), findsOneWidget);
+      expect(find.text('Gratuit'), findsOneWidget);
+    },
+  );
+
+  testWidgets('InvestigationListScreen shows empty state when list is empty', (
+    WidgetTester tester,
+  ) async {
+    final router = GoRouter(
+      initialLocation: AppRouter.investigations,
+      routes: [
+        GoRoute(
+          path: AppRouter.investigations,
+          builder: (context, state) => const InvestigationListScreen(),
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          investigationListProvider.overrideWith(
+            () => FakeInvestigationListNotifier([]),
+          ),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Aucune enquête disponible pour le moment.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('InvestigationListScreen shows user-friendly error message', (
+    WidgetTester tester,
+  ) async {
+    const errorMessage = 'Erreur réseau';
+    final router = GoRouter(
+      initialLocation: AppRouter.investigations,
+      routes: [
+        GoRoute(
+          path: AppRouter.investigations,
+          builder: (context, state) => const InvestigationListScreen(),
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          investigationListProvider.overrideWith(
+            () => FakeErrorInvestigationListNotifier(errorMessage),
+          ),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(InvestigationListScreen), findsOneWidget);
+    expect(find.text(errorMessage), findsOneWidget);
+  });
+}

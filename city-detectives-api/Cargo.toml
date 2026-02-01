@@ -27,3 +27,8 @@ tokio-test = "0.4"
 [[test]]
 name = "auth_test"
 path = "tests/api/auth_test.rs"
+
+# Binaire de test d'intégration API (tests/api/investigations_test.rs) – Story 2.1
+[[test]]
+name = "investigations_test"
+path = "tests/api/investigations_test.rs"
