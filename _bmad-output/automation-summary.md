@@ -1,7 +1,7 @@
-# Résumé d'automatisation – City Detectives (Stories 1.2 + 2.1)
+# Résumé d'automatisation – City Detectives (Stories 1.2, 2.1, 2.2)
 
 **Date :** 2026-02-01  
-**Stories couvertes :** 1.2 (Création de compte), 2.1 (Parcourir et consulter les enquêtes)  
+**Stories couvertes :** 1.2 (Création de compte), 2.1 (Parcourir et consulter les enquêtes), 2.2 (Sélection enquête, gratuit/payant)  
 **Mode :** Standalone / Auto-discover  
 **Cible de couverture :** critical-paths  
 
@@ -11,7 +11,7 @@
 
 - **Stack :** Flutter (app mobile) + Rust (API GraphQL). Pas de Playwright/Cypress (Node/TS).
 - **Frameworks de test :** Flutter (widget tests, `flutter test`) ; Rust (`cargo test`, tests d’intégration API, tests in-process GraphQL).
-- **Artéfacts BMad :** Stories 1.2 et 2.1 utilisées pour cibler les chemins critiques ; workflow testarch-automate en mode autonome.
+- **Artéfacts BMad :** Stories 1.2, 2.1 et 2.2 ; workflow testarch-automate en mode autonome.
 
 ---
 
@@ -39,9 +39,13 @@
 | `register_screen_test.dart` | Formulaire, erreur mots de passe différents, isolation avec router. |
 | `onboarding_screen_test.dart` | Écran 1 (première enquête + CTA), écran 2 (LORE), navigation. |
 | `features/investigation/investigation_list_screen_test.dart` | Liste (durée, difficulté, description, gratuit), état vide, message d’erreur utilisateur. |
+| `features/investigation/screens/investigation_detail_screen_test.dart` | Détail enquête : titre, description, chip Gratuit/Payant, CTA Démarrer (Story 2.2). |
+| `features/investigation/screens/investigation_start_placeholder_screen_test.dart` | Placeholder démarrage : id enquête, message Story 3.1, bouton Retour (Story 2.2). |
+| `shared/widgets/price_chip_test.dart` | Widget PriceChip : Gratuit / Payant selon isFree (Story 2.2). |
+| `features/investigation/models/investigation_test.dart` | TU `Investigation.fromJson` (défensif, isFree, durationEstimate). |
 | `widget_test.dart` | App build, WelcomeScreen. |
 
-- **Total Flutter :** 12 tests widget (plusieurs `testWidgets` par fichier).
+- **Total Flutter :** 27 tests widget (plusieurs `testWidgets` par fichier).
 - **Exécution :** `cd city_detectives && flutter test`.
 
 ---
@@ -55,27 +59,33 @@
 | In-process Rust | `graphql.rs` (tests) | – | 1 | – | listInvestigations sans serveur (CI) |
 | Unit Rust | `user.rs` | – | – | 3 | Validation RegisterInput |
 | Unit Rust | `auth_service.rs` | – | – | 2 | JWT / validation token |
-| Widget Flutter | register, onboarding, investigation_list, widget | – | 12 | – | Écrans critiques 1.2, 1.3, 2.1 |
+| Widget Flutter | register, onboarding, investigation_list, detail, placeholder, price_chip, models, widget | – | 27 | – | Écrans 1.2, 1.3, 2.1, 2.2 (liste, détail, placeholder, PriceChip) |
 
-- **Résumé :** 7 tests API/in-process Rust (1 exécutable en CI), 5 tests unitaires Rust, 12 tests widget Flutter.
-- **Doublons évités :** Pas d’E2E pour 1.2/2.1 ; logique métier couverte en unitaire + API ; widget couvre UX critique.
+- **Résumé :** 7 tests API/in-process Rust (1 exécutable en CI), 5 tests unitaires Rust, 27 tests widget Flutter.
+- **Doublons évités :** Pas d’E2E pour 1.2/2.1/2.2 ; logique métier couverte en unitaire + API ; widget couvre UX critique.
 
 ---
 
-## Gaps identifiés (analyse post–2.1)
+## Gaps identifiés (analyse post–2.2)
 
 1. **Modèles / DTOs**
    - **Rust :** Pas de tests unitaires dédiés pour `Investigation` (sérialisation / champs). Couvert indirectement par le test in-process GraphQL.
-   - **Flutter :** Pas de tests unitaires pour `Investigation.fromJson` (valeurs nulles, types inattendus) ; code défensif présent mais non exercé par des tests.
+   - **Flutter :** ✅ `Investigation.fromJson` couvert par `investigation_test.dart`.
 
 2. **Services / Repository**
    - **Rust :** `InvestigationService::list_investigations` non testé unitairement (données mockées) ; optionnel car simple.
    - **Flutter :** Pas de tests unitaires pour `InvestigationRepository` (appels GraphQL mockés) ; couvert par les tests widget via override de provider.
 
-3. **E2E**
+3. **Story 2.2 (sélection enquête, gratuit/payant)**
+   - ✅ Liste : libellé Gratuit/Payant et tap → détail (investigation_list_screen_test).
+   - ✅ Détail : écran détail + CTA Démarrer (investigation_detail_screen_test).
+   - ✅ Placeholder : écran démarrage (investigation_start_placeholder_screen_test).
+   - ✅ PriceChip partagé (price_chip_test).
+
+4. **E2E**
    - Aucun test E2E (Flutter `integration_test` ou scénario réel API + app). À prévoir si une story le demande (ex. parcours complet inscription → liste enquêtes).
 
-4. **CI**
+5. **CI**
    - Rust : `cargo test` exécute unitaires + test in-process GraphQL ; tests `#[ignore]` à lancer avec serveur sur 8080.
    - Flutter : `flutter test` à exécuter en CI ; environnement SDK à configurer.
 
@@ -83,9 +93,9 @@
 
 ## Recommandations (Flutter & Rust)
 
-### Priorité immédiate (optionnel pour 2.1)
+### Priorité immédiate (post–2.2)
 
-- **Flutter – `Investigation.fromJson` :** Ajouter un petit fichier de tests unitaires (ex. `test/features/investigation/models/investigation_test.dart`) pour `fromJson` avec cas valide, champs manquants, types incorrects. Renforce la robustesse du parsing.
+- **Flutter – Story 2.2 :** ✅ Écran détail, placeholder et PriceChip couverts par widget tests (investigation_detail_screen_test, investigation_start_placeholder_screen_test, price_chip_test).
 - **Rust :** Conserver le test in-process `list_investigations_in_process_returns_array` comme base de non-régression GraphQL en CI ; les tests `investigations_test.rs` restent utiles en intégration avec serveur.
 
 ### Moyen terme
@@ -127,12 +137,21 @@ flutter test
 
 ---
 
+## Tests ajoutés (workflow testarch-automate – 2026-02-01, Story 2.2)
+
+- **investigation_detail_screen_test.dart** : 2 tests – détail avec chip Gratuit/Payant et CTA Démarrer.
+- **investigation_start_placeholder_screen_test.dart** : 1 test – placeholder id + message Story 3.1 + Retour.
+- **price_chip_test.dart** : 2 tests – affichage Gratuit / Payant selon isFree.
+
+---
+
 ## Definition of Done (workflow testarch-automate)
 
-- [x] Inventaire complet des tests existants (Rust + Flutter) pour 1.2 et 2.1.
+- [x] Inventaire complet des tests existants (Rust + Flutter) pour 1.2, 2.1 et 2.2.
 - [x] Analyse des gaps (modèles, services, E2E) et recommandations spécifiques Flutter/Rust.
 - [x] Plan de couverture documenté (priorités P1/P2, niveaux API / unit / widget).
 - [x] Pas de doublon inutile ; E2E non requis pour les stories actuelles.
+- [x] Tests Story 2.2 ajoutés (écran détail, placeholder, PriceChip).
 - [x] Résumé sauvegardé dans `_bmad-output/automation-summary.md`.
 
 ---
@@ -148,7 +167,10 @@ flutter test
 | `city-detectives-api/tests/api/investigations_test.rs` | Tests intégration listInvestigations (HTTP). |
 | `city_detectives/test/register_screen_test.dart` | Widget inscription. |
 | `city_detectives/test/onboarding_screen_test.dart` | Widget onboarding. |
-| `city_detectives/test/features/investigation/investigation_list_screen_test.dart` | Widget liste enquêtes. |
+| `city_detectives/test/features/investigation/investigation_list_screen_test.dart` | Widget liste enquêtes (2.1 + 2.2). |
+| `city_detectives/test/features/investigation/screens/investigation_detail_screen_test.dart` | Widget écran détail enquête (2.2). |
+| `city_detectives/test/features/investigation/screens/investigation_start_placeholder_screen_test.dart` | Widget placeholder démarrage (2.2). |
+| `city_detectives/test/shared/widgets/price_chip_test.dart` | Widget PriceChip Gratuit/Payant (2.2). |
 | `city_detectives/test/widget_test.dart` | Smoke app / welcome. |
 | `city_detectives/test/features/investigation/models/investigation_test.dart` | TU `Investigation.fromJson`. |
 | `city_detectives/integration_test/app_test.dart` | E2E welcome → register, retour. |

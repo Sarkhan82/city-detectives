@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:city_detectives/features/investigation/models/investigation.dart';
 import 'package:city_detectives/features/investigation/providers/investigation_list_provider.dart';
+import 'package:city_detectives/shared/widgets/price_chip.dart';
 
 /// Message d'erreur utilisateur (sans stack ni détail technique).
 String _userFriendlyErrorMessage(Object err) {
@@ -22,7 +24,8 @@ class InvestigationListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncList = ref.watch(investigationListProvider);
     return Semantics(
-      label: 'Liste des enquêtes disponibles – durée, difficulté, description',
+      label:
+          'Liste des enquêtes disponibles – durée, difficulté, description, gratuit ou payant',
       child: Scaffold(
         appBar: AppBar(title: const Text('Enquêtes')),
         body: SafeArea(
@@ -84,89 +87,90 @@ class _InvestigationList extends StatelessWidget {
       itemCount: list.length,
       itemBuilder: (context, index) {
         final inv = list[index];
-        return _InvestigationCard(investigation: inv);
+        return _InvestigationCard(
+          investigation: inv,
+          onTap: () => context.push('/investigations/${inv.id}', extra: inv),
+        );
       },
     );
   }
 }
 
-/// Carte enquête – design carnet de détective (Story 2.1).
-/// Affiche durée, difficulté, description ; accessibilité Semantics.
+/// Carte enquête – design carnet de détective (Story 2.1 + 2.2).
+/// Affiche durée, difficulté, description, libellé Gratuit/Payant ; tap → détail (Story 2.2).
 class _InvestigationCard extends StatelessWidget {
-  const _InvestigationCard({required this.investigation});
+  const _InvestigationCard({required this.investigation, required this.onTap});
 
   final Investigation investigation;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final inv = investigation;
+    final priceLabel = inv.isFree ? 'Gratuit' : 'Payant';
     return Semantics(
       label:
-          'Enquête ${inv.titre}. ${inv.description}. Durée ${inv.durationEstimate} minutes. Difficulté ${inv.difficulte}.',
+          'Enquête ${inv.titre}. $priceLabel. ${inv.description}. Durée ${inv.durationEstimate} minutes. Difficulté ${inv.difficulte}. Bouton pour ouvrir le détail et démarrer.',
+      button: true,
       child: Card(
         margin: const EdgeInsets.only(bottom: 12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      inv.titre,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        inv.titre,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ),
-                  ),
-                  if (inv.isFree)
-                    Chip(
-                      label: const Text('Gratuit'),
-                      backgroundColor: Theme.of(
-                        context,
-                      ).colorScheme.primaryContainer,
-                      padding: EdgeInsets.zero,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                inv.description,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Icon(
-                    Icons.schedule,
-                    size: 18,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    '~${inv.durationEstimate} min',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    PriceChip(isFree: inv.isFree),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  inv.description,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.schedule,
+                      size: 18,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Icon(
-                    Icons.signal_cellular_alt,
-                    size: 18,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    inv.difficulte,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    const SizedBox(width: 6),
+                    Text(
+                      '~${inv.durationEstimate} min',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Icon(
+                      Icons.signal_cellular_alt,
+                      size: 18,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
-                  ),
-                ],
-              ),
-            ],
+                    const SizedBox(width: 6),
+                    Text(
+                      inv.difficulte,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

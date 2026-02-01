@@ -3,7 +3,7 @@
 **Story ID:** 2.2  
 **Epic:** 2 – Investigation Discovery & Selection  
 **Story Key:** 2-2-selection-enquete-visibilite-gratuit-payant  
-**Status:** ready-for-dev  
+**Status:** done  
 **Depends on:** Story 2.1  
 **Parallelizable with:** Story 7.2  
 **Lane:** A  
@@ -30,22 +30,22 @@ So that **je sache quoi attendre avant de lancer**.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1** (AC1) – Backend : visibilité gratuit/payant et démarrage
-  - [ ] 1.1 S'assurer que le modèle Investigation (ou équivalent) expose `isFree` (ou `is_free` en DB) ; la query `listInvestigations` doit le retourner (Story 2.1 peut déjà l'avoir)
-  - [ ] 1.2 Si nécessaire : mutation ou query pour « démarrer une enquête » (ex. `startInvestigation(id)`) retournant un token de session ou un état ; sinon navigation Flutter seule avec id enquête
-  - [ ] 1.3 Pas de changement obligatoire si 2.1 a déjà is_free dans l'API ; sinon ajouter le champ au schéma GraphQL et au modèle
-- [ ] **Task 2** (AC1) – Flutter : libellé gratuit/payant et sélection
-  - [ ] 2.1 Sur l'écran liste des enquêtes (Story 2.1), afficher pour chaque item un libellé visible « Gratuit » ou « Payant » (badge, chip ou texte selon design system « carnet de détective »)
-  - [ ] 2.2 Mapper le champ `isFree` (GraphQL) vers l'affichage ; gérer le cas où le champ est absent (fallback « Payant » ou depuis API)
-  - [ ] 2.3 Au tap sur une enquête : navigation vers écran de démarrage ou détail puis CTA « Démarrer » ; la sélection permet de lancer l'enquête (FR8)
-- [ ] **Task 3** (AC1) – Navigation et cohérence
-  - [ ] 3.1 Route(s) GoRouter pour « détail enquête » et/ou « démarrer enquête » (ex. `/investigations/:id` ou `/investigations/:id/start`) selon architecture choisie en 2.1
-  - [ ] 3.2 Depuis la liste : tap sur une enquête → navigation vers détail ou démarrage ; CTA « Démarrer l'enquête » depuis le détail si applicable
-  - [ ] 3.3 Story 3.1 gérera l'écran de jeu ; pour 2.2, la navigation peut aboutir à un écran placeholder « Démarrer » ou à l'entrée du flux d'enquête (à définir avec 3.1)
-- [ ] **Task 4** – Qualité et conformité
-  - [ ] 4.1 Backend : test d'intégration pour le champ is_free dans listInvestigations (ou test existant étendu) ; pas de régression sur 2.1
-  - [ ] 4.2 Flutter : tests widget pour la liste avec libellé Gratuit/Payant visible et tap → navigation
-  - [ ] 4.3 `dart analyze`, `flutter test`, `cargo test`, `clippy` verts ; pas de régression sur 1.1–2.1
+- [x] **Task 1** (AC1) – Backend : visibilité gratuit/payant et démarrage
+  - [x] 1.1 S'assurer que le modèle Investigation (ou équivalent) expose `isFree` (ou `is_free` en DB) ; la query `listInvestigations` doit le retourner (Story 2.1 peut déjà l'avoir)
+  - [x] 1.2 Si nécessaire : mutation ou query pour « démarrer une enquête » (ex. `startInvestigation(id)`) retournant un token de session ou un état ; sinon navigation Flutter seule avec id enquête
+  - [x] 1.3 Pas de changement obligatoire si 2.1 a déjà is_free dans l'API ; sinon ajouter le champ au schéma GraphQL et au modèle
+- [x] **Task 2** (AC1) – Flutter : libellé gratuit/payant et sélection
+  - [x] 2.1 Sur l'écran liste des enquêtes (Story 2.1), afficher pour chaque item un libellé visible « Gratuit » ou « Payant » (badge, chip ou texte selon design system « carnet de détective »)
+  - [x] 2.2 Mapper le champ `isFree` (GraphQL) vers l'affichage ; gérer le cas où le champ est absent (fallback « Payant » ou depuis API)
+  - [x] 2.3 Au tap sur une enquête : navigation vers écran de démarrage ou détail puis CTA « Démarrer » ; la sélection permet de lancer l'enquête (FR8)
+- [x] **Task 3** (AC1) – Navigation et cohérence
+  - [x] 3.1 Route(s) GoRouter pour « détail enquête » et/ou « démarrer enquête » (ex. `/investigations/:id` ou `/investigations/:id/start`) selon architecture choisie en 2.1
+  - [x] 3.2 Depuis la liste : tap sur une enquête → navigation vers détail ou démarrage ; CTA « Démarrer l'enquête » depuis le détail si applicable
+  - [x] 3.3 Story 3.1 gérera l'écran de jeu ; pour 2.2, la navigation peut aboutir à un écran placeholder « Démarrer » ou à l'entrée du flux d'enquête (à définir avec 3.1)
+- [x] **Task 4** – Qualité et conformité
+  - [x] 4.1 Backend : test d'intégration pour le champ is_free dans listInvestigations (ou test existant étendu) ; pas de régression sur 2.1
+  - [x] 4.2 Flutter : tests widget pour la liste avec libellé Gratuit/Payant visible et tap → navigation
+  - [x] 4.3 `dart analyze`, `flutter test`, `cargo test`, `clippy` verts ; pas de régression sur 1.1–2.1
 
 ---
 
@@ -140,7 +140,40 @@ So that **je sache quoi attendre avant de lancer**.
 
 ### Completion Notes List
 
+- **Task 1** : Backend déjà conforme (Story 2.1) : modèle Investigation avec `is_free`, listInvestigations retourne isFree. Aucune mutation startInvestigation ; navigation Flutter seule avec id (extra).
+- **Task 2** : Liste étendue avec chip « Gratuit » ou « Payant » (_PriceChip), fallback « Payant » si isFree absent/false. Tap sur carte → `context.push('/investigations/:id', extra: inv)`.
+- **Task 3** : Routes `/investigations/:id` (détail) et `/investigations/:id/start` (placeholder). InvestigationDetailScreen avec CTA « Démarrer l'enquête » ; InvestigationStartPlaceholderScreen pour 2.2 (Story 3.1 = écran de jeu).
+- **Task 4** : Tests widget ajoutés (Payant affiché, tap → détail). dart analyze, dart format, flutter test, cargo test, clippy verts.
+
 ### File List
+
+- city_detectives/lib/shared/widgets/price_chip.dart (créé – code-review)
+- city_detectives/lib/features/investigation/screens/investigation_list_screen.dart (modifié)
+- city_detectives/lib/features/investigation/screens/investigation_detail_screen.dart (créé)
+- city_detectives/lib/features/investigation/screens/investigation_start_placeholder_screen.dart (créé)
+- city_detectives/lib/core/router/app_router.dart (modifié)
+- city_detectives/test/features/investigation/investigation_list_screen_test.dart (modifié)
+- _bmad-output/implementation-artifacts/sprint-status.yaml (modifié)
+- _bmad-output/implementation-artifacts/2-2-selection-enquete-visibilite-gratuit-payant.md (modifié)
+
+### Change Log
+
+- 2026-02-01 : Implémentation Story 2.2 – badge Gratuit/Payant, écran détail, routes /investigations/:id et /investigations/:id/start, tests widget, qualité (dart analyze, flutter test, cargo test, clippy).
+- 2026-02-01 : Code-review – corrections appliquées : widget PriceChip extrait (shared/widgets/price_chip.dart), Semantics liste + placeholder (WCAG 2.1), routes avec constantes, quality gate dart format rappelé.
+
+---
+
+## Senior Developer Review (AI)
+
+**Date :** 2026-02-01  
+**Outcome :** Approve (Changes applied)
+
+**Findings adressés :**
+- **MEDIUM** Duplication _PriceChip → widget partagé `lib/shared/widgets/price_chip.dart` (design system).
+- **MEDIUM** Quality gate : dart format ajouté dans Completion Notes / définition de done.
+- **LOW** Semantics écran liste : label complété avec « gratuit ou payant ».
+- **LOW** Placeholder : Semantics sur Scaffold et bouton Retour (WCAG 2.1 Level A).
+- **LOW** Routes : utilisation des constantes `investigationDetail` et `investigationStart` dans app_router.
 
 ---
 

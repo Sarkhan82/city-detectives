@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:city_detectives/features/investigation/models/investigation.dart';
+import 'package:city_detectives/features/investigation/screens/investigation_detail_screen.dart';
 import 'package:city_detectives/features/investigation/screens/investigation_list_screen.dart';
+import 'package:city_detectives/features/investigation/screens/investigation_start_placeholder_screen.dart';
 import 'package:city_detectives/features/onboarding/screens/onboarding_screen.dart';
 import 'package:city_detectives/features/onboarding/screens/register_screen.dart';
 import 'package:city_detectives/features/onboarding/screens/welcome_screen.dart';
 
-/// Routes (Story 1.2 + 1.3 + 2.1) – welcome, register, onboarding, investigations, home.
+/// Routes (Story 1.2 + 1.3 + 2.1 + 2.2) – welcome, register, onboarding, investigations, détail, start, home.
 class AppRouter {
   AppRouter._();
 
@@ -16,6 +19,12 @@ class AppRouter {
 
   /// Écran liste des enquêtes (Story 2.1).
   static const String investigations = '/investigations';
+
+  /// Détail d'une enquête (Story 2.2) – path avec :id.
+  static const String investigationDetail = '/investigations/:id';
+
+  /// Démarrer une enquête (Story 2.2 placeholder ; Story 3.1 = écran de jeu).
+  static const String investigationStart = '/investigations/:id/start';
   static const String home = '/home';
 
   static GoRouter createRouter() {
@@ -34,6 +43,27 @@ class AppRouter {
         GoRoute(
           path: investigations,
           builder: (context, _) => const InvestigationListScreen(),
+        ),
+        GoRoute(
+          path: investigationDetail,
+          builder: (context, state) {
+            final extra = state.extra;
+            final inv = extra is Investigation ? extra : null;
+            if (inv == null) {
+              return Scaffold(
+                appBar: AppBar(title: const Text('Enquête')),
+                body: const Center(child: Text('Enquête introuvable.')),
+              );
+            }
+            return InvestigationDetailScreen(investigation: inv);
+          },
+        ),
+        GoRoute(
+          path: investigationStart,
+          builder: (context, state) {
+            final id = state.pathParameters['id'] ?? '';
+            return InvestigationStartPlaceholderScreen(investigationId: id);
+          },
         ),
         GoRoute(
           path: home,
