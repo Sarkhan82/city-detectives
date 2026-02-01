@@ -10,3 +10,6 @@
 
 # Référence méthode BMAD (externe, ne pas pousser)
 BMAD-METHOD/
+
+# Rust
+city-detectives-api/target/
