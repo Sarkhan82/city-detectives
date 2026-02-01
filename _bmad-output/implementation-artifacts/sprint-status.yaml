@@ -47,12 +47,12 @@ development_status:
   epic-1-retrospective: optional
 
   epic-2: in-progress
-  2-1-parcourir-consulter-enquetes: ready-for-dev
-  2-2-selection-enquete-visibilite-gratuit-payant: backlog
+  2-1-parcourir-consulter-enquetes: done
+  2-2-selection-enquete-visibilite-gratuit-payant: ready-for-dev
   epic-2-retrospective: optional
 
-  epic-3: backlog
-  3-1-demarrer-enquete-navigation-enigmes: backlog
+  epic-3: in-progress
+  3-1-demarrer-enquete-navigation-enigmes: ready-for-dev
   3-2-progression-carte-interactive-position: backlog
   3-3-pause-reprise-abandon-sauvegarde: backlog
   3-4-capacites-techniques: backlog

@@ -13,6 +13,7 @@ mod services;
 
 use api::graphql::create_schema;
 use services::auth_service::{self, AuthService};
+use services::investigation_service::InvestigationService;
 
 #[tokio::main]
 async fn main() {
@@ -27,7 +28,8 @@ async fn main() {
         .map(|s| s.into_bytes())
         .unwrap_or_else(|_| auth_service::default_jwt_secret());
     let auth_service = Arc::new(AuthService::new(jwt_secret));
-    let schema = create_schema(auth_service);
+    let investigation_service = Arc::new(InvestigationService::new());
+    let schema = create_schema(auth_service, investigation_service);
 
     let app = Router::new()
         .route("/graphql", post(api::graphql::graphql_handler))
