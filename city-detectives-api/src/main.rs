@@ -11,8 +11,8 @@ mod db;
 mod models;
 mod services;
 
-use api::graphql::{create_schema, AppSchema};
-use services::auth_service::AuthService;
+use api::graphql::create_schema;
+use services::auth_service::{self, AuthService};
 
 #[tokio::main]
 async fn main() {
@@ -25,7 +25,7 @@ async fn main() {
 
     let jwt_secret = std::env::var("JWT_SECRET")
         .map(|s| s.into_bytes())
-        .unwrap_or_else(|_| AuthService::default_jwt_secret());
+        .unwrap_or_else(|_| auth_service::default_jwt_secret());
     let auth_service = Arc::new(AuthService::new(jwt_secret));
     let schema = create_schema(auth_service);
 

@@ -2,7 +2,7 @@
 //! Stockage en mémoire pour MVP ; à remplacer par PostgreSQL/sqlx en prod.
 
 use crate::models::user::{RegisterInput, User};
-use bcrypt::{hash, verify, DEFAULT_COST};
+use bcrypt::{hash, DEFAULT_COST};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
