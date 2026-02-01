@@ -1,6 +1,7 @@
 // Story 1.1 – Vérifier que l'app se construit et affiche l'écran d'accueil (FR1).
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:city_detectives/app.dart';
@@ -24,7 +25,9 @@ void main() {
   testWidgets('WelcomeScreen builds without crash', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const MaterialApp(home: WelcomeScreen()));
+    await tester.pumpWidget(
+      const ProviderScope(child: MaterialApp(home: WelcomeScreen())),
+    );
     await tester.pump();
 
     expect(find.byType(WelcomeScreen), findsOneWidget);

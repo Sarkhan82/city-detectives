@@ -1,18 +1,20 @@
 # City Detectives – Quality pipeline (Flutter + Rust)
-# Quality gates: project-context.md – dart analyze, dart format, flutter test; cargo test, clippy, rustfmt
+# Quality gates: dart analyze, format, flutter test; cargo test, clippy, rustfmt
 
 name: Quality
 
 on:
   push:
-    branches: [main, master, develop]
+    branches: [main, master, develop, 'feature/**']
   pull_request:
-    branches: [main, master, develop]
+    branches: [main, master, develop, 'feature/**']
+  workflow_dispatch:
 
 jobs:
   flutter:
     name: Flutter (analyze, format, test)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -39,11 +41,47 @@ jobs:
 
       - name: Test
         working-directory: city_detectives
-        run: flutter test
+        run: flutter test --coverage
 
-  # Rust job: décommenter quand city-detectives-api existe
-  # rust:
-  #   name: Rust (test, clippy, fmt)
-  #   runs-on: ubuntu-latest
-  #   if: hashFiles('city-detectives-api/Cargo.toml') != ''
-  #   ...
+  rust:
+    name: Rust (test, clippy, fmt)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Run only when API exists (hashFiles not available in all contexts)
+    continue-on-error: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Skip if no Rust project
+        id: skip_rust
+        run: |
+          if [ ! -f city-detectives-api/Cargo.toml ]; then echo "skip=true" >> $GITHUB_OUTPUT; else echo "skip=false" >> $GITHUB_OUTPUT; fi
+
+      - name: Setup Rust
+        if: steps.skip_rust.outputs.skip != 'true'
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache Cargo
+        if: steps.skip_rust.outputs.skip != 'true'
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: city-detectives-api
+
+      - name: Check format
+        if: steps.skip_rust.outputs.skip != 'true'
+        working-directory: city-detectives-api
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        if: steps.skip_rust.outputs.skip != 'true'
+        working-directory: city-detectives-api
+        run: cargo clippy -- -D warnings
+
+      - name: Test
+        if: steps.skip_rust.outputs.skip != 'true'
+        working-directory: city-detectives-api
+        run: cargo test
