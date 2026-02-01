@@ -30,7 +30,9 @@ async fn test_register_returns_jwt() {
     assert!(res.status().is_success(), "status: {}", res.status());
     let body: serde_json::Value = res.json().await.unwrap();
     let data = body.get("data").and_then(|d| d.get("register"));
-    let token = data.and_then(|t| t.as_str()).expect("register doit retourner un JWT");
+    let token = data
+        .and_then(|t| t.as_str())
+        .expect("register doit retourner un JWT");
     assert!(!token.is_empty());
     assert!(token.split('.').count() == 3, "JWT doit avoir 3 parties");
 }
@@ -60,5 +62,52 @@ async fn test_register_duplicate_email_rejected() {
         .unwrap();
     let body2: serde_json::Value = res2.json().await.unwrap();
     let errors = body2.get("errors");
-    assert!(errors.is_some(), "second enregistrement doit renvoyer une erreur");
+    assert!(
+        errors.is_some(),
+        "second enregistrement doit renvoyer une erreur"
+    );
+}
+
+#[tokio::test]
+#[ignore]
+async fn test_register_invalid_email_returns_error() {
+    let client = Client::new();
+    let res = client
+        .post(format!("{}/graphql", BASE))
+        .json(&json!({
+            "query": register_mutation("invalid-email", "password12345")
+        }))
+        .send()
+        .await
+        .unwrap();
+    // Backend renvoie 200 avec errors ou 400 (BAD_REQUEST) pour validation
+    let body: serde_json::Value = res.json().await.unwrap();
+    let errors = body.get("errors");
+    assert!(
+        errors.is_some(),
+        "email invalide doit renvoyer une erreur de validation, body={}",
+        body
+    );
+}
+
+#[tokio::test]
+#[ignore]
+async fn test_register_short_password_returns_error() {
+    let client = Client::new();
+    let res = client
+        .post(format!("{}/graphql", BASE))
+        .json(&json!({
+            "query": register_mutation("user@example.com", "short")
+        }))
+        .send()
+        .await
+        .unwrap();
+    // Backend renvoie 200 avec errors ou 400 (BAD_REQUEST) pour validation
+    let body: serde_json::Value = res.json().await.unwrap();
+    let errors = body.get("errors");
+    assert!(
+        errors.is_some(),
+        "mot de passe < 8 caractères doit renvoyer une erreur de validation, body={}",
+        body
+    );
 }

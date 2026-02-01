@@ -81,7 +81,25 @@ jobs:
         working-directory: city-detectives-api
         run: cargo clippy -- -D warnings
 
-      - name: Test
+      - name: Test (unit)
         if: steps.skip_rust.outputs.skip != 'true'
         working-directory: city-detectives-api
         run: cargo test
+
+      # Tests d'intégration API : serveur sur 8080 puis cargo test -- --ignored
+      - name: Integration tests (API server)
+        if: steps.skip_rust.outputs.skip != 'true'
+        working-directory: city-detectives-api
+        run: |
+          cargo run &
+          SERVER_PID=$!
+          for i in $(seq 1 45); do
+            if curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8080/graphql -H "Content-Type: application/json" -d '{"query":"query { health }"}' | grep -q 200; then
+              break
+            fi
+            sleep 1
+          done
+          cargo test --test auth_test -- --ignored --nocapture
+          EXIT=$?
+          kill $SERVER_PID 2>/dev/null || true
+          exit $EXIT
