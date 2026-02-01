@@ -80,12 +80,13 @@ async fn test_register_invalid_email_returns_error() {
         .send()
         .await
         .unwrap();
-    assert!(res.status().is_success(), "GraphQL returns 200");
+    // Backend renvoie 200 avec errors ou 400 (BAD_REQUEST) pour validation
     let body: serde_json::Value = res.json().await.unwrap();
     let errors = body.get("errors");
     assert!(
         errors.is_some(),
-        "email invalide doit renvoyer une erreur de validation"
+        "email invalide doit renvoyer une erreur de validation, body={}",
+        body
     );
 }
 
@@ -101,11 +102,12 @@ async fn test_register_short_password_returns_error() {
         .send()
         .await
         .unwrap();
-    assert!(res.status().is_success(), "GraphQL returns 200");
+    // Backend renvoie 200 avec errors ou 400 (BAD_REQUEST) pour validation
     let body: serde_json::Value = res.json().await.unwrap();
     let errors = body.get("errors");
     assert!(
         errors.is_some(),
-        "mot de passe < 8 caractères doit renvoyer une erreur de validation"
+        "mot de passe < 8 caractères doit renvoyer une erreur de validation, body={}",
+        body
     );
 }
