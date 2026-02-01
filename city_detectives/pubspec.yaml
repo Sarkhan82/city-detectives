@@ -19,8 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  # ^3.5.0 pour compatibilité CI (Flutter 3.27) ; préférer ^3.10.4 en local si dispo
-  sdk: ">=3.5.0 <4.0.0"
+  sdk: ^3.10.4
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
