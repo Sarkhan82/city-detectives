@@ -47,30 +47,41 @@ jobs:
     name: Rust (test, clippy, fmt)
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: hashFiles('city-detectives-api/Cargo.toml') != ''
+    # Run only when API exists (hashFiles not available in all contexts)
+    continue-on-error: false
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Skip if no Rust project
+        id: skip_rust
+        run: |
+          if [ ! -f city-detectives-api/Cargo.toml ]; then echo "skip=true" >> $GITHUB_OUTPUT; else echo "skip=false" >> $GITHUB_OUTPUT; fi
+
       - name: Setup Rust
+        if: steps.skip_rust.outputs.skip != 'true'
         uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt
 
       - name: Cache Cargo
+        if: steps.skip_rust.outputs.skip != 'true'
         uses: Swatinem/rust-cache@v2
         with:
           workspace: city-detectives-api
 
       - name: Check format
+        if: steps.skip_rust.outputs.skip != 'true'
         working-directory: city-detectives-api
         run: cargo fmt --all -- --check
 
       - name: Clippy
+        if: steps.skip_rust.outputs.skip != 'true'
         working-directory: city-detectives-api
         run: cargo clippy -- -D warnings
 
       - name: Test
+        if: steps.skip_rust.outputs.skip != 'true'
         working-directory: city-detectives-api
         run: cargo test
