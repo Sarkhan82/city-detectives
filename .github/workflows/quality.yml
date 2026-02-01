@@ -6,9 +6,9 @@ name: Quality
 
 on:
   push:
-    branches: [main, master, develop]
+    branches: [main, master, develop, 'feature/**']
   pull_request:
-    branches: [main, master, develop]
+    branches: [main, master, develop, 'feature/**']
   schedule:
     # Burn-in hebdomadaire (dimanche 2h UTC)
     - cron: "0 2 * * 0"
