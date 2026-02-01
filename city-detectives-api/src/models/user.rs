@@ -20,3 +20,35 @@ pub struct RegisterInput {
     #[validate(length(min = 8))]
     pub password: String,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn register_input_rejects_invalid_email() {
+        let input = RegisterInput {
+            email: "not-an-email".to_string(),
+            password: "password123".to_string(),
+        };
+        assert!(input.validate().is_err());
+    }
+
+    #[test]
+    fn register_input_rejects_short_password() {
+        let input = RegisterInput {
+            email: "user@example.com".to_string(),
+            password: "short".to_string(),
+        };
+        assert!(input.validate().is_err());
+    }
+
+    #[test]
+    fn register_input_accepts_valid_input() {
+        let input = RegisterInput {
+            email: "user@example.com".to_string(),
+            password: "password123".to_string(),
+        };
+        assert!(input.validate().is_ok());
+    }
+}

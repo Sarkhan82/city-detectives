@@ -62,3 +62,45 @@ async fn test_register_duplicate_email_rejected() {
     let errors = body2.get("errors");
     assert!(errors.is_some(), "second enregistrement doit renvoyer une erreur");
 }
+
+#[tokio::test]
+#[ignore]
+async fn test_register_invalid_email_returns_error() {
+    let client = Client::new();
+    let res = client
+        .post(format!("{}/graphql", BASE))
+        .json(&json!({
+            "query": register_mutation("invalid-email", "password12345")
+        }))
+        .send()
+        .await
+        .unwrap();
+    assert!(res.status().is_success(), "GraphQL returns 200");
+    let body: serde_json::Value = res.json().await.unwrap();
+    let errors = body.get("errors");
+    assert!(
+        errors.is_some(),
+        "email invalide doit renvoyer une erreur de validation"
+    );
+}
+
+#[tokio::test]
+#[ignore]
+async fn test_register_short_password_returns_error() {
+    let client = Client::new();
+    let res = client
+        .post(format!("{}/graphql", BASE))
+        .json(&json!({
+            "query": register_mutation("user@example.com", "short")
+        }))
+        .send()
+        .await
+        .unwrap();
+    assert!(res.status().is_success(), "GraphQL returns 200");
+    let body: serde_json::Value = res.json().await.unwrap();
+    let errors = body.get("errors");
+    assert!(
+        errors.is_some(),
+        "mot de passe < 8 caractères doit renvoyer une erreur de validation"
+    );
+}
