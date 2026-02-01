@@ -1,4 +1,4 @@
-// Story 2.1 – Tests widget écran liste enquêtes (présence liste, durée, difficulté, description).
+// Story 2.1 + 2.2 – Tests widget écran liste enquêtes (liste, durée, difficulté, description, Gratuit/Payant, tap → navigation).
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -75,6 +75,81 @@ void main() {
       expect(find.text('~45 min'), findsOneWidget);
       expect(find.text('facile'), findsOneWidget);
       expect(find.text('Gratuit'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'InvestigationListScreen shows Payant when isFree is false (Story 2.2)',
+    (WidgetTester tester) async {
+      final mockList = [
+        const Investigation(
+          id: 'id-paid',
+          titre: 'Enquête premium',
+          description: 'Enquête payante.',
+          durationEstimate: 60,
+          difficulte: 'moyen',
+          isFree: false,
+        ),
+      ];
+      final router = GoRouter(
+        initialLocation: AppRouter.investigations,
+        routes: [
+          GoRoute(
+            path: AppRouter.investigations,
+            builder: (context, state) => const InvestigationListScreen(),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            investigationListProvider.overrideWith(
+              () => FakeInvestigationListNotifier(mockList),
+            ),
+          ],
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Payant'), findsOneWidget);
+      expect(find.text('Gratuit'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'InvestigationListScreen tap on item navigates to detail (Story 2.2)',
+    (WidgetTester tester) async {
+      final mockList = [
+        const Investigation(
+          id: 'id-1',
+          titre: 'Le mystère du parc',
+          description: 'Une enquête familiale.',
+          durationEstimate: 45,
+          difficulte: 'facile',
+          isFree: true,
+        ),
+      ];
+      final router = AppRouter.createRouter();
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            investigationListProvider.overrideWith(
+              () => FakeInvestigationListNotifier(mockList),
+            ),
+          ],
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+      await tester.pumpAndSettle();
+      router.go(AppRouter.investigations);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Le mystère du parc'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Démarrer l\'enquête'), findsOneWidget);
+      expect(find.text('Une enquête familiale.'), findsOneWidget);
     },
   );
 
