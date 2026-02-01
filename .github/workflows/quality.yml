@@ -103,7 +103,8 @@ jobs:
     name: Rust (test, clippy, fmt)
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: "hashFiles('city-detectives-api/Cargo.toml') != ''"
+    # Run only when Cargo.toml exists (e.g. in PR with api code)
+    if: ${{ hashFiles('city-detectives-api/Cargo.toml') != '' }}
 
     steps:
       - name: Checkout
