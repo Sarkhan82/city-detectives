@@ -9,6 +9,7 @@ pub struct User {
     pub id: Uuid,
     pub email: String,
     #[serde(skip_serializing)]
+    #[allow(dead_code)] // utilisé pour vérification mot de passe (login futur)
     pub password_hash: String,
 }
 

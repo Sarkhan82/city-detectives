@@ -20,7 +20,7 @@ pub fn create_schema(auth_service: Arc<AuthService>) -> AppSchema {
         .finish()
 }
 
-struct QueryRoot;
+pub struct QueryRoot;
 
 #[Object]
 impl QueryRoot {
@@ -38,7 +38,7 @@ impl QueryRoot {
     }
 }
 
-struct MutationRoot;
+pub struct MutationRoot;
 
 #[Object]
 impl MutationRoot {
