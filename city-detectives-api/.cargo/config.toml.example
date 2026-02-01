@@ -1,0 +1,18 @@
+# Exemple pour Windows SANS Visual Studio (utilisation de MinGW-w64 64 bits).
+# IMPORTANT : il faut MinGW-w64 64 bits (x86_64), pas MinGW 32 bits (mingw32).
+# Vérifier avec : gcc -dumpmachine  → doit afficher "x86_64-w64-mingw32" ou "x86_64-pc-msys", pas "mingw32".
+#
+# Option A – MSYS2 (recommandé) :
+#   1. Installer MSYS2 : https://www.msys2.org/
+#   2. Ouvrir "MSYS2 UCRT64" ou "MSYS2 MINGW64", exécuter : pacman -S mingw-w64-ucrt-x86_64-gcc
+#   3. Ajouter au PATH : C:\msys64\ucrt64\bin (ou C:\msys64\mingw64\bin)
+# Option B – Scoop : scoop install mingw (vérifier que gcc -dumpmachine donne x86_64)
+#
+# Puis :
+#   4. Copier ce fichier vers config.toml : Copy-Item config.toml.example config.toml
+#   5. rustup toolchain install stable-x86_64-pc-windows-gnu
+#   6. rustup default stable-x86_64-pc-windows-gnu
+#   7. cargo test
+
+[build]
+target = "x86_64-pc-windows-gnu"

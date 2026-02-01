@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:city_detectives/core/router/app_router.dart';
 import 'package:city_detectives/core/services/auth_provider.dart';
+import 'package:city_detectives/features/onboarding/providers/onboarding_provider.dart';
 
 /// Écran d'accueil – Story 1.1 (FR1). Session persistante : si token existant → home.
 class WelcomeScreen extends ConsumerStatefulWidget {
@@ -24,7 +25,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     final auth = ref.read(authServiceProvider);
     final token = await auth.getStoredToken();
     if (!mounted || token == null || token.isEmpty) return;
-    context.go(AppRouter.home);
+    final completed = await ref.read(onboardingCompletedProvider.future);
+    if (!mounted) return;
+    context.go(completed ? AppRouter.home : AppRouter.onboarding);
   }
 
   @override

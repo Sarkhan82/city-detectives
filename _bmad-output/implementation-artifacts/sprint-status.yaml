@@ -43,11 +43,11 @@ development_status:
   epic-1: in-progress
   1-1-app-shell-et-installation: done
   1-2-creation-de-compte: review
-  1-3-decouverte-premiere-enquete-gratuite-onboarding: backlog
+  1-3-decouverte-premiere-enquete-gratuite-onboarding: review
   epic-1-retrospective: optional
 
-  epic-2: backlog
-  2-1-parcourir-consulter-enquetes: backlog
+  epic-2: in-progress
+  2-1-parcourir-consulter-enquetes: ready-for-dev
   2-2-selection-enquete-visibilite-gratuit-payant: backlog
   epic-2-retrospective: optional
 
