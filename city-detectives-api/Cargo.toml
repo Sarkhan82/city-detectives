@@ -22,3 +22,8 @@ tower-http = { version = "0.5", features = ["cors"] }
 [dev-dependencies]
 reqwest = { version = "0.12", features = ["json"] }
 tokio-test = "0.4"
+
+# Binaire de test d'intégration API (tests/api/auth_test.rs)
+[[test]]
+name = "auth_test"
+path = "tests/api/auth_test.rs"
