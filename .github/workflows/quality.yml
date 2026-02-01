@@ -1,0 +1,70 @@
+# City Detectives – Quality pipeline (Flutter + Rust)
+# Quality gates: project-context.md – dart analyze, dart format, flutter test; cargo test, clippy, rustfmt
+
+name: Quality
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  flutter:
+    name: Flutter (analyze, format, test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: city_detectives
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.24.x"
+          channel: "stable"
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: dart analyze
+
+      - name: Format (check)
+        run: dart format --set-exit-if-changed .
+
+      - name: Test
+        run: flutter test
+
+  rust:
+    name: Rust (test, clippy, fmt)
+    runs-on: ubuntu-latest
+    if: hashFiles('city-detectives-api/Cargo.toml') != ''
+    defaults:
+      run:
+        working-directory: city-detectives-api
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-action@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: city-detectives-api
+
+      - name: Check format
+        run: cargo fmt -- --check
+
+      - name: Clippy
+        run: cargo clippy -- -D warnings
+
+      - name: Test
+        run: cargo test

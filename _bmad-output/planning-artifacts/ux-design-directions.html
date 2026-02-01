@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Detectives - Directions de Design</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #f5f5f5;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+        
+        h1 {
+            font-size: 36px;
+            color: #d4af37;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        
+        .subtitle {
+            font-size: 18px;
+            color: #b0b0b0;
+            margin-bottom: 48px;
+        }
+        
+        .direction {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            padding: 32px;
+            margin-bottom: 48px;
+            transition: border-color 0.3s;
+        }
+        
+        .direction:hover {
+            border-color: #d4af37;
+        }
+        
+        .direction-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .direction-title {
+            font-size: 28px;
+            color: #d4af37;
+            font-weight: bold;
+        }
+        
+        .direction-number {
+            font-size: 18px;
+            color: #666;
+            background: #2a2a2a;
+            padding: 8px 16px;
+            border-radius: 4px;
+        }
+        
+        .direction-description {
+            font-size: 16px;
+            color: #e0e0e0;
+            margin-bottom: 24px;
+            line-height: 1.8;
+        }
+        
+        .direction-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .feature {
+            background: #0a0a0a;
+            padding: 16px;
+            border-radius: 4px;
+            border-left: 3px solid #d4af37;
+        }
+        
+        .feature-title {
+            font-size: 14px;
+            color: #d4af37;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .feature-text {
+            font-size: 14px;
+            color: #b0b0b0;
+        }
+        
+        .mockup-preview {
+            background: #0a0a0a;
+            border: 2px solid #2a2a2a;
+            border-radius: 8px;
+            padding: 24px;
+            margin-top: 24px;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .color-palette {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        
+        .color-swatch {
+            width: 60px;
+            height: 60px;
+            border-radius: 4px;
+            border: 1px solid #2a2a2a;
+        }
+        
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-top: 24px;
+        }
+        
+        .pros, .cons {
+            padding: 16px;
+            border-radius: 4px;
+        }
+        
+        .pros {
+            background: rgba(46, 204, 113, 0.1);
+            border-left: 3px solid #2ecc71;
+        }
+        
+        .cons {
+            background: rgba(231, 76, 60, 0.1);
+            border-left: 3px solid #e74c3c;
+        }
+        
+        .pros-title, .cons-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .pros-title {
+            color: #2ecc71;
+        }
+        
+        .cons-title {
+            color: #e74c3c;
+        }
+        
+        .pros-list, .cons-list {
+            list-style: none;
+            font-size: 14px;
+            color: #b0b0b0;
+        }
+        
+        .pros-list li, .cons-list li {
+            margin-bottom: 4px;
+            padding-left: 16px;
+            position: relative;
+        }
+        
+        .pros-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #2ecc71;
+        }
+        
+        .cons-list li:before {
+            content: "✗";
+            position: absolute;
+            left: 0;
+            color: #e74c3c;
+        }
+        
+        .use-case {
+            background: rgba(52, 152, 219, 0.1);
+            border-left: 3px solid #3498db;
+            padding: 16px;
+            margin-top: 16px;
+            border-radius: 4px;
+        }
+        
+        .use-case-title {
+            color: #3498db;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .use-case-text {
+            font-size: 14px;
+            color: #b0b0b0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Directions de Design - City Detectives</h1>
+        <p class="subtitle">Exploration de 8 directions visuelles différentes pour l'univers détective</p>
+        
+        <!-- Direction 1: Immersive Full-Screen Map -->
+        <div class="direction">
+            <div class="direction-header">
+                <div class="direction-title">Direction 1 : Carte Immersive Plein Écran</div>
+                <div class="direction-number">#1</div>
+            </div>
+            <div class="direction-description">
+                <strong>Concept :</strong> Le premier écran est une carte plein écran immersive, similaire à Google Maps mais enrichie avec l'univers détective. La carte occupe tout l'écran, avec des points d'intérêt mystérieux qui pulsent légèrement. Navigation minimale, focus total sur l'exploration spatiale.
+            </div>
+            <div class="direction-features">
+                <div class="feature">
+                    <div class="feature-title">Layout</div>
+                    <div class="feature-text">Carte plein écran (100% viewport), navigation flottante discrète</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-title">Hiérarchie</div>
+                    <div class="feature-text">Carte = élément principal, points d'intérêt = focus secondaire</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-title">Interaction</div>
+                    <div class="feature-text">Tap sur point → modal plein écran avec enquête, swipe pour naviguer</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-title">Densité</div>
+                    <div class="feature-text">Aérée - espace blanc généreux autour de la carte</div>
+                </div>
+            </div>
+            <div class="color-palette">
+                <div class="color-swatch" style="background: #0a0a0a;"></div>
+                <div class="color-swatch" style="background: #1a1a2e;"></div>
+                <div class="color-swatch" style="background: #d4af37;"></div>
+                <div class="color-swatch" style="background: #1a1a1a;"></div>
+            </div>
+            <div class="pros-cons">
+                <div class="pros">
+                    <div class="pros-title">Avantages</div>
+                    <ul class="pros-list">
+                        <li>Immersion maximale dès le premier écran</li>
+                        <li>Compréhension spatiale claire</li>
+                        <li>Aligné avec l'expérience "découverte de ville"</li>
+                        <li>Navigation intuitive (similaire à Google Maps)</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <div class="cons-title">Défis</div>
+                    <ul class="cons-list">
+                        <li>Peut être écrasant sur petits écrans</li>
+                        <li>Risque de surcharge si trop de points</li>
+                        <li>Nécessite une carte de qualité</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="use-case">
+                <div class="use-case-title">💡 Idéal pour :</div>
+                <div class="use-case-text">Utilisateurs qui veulent explorer la ville spatialement, mode Touriste, première découverte</div>
+            </div>
+        </div>
+        
+        <!-- Direction 2: Card-Based Discovery -->
+        <div class="direction">
+            <div class="direction-header">
+                <div class="direction-title">Direction 2 : Découverte par Cartes</div>
+                <div class="direction-number">#2</div>
+            </div>
+            <div class="direction-description">
+                <strong>Concept :</strong> Interface basée sur des cartes (cards) qui présentent les enquêtes comme des "dossiers de détective". Chaque carte montre une enquête avec image, titre, LORE, et indicateur de progression. Layout en grille ou liste, navigation par scroll.
+            </div>
+            <div class="direction-features">
+                <div class="feature">
+                    <div class="feature-title">Layout</div>
+                    <div class="feature-text">Grille de cartes (2 colonnes mobile), scroll vertical, header fixe</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-title">Hiérarchie</div>
+                    <div class="feature-text">Cartes = éléments principaux, chaque carte = une enquête complète</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-title">Interaction</div>
+                    <div class="feature-text">Tap sur carte → transition vers écran d'enquête, swipe pour voir plus</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-title">Densité</div>
+                    <div class="feature-text">Modérée - cartes espacées généreusement (24px entre cartes)</div>
+                </div>
+            </div>
+            <div class="color-palette">
+                <div class="color-swatch" style="background: #0a0a0a;"></div>
+                <div class="color-swatch" style="background: #1a1a1a;"></div>
+                <div class="color-swatch" style="background: #d4af37;"></div>
+                <div class="color-swatch" style="background: #1a1a2e;"></div>
+            </div>
+            <div class="pros-cons">
+                <div class="pros">
+                    <div class="pros-title">Avantages</div>
+                    <ul class="pros-list">
+                        <li>Présentation claire de toutes les enquêtes</li>
+                        <li>Facile à scanner visuellement</li>
+                        <li>Permet de montrer le LORE avant de commencer</li>
+                        <li>Layout familier (apps mobiles standards)</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <div class="cons-title">Défis</div>
+                    <ul class="cons-list">
+                        <li>Moins immersif que la carte</li>
+                        <li>Peut nécessiter plus de scroll</li>
+                        <li>Risque de surcharge si trop d'enquêtes</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="use-case">
+                <div class="use-case-title">💡 Idéal pour :</div>
+                <div class="use-case-text">Utilisateurs qui veulent voir toutes les options, mode Famille, navigation claire</div>
+            </div>
+        </div>
+        
+        <!-- Direction 3: Story-Driven Linear -->
+        <div class="direction">
+            <div class="direction-header">
+                <div class="direction-title">Direction 3 : Narratif Linéaire</div>
+                <div class="direction-number">#3</div>
+            </div>
+            <div class="direction-description">
+                <strong>Concept :</strong> Interface qui suit une progression narrative linéaire. L'utilisateur commence une enquête et progresse étape par étape, avec transitions fluides entre énigmes. Focus sur la continuité narrative, moins de navigation globale.
+            </div>
+            <div class="direction-features">
+                <div class="feature">
+                    <div class="feature-title">Layout</div>
+                    <div class="feature-text">Écran unique avec transitions fluides, progression visible en haut</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-title">Hiérarchie</div>
+                    <div class="feature-text">Énigme actuelle = focus total, progression = indicateur discret</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-title">Interaction</div>
+                    <div class="feature-text">Résolution → transition automatique → énigme suivante, pas de navigation manuelle</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-title">Densité</div>
+                    <div class="feature-text">Aérée - focus sur une énigme à la fois, espace généreux</div>
+                </div>
+            </div>
+            <div class="color-palette">
+                <div class="color-swatch" style="background: #0a0a0a;"></div>
+                <div class="color-swatch" style="background: #1a1a2e;"></div>
+                <div class="color-swatch" style="background: #d4af37;"></div>
+                <div class="color-swatch" style="background: #1a1a1a;"></div>
+            </div>
+            <div class="pros-cons">
+                <div class="pros">
+                    <div class="pros-title">Avantages</div>
+                    <ul class="pros-list">
+                        <li>Immersion narrative maximale</li>
+                        <li>Flow continu sans interruption</li>
+                        <li>Pas de confusion sur "où aller"</li>
+                        <li>Aligné avec l'objectif de fluidité</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <div class="cons-title">Défis</div>
+                    <ul class="cons-list">
+                        <li>Moins de contrôle utilisateur</li>
+                        <li>Difficile de revenir en arrière</li>
+                        <li>Peut être frustrant si bloqué</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="use-case">
+                <div class="use-case-title">💡 Idéal pour :</div>
+                <div class="use-case-text">Mode Défieur, utilisateurs qui veulent une expérience immersive continue</div>
+            </div>
+        </div>
+        
+        <!-- Direction 4: Minimalist Detective Notebook -->
+        <div class="direction">
+            <div class="direction-header">
+                <div class="direction-title">Direction 4 : Carnet de Détective Minimaliste</div>
+                <div class="direction-number">#4</div>
+            </div>
+            <div class="direction-description">
+                <strong>Concept :</strong> Interface qui ressemble à un carnet de détective avec pages, notes, et indices. Design très minimaliste avec éléments visuels évoquant le papier, l'encre, les annotations. Typographie qui évoque l'écriture manuscrite ou les machines à écrire.
+            </div>
+            <div class="direction-features">
+                <div class="feature">
+                    <div class="feature-title">Layout</div>
+                    <div class="feature-text">Pages de carnet, navigation par onglets (Enquêtes, Progression, Collection)</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-title">Hiérarchie</div>
+                    <div class="feature-text">Contenu = focus, éléments UI très discrets, métaphore du carnet</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-title">Interaction</div>
+                    <div class="feature-text">Tap sur page → ouverture de l'enquête, animations de "tourner la page"</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-title">Densité</div>
+                    <div class="feature-text">Très aérée - beaucoup d'espace blanc, design épuré</div>
+                </div>
+            </div>
+            <div class="color-palette">
+                <div class="color-swatch" style="background: #0a0a0a;"></div>
+                <div class="color-swatch" style="background: #1a1a1a;"></div>
+                <div class="color-swatch" style="background: #d4af37;"></div>
+                <div class="color-swatch" style="background: #2a2a2a;"></div>
+            </div>
+            <div class="pros-cons">
+                <div class="pros">
+                    <div class="pros-title">Avantages</div>
+                    <ul class="pros-list">
+                        <li>Métaphore cohérente avec l'univers détective</li>
+                        <li>Design unique et mémorable</li>
+                        <li>Focus sur le contenu (LORE, énigmes)</li>
+                        <li>Très clair et lisible</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <div class="cons-title">Défis</div>
+                    <ul class="cons-list">
+                        <li>Peut être trop stylisé pour certains</li>
+                        <li>Risque de paraître "vieux" si mal exécuté</li>
+                        <li>Nécessite des assets visuels de qualité</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="use-case">
+                <div class="use-case-title">💡 Idéal pour :</div>
+                <div class="use-case-text">Utilisateurs qui apprécient l'immersion narrative, mode Défieur, expérience premium</div>
+            </div>
+        </div>
+        
+        <!-- Direction 5: Game-First Dashboard -->
+        <div class="direction">
+            <div class="direction-header">
+                <div class="direction-title">Direction 5 : Dashboard Jeu d'Abord</div>
+                <div class="direction-number">#5</div>
+            </div>
+            <div class="direction-description">
+                <strong>Concept :</strong> Interface qui ressemble à un jeu mobile avec dashboard, progression, badges, leaderboard. Design plus "gamifié" avec éléments visuels de jeu (barres de progression, icônes de badges, stats). Focus sur l'engagement et la compétition.
+            </div>
+            <div class="direction-features">
+                <div class="feature">
+                    <div class="feature-title">Layout</div>
+                    <div class="feature-text">Dashboard avec stats en haut, enquêtes au centre, progression visible</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-title">Hiérarchie</div>
+                    <div class="feature-text">Progression = élément principal, enquêtes = secondaire, stats = tertiaire</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-title">Interaction</div>
+                    <div class="feature-text">Tap sur enquête → écran de jeu, navigation par onglets (Jeu, Progression, Classement)</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-title">Densité</div>
+                    <div class="feature-text">Modérée - informations structurées, pas trop d'espace</div>
+                </div>
+            </div>
+            <div class="color-palette">
+                <div class="color-swatch" style="background: #0a0a0a;"></div>
+                <div class="color-swatch" style="background: #1a1a2e;"></div>
+                <div class="color-swatch" style="background: #d4af37;"></div>
+                <div class="color-swatch" style="background: #2ecc71;"></div>
+            </div>
+            <div class="pros-cons">
+                <div class="pros">
+                    <div class="pros-title">Avantages</div>
+                    <ul class="pros-list">
+                        <li>Engagement fort via gamification</li>
+                        <li>Progression visible et motivante</li>
+                        <li>Familiers aux joueurs de jeux mobiles</li>
+                        <li>Encourage la compétition et le retour</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <div class="cons-title">Défis</div>
+                    <ul class="cons-list">
+                        <li>Peut distraire de l'immersion narrative</li>
+                        <li>Risque de surcharge visuelle</li>
+                        <li>Moins adapté au mode Touriste</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="use-case">
+                <div class="use-case-title">💡 Idéal pour :</div>
+                <div class="use-case-text">Mode Défieur, utilisateurs compétitifs, gamification importante</div>
+            </div>
+        </div>
+        
+        <!-- Direction 6: Split-Screen Hybrid -->
+        <div class="direction">
+            <div class="direction-header">
+                <div class="direction-title">Direction 6 : Hybride Split-Screen</div>
+                <div class="direction-number">#6</div>
+            </div>
+            <div class="direction-description">
+                <strong>Concept :</strong> Interface qui combine carte et contenu en split-screen. Sur mobile, la carte occupe une partie de l'écran (haut ou bas) et le contenu (énigme, LORE) occupe l'autre partie. Sur tablette, split horizontal ou vertical selon orientation.
+            </div>
+            <div class="direction-features">
+                <div class="feature">
+                    <div class="feature-title">Layout</div>
+                    <div class="feature-text">Split 50/50 ou 60/40, carte + contenu simultanés, adaptatif</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-title">Hiérarchie</div>
+                    <div class="feature-text">Carte et contenu = égaux, focus selon contexte (énigme GPS → carte, énigme texte → contenu)</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-title">Interaction</div>
+                    <div class="feature-text">Tap sur point → contenu se met à jour, interactions simultanées possibles</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-title">Densité</div>
+                    <div class="feature-text">Modérée - équilibre entre carte et contenu, espace optimisé</div>
+                </div>
+            </div>
+            <div class="color-palette">
+                <div class="color-swatch" style="background: #0a0a0a;"></div>
+                <div class="color-swatch" style="background: #1a1a2e;"></div>
+                <div class="color-swatch" style="background: #d4af37;"></div>
+                <div class="color-swatch" style="background: #1a1a1a;"></div>
+            </div>
+            <div class="pros-cons">
+                <div class="pros">
+                    <div class="pros-title">Avantages</div>
+                    <ul class="pros-list">
+                        <li>Meilleur des deux mondes (carte + contenu)</li>
+                        <li>Contexte spatial toujours visible</li>
+                        <li>Idéal pour énigmes géolocalisées</li>
+                        <li>Adaptatif selon type d'énigme</div>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <div class="cons-title">Défis</div>
+                    <ul class="cons-list">
+                        <li>Peut être serré sur petits écrans</li>
+                        <li>Complexité de layout plus élevée</li>
+                        <li>Nécessite gestion responsive fine</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="use-case">
+                <div class="use-case-title">💡 Idéal pour :</div>
+                <div class="use-case-text">Tablettes, énigmes géolocalisées, utilisateurs qui veulent contexte spatial constant</div>
+            </div>
+        </div>
+        
+        <!-- Direction 7: Timeline Story Progression -->
+        <div class="direction">
+            <div class="direction-header">
+                <div class="direction-title">Direction 7 : Progression Temporelle (Timeline)</div>
+                <div class="direction-number">#7</div>
+            </div>
+            <div class="direction-description">
+                <strong>Concept :</strong> Interface qui présente l'enquête comme une timeline horizontale ou verticale. Chaque énigme est un point sur la timeline, avec connexions visuelles montrant la progression. Design qui évoque une enquête policière avec indices connectés.
+            </div>
+            <div class="direction-features">
+                <div class="feature">
+                    <div class="feature-title">Layout</div>
+                    <div class="feature-text">Timeline horizontale (scroll), points connectés, progression visible</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-title">Hiérarchie</div>
+                    <div class="feature-text">Timeline = structure principale, énigme actuelle = focus, énigmes passées/futures = secondaires</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-title">Interaction</div>
+                    <div class="feature-text">Tap sur point timeline → énigme, swipe pour naviguer, progression automatique</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-title">Densité</div>
+                    <div class="feature-text">Modérée - timeline structurée, contenu organisé</div>
+                </div>
+            </div>
+            <div class="color-palette">
+                <div class="color-swatch" style="background: #0a0a0a;"></div>
+                <div class="color-swatch" style="background: #1a1a2e;"></div>
+                <div class="color-swatch" style="background: #d4af37;"></div>
+                <div class="color-swatch" style="background: #1a1a1a;"></div>
+            </div>
+            <div class="pros-cons">
+                <div class="pros">
+                    <div class="pros-title">Avantages</div>
+                    <ul class="pros-list">
+                        <li>Progression très claire et visible</li>
+                        <li>Métaphore d'enquête policière forte</li>
+                        <li>Permet de voir où on en est</li>
+                        <li>Navigation intuitive (linéaire)</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <div class="cons-title">Défis</div>
+                    <ul class="cons-list">
+                        <li>Peut être limitant pour enquêtes non-linéaires</li>
+                        <li>Timeline peut devenir longue</li>
+                        <li>Moins adapté pour navigation libre</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="use-case">
+                <div class="use-case-title">💡 Idéal pour :</div>
+                <div class="use-case-text">Enquêtes linéaires, utilisateurs qui veulent voir leur progression, mode Défieur</div>
+            </div>
+        </div>
+        
+        <!-- Direction 8: Adaptive Context-Aware -->
+        <div class="direction">
+            <div class="direction-header">
+                <div class="direction-title">Direction 8 : Adaptatif Contextuel</div>
+                <div class="direction-number">#8</div>
+            </div>
+            <div class="direction-description">
+                <strong>Concept :</strong> Interface qui s'adapte dynamiquement selon le contexte. Énigme GPS → carte plein écran, énigme photo → interface photo optimisée, énigme texte → interface texte focus. Le layout change selon le type d'énigme pour optimiser chaque interaction.
+            </div>
+            <div class="direction-features">
+                <div class="feature">
+                    <div class="feature-title">Layout</div>
+                    <div class="feature-text">Layout adaptatif selon type d'énigme, transitions fluides entre modes</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-title">Hiérarchie</div>
+                    <div class="feature-text">Type d'énigme = détermine la hiérarchie, interface optimisée pour chaque type</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-title">Interaction</div>
+                    <div class="feature-text">Changement automatique de layout selon énigme, transitions intelligentes</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-title">Densité</div>
+                    <div class="feature-text">Variable - adaptée à chaque type d'énigme (GPS = aéré, texte = modéré)</div>
+                </div>
+            </div>
+            <div class="color-palette">
+                <div class="color-swatch" style="background: #0a0a0a;"></div>
+                <div class="color-swatch" style="background: #1a1a2e;"></div>
+                <div class="color-swatch" style="background: #d4af37;"></div>
+                <div class="color-swatch" style="background: #1a1a1a;"></div>
+            </div>
+            <div class="pros-cons">
+                <div class="pros">
+                    <div class="pros-title">Avantages</div>
+                    <ul class="pros-list">
+                        <li>Optimisation pour chaque type d'énigme</li>
+                        <li>Expérience utilisateur adaptée au contexte</li>
+                        <li>Montre la variété des énigmes</li>
+                        <li>Très fluide et intelligent</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <div class="cons-title">Défis</div>
+                    <ul class="cons-list">
+                        <li>Complexité de développement élevée</li>
+                        <li>Risque de confusion si transitions mal gérées</li>
+                        <li>Nécessite beaucoup de design pour chaque type</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="use-case">
+                <div class="use-case-title">💡 Idéal pour :</div>
+                <div class="use-case-text">Tous les modes, utilisateurs qui apprécient la variété, expérience premium</div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 64px; padding: 32px; background: #1a1a1a; border-radius: 8px; border: 1px solid #2a2a2a;">
+            <h2 style="color: #d4af37; margin-bottom: 16px;">📋 Critères d'Évaluation</h2>
+            <p style="color: #b0b0b0; margin-bottom: 24px;">En explorant ces directions, évaluez-les selon ces critères :</p>
+            <ul style="color: #e0e0e0; list-style: none; line-height: 2;">
+                <li>✅ <strong>Intuitivité du Layout</strong> - Quelle hiérarchie d'information correspond à vos priorités ?</li>
+                <li>✅ <strong>Style d'Interaction</strong> - Quel style d'interaction correspond à votre expérience centrale ?</li>
+                <li>✅ <strong>Poids Visuel</strong> - Quelle densité visuelle correspond à votre marque ?</li>
+                <li>✅ <strong>Approche de Navigation</strong> - Quel pattern de navigation correspond aux attentes utilisateur ?</li>
+                <li>✅ <strong>Usage des Composants</strong> - Comment les composants soutiennent-ils vos parcours utilisateur ?</li>
+                <li>✅ <strong>Alignement avec la Marque</strong> - Quelle direction soutient le mieux vos objectifs émotionnels ?</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

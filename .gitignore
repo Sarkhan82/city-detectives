@@ -1,0 +1,12 @@
+# Root .gitignore – City Detectives monorepo
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+
+# IDE / tooling (optionnel à committer)
+.cursor/
+
+# Référence méthode BMAD (externe, ne pas pousser)
+BMAD-METHOD/
