@@ -69,7 +69,7 @@ jobs:
         if: steps.skip_rust.outputs.skip != 'true'
         uses: Swatinem/rust-cache@v2
         with:
-          workspace: city-detectives-api
+          workspaces: city-detectives-api
 
       - name: Check format
         if: steps.skip_rust.outputs.skip != 'true'

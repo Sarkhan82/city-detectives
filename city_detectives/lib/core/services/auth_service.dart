@@ -10,11 +10,9 @@ const _defaultTokenKey = 'auth_jwt_token';
 /// Service d'authentification (Story 1.2).
 /// Inscription via GraphQL, stockage du JWT dans flutter_secure_storage.
 class AuthService {
-  AuthService({
-    FlutterSecureStorage? secureStorage,
-    String? tokenKey,
-  })  : _storage = secureStorage ?? const FlutterSecureStorage(),
-        _tokenKey = tokenKey ?? _defaultTokenKey;
+  AuthService({FlutterSecureStorage? secureStorage, String? tokenKey})
+    : _storage = secureStorage ?? const FlutterSecureStorage(),
+      _tokenKey = tokenKey ?? _defaultTokenKey;
 
   final FlutterSecureStorage _storage;
   final String _tokenKey;
@@ -24,7 +22,10 @@ class AuthService {
   UserRepository get _userRepo => UserRepository(createGraphQLClient());
 
   /// Inscription : appelle l'API register, stocke le JWT en secure storage.
-  Future<String> register({required String email, required String password}) async {
+  Future<String> register({
+    required String email,
+    required String password,
+  }) async {
     final token = await _userRepo.register(email: email, password: password);
     await _storage.write(key: _tokenKey, value: token);
     _cachedToken = token;

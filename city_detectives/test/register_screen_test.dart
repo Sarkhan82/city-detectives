@@ -37,21 +37,23 @@ void main() {
       ],
     );
     await tester.pumpWidget(
-      ProviderScope(
-        child: MaterialApp.router(
-          routerConfig: router,
-        ),
-      ),
+      ProviderScope(child: MaterialApp.router(routerConfig: router)),
     );
     await tester.pump();
 
-    await tester.enterText(find.byType(TextFormField).first, 'test@example.com');
+    await tester.enterText(
+      find.byType(TextFormField).first,
+      'test@example.com',
+    );
     await tester.enterText(find.byType(TextFormField).at(1), 'password123');
     await tester.enterText(find.byType(TextFormField).at(2), 'different');
     await tester.tap(find.text('Créer mon compte'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Les mots de passe ne correspondent pas.'), findsOneWidget);
+    expect(
+      find.text('Les mots de passe ne correspondent pas.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('RegisterScreen builds in isolation with router', (
@@ -67,11 +69,7 @@ void main() {
       ],
     );
     await tester.pumpWidget(
-      ProviderScope(
-        child: MaterialApp.router(
-          routerConfig: router,
-        ),
-      ),
+      ProviderScope(child: MaterialApp.router(routerConfig: router)),
     );
     await tester.pump();
 

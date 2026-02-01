@@ -28,7 +28,8 @@ class UserRepository {
       final errors = result.exception?.graphqlErrors ?? [];
       final message = errors.isNotEmpty
           ? errors.first.message
-          : result.exception?.linkException?.toString() ?? 'Erreur d\'inscription';
+          : result.exception?.linkException?.toString() ??
+                'Erreur d\'inscription';
       throw Exception(message);
     }
     final token = result.data?['register'] as String?;

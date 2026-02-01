@@ -71,8 +71,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   String? get _errorMessage => _submitState.whenOrNull(
-        error: (e, _) => e.toString().replaceFirst('Exception: ', ''),
-      );
+    error: (e, _) => e.toString().replaceFirst('Exception: ', ''),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +83,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           title: const Text('Créer un compte'),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
-            onPressed: _submitState.isLoading ? null : () => context.go(AppRouter.welcome),
+            onPressed: _submitState.isLoading
+                ? null
+                : () => context.go(AppRouter.welcome),
           ),
         ),
         body: SafeArea(
@@ -138,7 +140,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       liveRegion: true,
                       child: Text(
                         _errorMessage!,
-                        style: TextStyle(color: Theme.of(context).colorScheme.error),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
                       ),
                     ),
                   ],

@@ -11,12 +11,11 @@ GraphQLClient createGraphQLClient({String? authToken}) {
       !url.startsWith('https') &&
       !url.contains('localhost') &&
       !url.contains('127.0.0.1')) {
-    debugPrint(
-      '⚠️ API_BASE_URL should be HTTPS in production. Current: $url',
-    );
+    debugPrint('⚠️ API_BASE_URL should be HTTPS in production. Current: $url');
   }
-  final link = AuthLink(getToken: () async => authToken != null ? 'Bearer $authToken' : null)
-      .concat(HttpLink('$url/graphql'));
+  final link = AuthLink(
+    getToken: () async => authToken != null ? 'Bearer $authToken' : null,
+  ).concat(HttpLink('$url/graphql'));
   return GraphQLClient(
     cache: GraphQLCache(store: InMemoryStore()),
     link: link,

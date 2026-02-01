@@ -16,10 +16,7 @@ class AppRouter {
     return GoRouter(
       initialLocation: welcome,
       routes: [
-        GoRoute(
-          path: welcome,
-          builder: (context, _) => const WelcomeScreen(),
-        ),
+        GoRoute(path: welcome, builder: (context, _) => const WelcomeScreen()),
         GoRoute(
           path: register,
           builder: (context, _) => const RegisterScreen(),
@@ -28,9 +25,7 @@ class AppRouter {
           path: home,
           builder: (context, _) => Scaffold(
             appBar: AppBar(title: const Text('City Detectives')),
-            body: const Center(
-              child: Text('Bienvenue – vous êtes connecté.'),
-            ),
+            body: const Center(child: Text('Bienvenue – vous êtes connecté.')),
           ),
         ),
       ],
