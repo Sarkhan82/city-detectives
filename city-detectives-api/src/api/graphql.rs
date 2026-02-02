@@ -12,6 +12,7 @@ use crate::api::middleware::auth::{extract_bearer, BearerToken};
 use crate::models::user::RegisterInput;
 use crate::services::auth_service::AuthService;
 use crate::services::investigation_service::InvestigationService;
+use uuid::Uuid;
 
 pub type AppSchema = Schema<QueryRoot, MutationRoot, EmptySubscription>;
 
@@ -49,6 +50,17 @@ impl QueryRoot {
     ) -> Result<Vec<crate::models::investigation::Investigation>, Error> {
         let svc = ctx.data::<Arc<InvestigationService>>()?;
         Ok(svc.list_investigations())
+    }
+
+    /// Enquête par id avec liste ordonnée d'énigmes (Story 3.1) – pour écran « enquête en cours ».
+    async fn investigation(
+        &self,
+        ctx: &Context<'_>,
+        id: String,
+    ) -> Result<Option<crate::models::investigation::InvestigationWithEnigmas>, Error> {
+        let id = Uuid::parse_str(&id).map_err(|_| Error::new("ID enquête invalide"))?;
+        let svc = ctx.data::<Arc<InvestigationService>>()?;
+        Ok(svc.get_investigation_by_id_with_enigmas(id))
     }
 }
 
@@ -126,5 +138,41 @@ mod tests {
         assert!(first.get("durationEstimate").is_some());
         assert!(first.get("difficulte").is_some());
         assert!(first.get("isFree").is_some());
+    }
+
+    /// Test investigation(id) avec liste énigmes ordonnée (Story 3.1) – exécutable en CI.
+    #[tokio::test]
+    async fn investigation_by_id_returns_investigation_with_enigmas() {
+        let auth = Arc::new(AuthService::default());
+        let inv_svc = Arc::new(InvestigationService::new());
+        let schema = create_schema(auth, inv_svc);
+        let id = "11111111-1111-1111-1111-111111111111";
+        let request = async_graphql::Request::new(format!(
+            r#"query {{ investigation(id: "{}") {{ investigation {{ id titre }} enigmas {{ id orderIndex type titre }} }} }}"#,
+            id
+        ));
+        let res = schema.execute(request).await;
+        assert!(res.is_ok(), "errors: {:?}", res.errors);
+        let data = res.data.into_json().unwrap();
+        let root = data
+            .get("investigation")
+            .and_then(|v| v.as_object())
+            .expect("investigation");
+        let inv = root
+            .get("investigation")
+            .and_then(|v| v.as_object())
+            .expect("investigation.investigation");
+        assert_eq!(inv.get("id").and_then(|v| v.as_str()).unwrap(), id);
+        assert!(inv.get("titre").is_some());
+        let enigmas = root
+            .get("enigmas")
+            .and_then(|v| v.as_array())
+            .expect("enigmas array");
+        assert!(!enigmas.is_empty(), "doit retourner au moins une énigme");
+        let first = enigmas[0].as_object().unwrap();
+        assert!(first.get("id").is_some());
+        assert!(first.get("orderIndex").is_some());
+        assert!(first.get("type").is_some());
+        assert!(first.get("titre").is_some());
     }
 }
