@@ -20,6 +20,12 @@ pub struct Investigation {
     pub difficulte: String,
     #[graphql(name = "isFree")]
     pub is_free: bool,
+    /// Centre latitude pour la carte (Story 3.2, optionnel).
+    #[graphql(name = "centerLat")]
+    pub center_lat: Option<f64>,
+    /// Centre longitude pour la carte (Story 3.2, optionnel).
+    #[graphql(name = "centerLng")]
+    pub center_lng: Option<f64>,
 }
 
 impl Investigation {
@@ -39,6 +45,8 @@ impl Investigation {
             duration_estimate,
             difficulte,
             is_free,
+            center_lat: None,
+            center_lng: None,
         }
     }
 }

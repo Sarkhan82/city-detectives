@@ -53,14 +53,14 @@ development_status:
 
   epic-3: in-progress
   3-1-demarrer-enquete-navigation-enigmes: done
-  3-2-progression-carte-interactive-position: ready-for-dev
+  3-2-progression-carte-interactive-position: done
   3-3-pause-reprise-abandon-sauvegarde: ready-for-dev
   3-4-capacites-techniques: ready-for-dev
   epic-3-retrospective: optional
 
-  epic-4: backlog
-  4-1-enigmes-photo-geolocalisation: backlog
-  4-2-enigmes-mots-puzzle: backlog
+  epic-4: in-progress
+  4-1-enigmes-photo-geolocalisation: ready-for-dev
+  4-2-enigmes-mots-puzzle: ready-for-dev
   4-3-aide-contextuelle-explications-historiques: backlog
   4-4-lore-option-saut: backlog
   epic-4-retrospective: optional
@@ -91,3 +91,4 @@ development_status:
   9-1-notation-apres-completion: backlog
   9-2-avis-consultation-avis: backlog
   epic-9-retrospective: optional
+onal

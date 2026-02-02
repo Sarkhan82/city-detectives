@@ -18,3 +18,22 @@ final investigationWithEnigmasProvider =
 final currentEnigmaIndexProvider = StateProvider.family<int, String>(
   (ref, investigationId) => 0,
 );
+
+/// Énigmes marquées comme complétées (Story 3.2) – état local/mock ; mise à jour quand l'utilisateur
+/// avance ou « valide » une énigme. Validation réelle = Epic 4.
+class CompletedEnigmasNotifier extends StateNotifier<Set<String>> {
+  CompletedEnigmasNotifier() : super({});
+
+  void markCompleted(String enigmaId) {
+    state = {...state, enigmaId};
+  }
+
+  void clear() {
+    state = {};
+  }
+}
+
+final completedEnigmaIdsProvider =
+    StateNotifierProvider.family<CompletedEnigmasNotifier, Set<String>, String>(
+      (ref, investigationId) => CompletedEnigmasNotifier(),
+    );

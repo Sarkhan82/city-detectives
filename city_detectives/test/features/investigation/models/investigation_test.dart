@@ -22,6 +22,24 @@ void main() {
       expect(inv.durationEstimate, 45);
       expect(inv.difficulte, 'facile');
       expect(inv.isFree, true);
+      expect(inv.centerLat, isNull);
+      expect(inv.centerLng, isNull);
+    });
+
+    test('parse centerLat and centerLng when present', () {
+      final json = {
+        'id': 'uuid-1',
+        'titre': 'Test',
+        'description': 'Desc',
+        'durationEstimate': 30,
+        'difficulte': 'facile',
+        'isFree': true,
+        'centerLat': 48.8566,
+        'centerLng': 2.3522,
+      };
+      final inv = Investigation.fromJson(json);
+      expect(inv.centerLat, 48.8566);
+      expect(inv.centerLng, 2.3522);
     });
 
     test('handles missing fields with defaults', () {
