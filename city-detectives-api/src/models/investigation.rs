@@ -1,8 +1,10 @@
-//! Modèle Investigation (Story 2.1) – catalogue enquêtes : id, titre, description, durée, difficulté, is_free.
+//! Modèle Investigation (Story 2.1, 3.1) – catalogue enquêtes ; InvestigationWithEnigmas pour query par id.
 
 use async_graphql::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+
+use crate::models::enigma::Enigma;
 
 /// Enquête exposée en GraphQL (champs camelCase en API ; id en UUID string).
 #[derive(Debug, Clone, Serialize, Deserialize, SimpleObject)]
@@ -39,4 +41,11 @@ impl Investigation {
             is_free,
         }
     }
+}
+
+/// Enquête avec liste ordonnée d'énigmes (Story 3.1) – retour de getInvestigationById.
+#[derive(Debug, Clone, SimpleObject)]
+pub struct InvestigationWithEnigmas {
+    pub investigation: Investigation,
+    pub enigmas: Vec<Enigma>,
 }

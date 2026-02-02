@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:city_detectives/features/investigation/models/investigation.dart';
 import 'package:city_detectives/features/investigation/screens/investigation_detail_screen.dart';
 import 'package:city_detectives/features/investigation/screens/investigation_list_screen.dart';
-import 'package:city_detectives/features/investigation/screens/investigation_start_placeholder_screen.dart';
+import 'package:city_detectives/features/investigation/screens/investigation_play_screen.dart';
 import 'package:city_detectives/features/onboarding/screens/onboarding_screen.dart';
 import 'package:city_detectives/features/onboarding/screens/register_screen.dart';
 import 'package:city_detectives/features/onboarding/screens/welcome_screen.dart';
@@ -62,7 +62,7 @@ class AppRouter {
           path: investigationStart,
           builder: (context, state) {
             final id = state.pathParameters['id'] ?? '';
-            return InvestigationStartPlaceholderScreen(investigationId: id);
+            return InvestigationPlayScreen(investigationId: id);
           },
         ),
         GoRoute(

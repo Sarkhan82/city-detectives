@@ -52,10 +52,10 @@ development_status:
   epic-2-retrospective: optional
 
   epic-3: in-progress
-  3-1-demarrer-enquete-navigation-enigmes: ready-for-dev
-  3-2-progression-carte-interactive-position: backlog
-  3-3-pause-reprise-abandon-sauvegarde: backlog
-  3-4-capacites-techniques: backlog
+  3-1-demarrer-enquete-navigation-enigmes: done
+  3-2-progression-carte-interactive-position: ready-for-dev
+  3-3-pause-reprise-abandon-sauvegarde: ready-for-dev
+  3-4-capacites-techniques: ready-for-dev
   epic-3-retrospective: optional
 
   epic-4: backlog
