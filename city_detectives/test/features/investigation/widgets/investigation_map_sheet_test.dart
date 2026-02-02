@@ -96,6 +96,27 @@ void main() {
       );
     },
   );
+
+  testWidgets(
+    'InvestigationMapSheet shows precision indicator when accuracy > 10m',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        buildTestWidget(
+          geolocationService: _MockGeolocationService(
+            const GeoPosition(
+              latitude: 48.85,
+              longitude: 2.35,
+              accuracyMeters: 25.0,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Position imprécise'), findsOneWidget);
+      expect(find.byIcon(Icons.gps_not_fixed), findsOneWidget);
+    },
+  );
 }
 
 class _MockGeolocationService implements GeolocationService {

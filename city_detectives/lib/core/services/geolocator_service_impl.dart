@@ -17,7 +17,7 @@ class GeolocatorServiceImpl implements GeolocationService {
     try {
       final pos = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.medium,
+          accuracy: LocationAccuracy.high,
         ),
       );
       return GeoPosition(

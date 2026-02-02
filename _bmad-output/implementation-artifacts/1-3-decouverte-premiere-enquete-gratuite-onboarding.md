@@ -3,7 +3,7 @@
 **Story ID:** 1.3  
 **Epic:** 1 – Onboarding & Account  
 **Story Key:** 1-3-decouverte-premiere-enquete-gratuite-onboarding  
-**Status:** review  
+**Status:** done  
 **Depends on:** Story 1.2  
 **Lane:** A  
 **FR:** FR3, FR4, FR5  
@@ -131,6 +131,8 @@ So that **je sache comment jouer avant de commencer**.
 ## Change Log
 
 - Implémentation Story 1.3 : onboarding 3 étapes (première enquête gratuite, LORE, guidage), routing /onboarding, redirections post-inscription et welcome, tests widget (Date: 2026-02-01).
+- Code review (AI) : 2 High, 2 Medium, 3 Low. Statut repassé à in-progress ; voir `code-review-1-3-decouverte-premiere-enquete-gratuite-onboarding.md` (Date: 2026-02-02).
+- Corrections post-review : Semantics/labels sur _GuideItem (H2) ; flutter test exécuté et documenté (H1/M2) ; double CTA documenté (M1). Statut → done (Date: 2026-02-02).
 
 ---
 
@@ -144,7 +146,7 @@ So that **je sache comment jouer avant de commencer**.
 
 ### Completion Notes List
 
-- Implémentation onboarding Story 1.3 : écran unique avec PageView (3 étapes – première enquête gratuite, LORE/concept, guidage). Riverpod OnboardingNotifier pour état complété (persistant via FlutterSecureStorage). Post-inscription → /onboarding ; welcome avec token → onboarding si non complété, sinon home. Routes GoRouter : /onboarding. CTA « Démarrer l'enquête » et « Voir les enquêtes » sur la dernière étape. Semantics/labels sur tous les écrans (WCAG 2.1 Level A). Tests widget : présence contenu, CTA, LORE, accessibilité. dart analyze et dart format OK ; flutter test non exécuté (erreur SDK locale « Invalid SDK hash »).
+- Implémentation onboarding Story 1.3 : écran unique avec PageView (3 étapes – première enquête gratuite, LORE/concept, guidage). Riverpod OnboardingNotifier pour état complété (persistant via FlutterSecureStorage). Post-inscription → /onboarding ; welcome avec token → onboarding si non complété, sinon home. Routes GoRouter : /onboarding. CTA « Démarrer l'enquête » et « Voir les enquêtes » sur la dernière étape ; les deux mènent à la liste des enquêtes (/investigations) par design (l'utilisateur choisit ensuite quelle enquête démarrer). Semantics/labels sur tous les écrans et sur _GuideItem (WCAG 2.1 Level A). Tests widget : présence contenu, CTA, LORE, accessibilité. dart analyze, dart format et flutter test OK (flutter test exécuté 2026-02-02 : suite complète passée).
 
 ### File List
 
@@ -155,6 +157,23 @@ So that **je sache comment jouer avant de commencer**.
 - city_detectives/lib/features/onboarding/screens/welcome_screen.dart (modified)
 - city_detectives/test/onboarding_screen_test.dart (new)
 - _bmad-output/implementation-artifacts/sprint-status.yaml (modified)
+
+---
+
+---
+
+## Senior Developer Review (AI)
+
+**Date :** 2026-02-02  
+**Rapport détaillé :** `_bmad-output/implementation-artifacts/code-review-1-3-decouverte-premiere-enquete-gratuite-onboarding.md`
+
+**Résumé :** 2 High, 2 Medium, 3 Low. **Décision : Changes Requested.**
+
+- **HIGH :** (1) Quality gate non vérifiée — `flutter test` non exécuté (Task 4.1). (2) Accessibilité — `_GuideItem` sans Semantics/labels (Task 3.3 / WCAG 2.1 Level A).
+- **MEDIUM :** Double CTA « Démarrer l’enquête » / « Voir les enquêtes » vers la même destination ; documentation des limitations (flutter test).
+- **LOW :** FlutterSecureStorage sans options plateforme ; test Semantics trop générique ; données première enquête en dur (OK pour MVP).
+
+**Statut mis à jour :** review → in-progress puis done après corrections automatiques (Semantics _GuideItem, flutter test documenté, double CTA documenté).
 
 ---
 

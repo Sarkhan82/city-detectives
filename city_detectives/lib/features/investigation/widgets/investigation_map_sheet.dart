@@ -5,7 +5,9 @@ import 'package:latlong2/latlong.dart';
 
 import 'package:city_detectives/core/services/geolocation_provider.dart';
 import 'package:city_detectives/core/services/geolocation_service.dart';
+import 'package:city_detectives/core/services/permission_service.dart';
 import 'package:city_detectives/features/investigation/providers/investigation_play_provider.dart';
+import 'package:city_detectives/shared/widgets/precision_circle.dart';
 
 /// Centre par défaut (Paris) si l'enquête n'a pas de zone (Story 3.2).
 const LatLng _defaultMapCenter = LatLng(48.8566, 2.3522);
@@ -63,16 +65,19 @@ class InvestigationMapSheet extends ConsumerWidget {
                   center: center,
                   userPosition: position,
                   showLocationUnavailableMessage: position == null,
+                  showLocationRationale: false,
                 ),
                 loading: () => _MapContent(
                   center: center,
                   userPosition: null,
                   showLocationUnavailableMessage: false,
+                  showLocationRationale: true,
                 ),
                 error: (_, _) => _MapContent(
                   center: center,
                   userPosition: null,
                   showLocationUnavailableMessage: true,
+                  showLocationRationale: false,
                 ),
               ),
             ),
@@ -88,11 +93,13 @@ class _MapContent extends StatelessWidget {
     required this.center,
     required this.userPosition,
     this.showLocationUnavailableMessage = false,
+    this.showLocationRationale = false,
   });
 
   final LatLng center;
   final GeoPosition? userPosition;
   final bool showLocationUnavailableMessage;
+  final bool showLocationRationale;
 
   @override
   Widget build(BuildContext context) {
@@ -116,9 +123,28 @@ class _MapContent extends StatelessWidget {
       );
     }
 
+    final showPrecisionIndicator =
+        userPosition != null &&
+        PrecisionCircle.isImprecise(userPosition!.accuracyMeters);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (showLocationRationale)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Semantics(
+              liveRegion: true,
+              label: 'Justification de la permission de localisation',
+              child: Text(
+                PermissionRationale.location,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
         if (showLocationUnavailableMessage)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -133,6 +159,8 @@ class _MapContent extends StatelessWidget {
               ),
             ),
           ),
+        if (showPrecisionIndicator)
+          PrecisionCircle(accuracyMeters: userPosition!.accuracyMeters),
         Expanded(
           child: FlutterMap(
             options: MapOptions(

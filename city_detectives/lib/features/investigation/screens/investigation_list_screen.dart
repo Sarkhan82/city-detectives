@@ -4,17 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import 'package:city_detectives/features/investigation/models/investigation.dart';
 import 'package:city_detectives/features/investigation/providers/investigation_list_provider.dart';
+import 'package:city_detectives/core/services/investigation_error_handler.dart';
 import 'package:city_detectives/features/investigation/repositories/investigation_progress_repository.dart';
+import 'package:city_detectives/shared/widgets/connectivity_status_indicator.dart';
 import 'package:city_detectives/shared/widgets/price_chip.dart';
-
-/// Message d'erreur utilisateur (sans stack ni détail technique).
-String _userFriendlyErrorMessage(Object err) {
-  final s = err.toString();
-  final withoutException = s.replaceFirst('Exception: ', '');
-  final firstLine = withoutException.split('\n').first.trim();
-  if (firstLine.length > 200) return firstLine.substring(0, 200);
-  return firstLine.isEmpty ? 'Une erreur est survenue.' : firstLine;
-}
 
 /// Écran liste des enquêtes (Story 2.1) – durée, difficulté, description.
 /// Design « carnet de détective » ; WCAG 2.1 Level A.
@@ -28,7 +21,15 @@ class InvestigationListScreen extends ConsumerWidget {
       label:
           'Liste des enquêtes disponibles – durée, difficulté, description, gratuit ou payant',
       child: Scaffold(
-        appBar: AppBar(title: const Text('Enquêtes')),
+        appBar: AppBar(
+          title: const Text('Enquêtes'),
+          actions: const [
+            Padding(
+              padding: EdgeInsets.only(right: 16),
+              child: ConnectivityStatusIndicator(compact: true),
+            ),
+          ],
+        ),
         body: SafeArea(
           child: asyncList.when(
             data: (list) => _InvestigationListWithInProgress(
@@ -56,9 +57,19 @@ class InvestigationListScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      _userFriendlyErrorMessage(err),
+                      userFriendlyInvestigationError(
+                        err,
+                        kInvestigationListLoadErrorMessage,
+                      ),
                       style: Theme.of(context).textTheme.bodyLarge,
                       textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    FilledButton.icon(
+                      onPressed: () =>
+                          ref.invalidate(investigationListProvider),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Réessayer'),
                     ),
                   ],
                 ),
