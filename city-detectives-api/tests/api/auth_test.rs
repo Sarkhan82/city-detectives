@@ -1,6 +1,7 @@
 //! Tests d'intégration API auth (Story 1.2) – register, JWT, email dupliqué.
-//! `cargo test` exécute les tests unitaires (src/services/auth_service.rs).
-//! Ces tests HTTP nécessitent le serveur sur 8080 : `cargo test --test auth_test -- --ignored --nocapture`
+//! En local : `cargo test` n'exécute pas ces tests (ils sont `#[ignore]`).
+//! Pour les lancer (serveur sur 8080) : `cargo test --test auth_test -- --ignored --nocapture`.
+//! La CI (quality.yml) les exécute après démarrage du serveur.
 
 use reqwest::Client;
 use serde_json::json;

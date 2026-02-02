@@ -3,26 +3,88 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:city_detectives/features/investigation/models/enigma.dart';
+import 'package:city_detectives/features/investigation/models/investigation_progress.dart';
 import 'package:city_detectives/features/investigation/models/investigation_with_enigmas.dart';
 import 'package:city_detectives/features/investigation/providers/investigation_play_provider.dart';
+import 'package:city_detectives/features/investigation/repositories/investigation_progress_repository.dart';
+import 'package:city_detectives/core/router/app_router.dart';
 import 'package:city_detectives/features/investigation/widgets/investigation_map_sheet.dart';
 
-/// Écran « enquête en cours » (Story 3.1) – première énigme ou intro, navigation Suivant/Précédent.
-/// Affichage minimal par énigme : titre, ordre (ex. « Énigme 1/5 »), placeholder contenu.
-class InvestigationPlayScreen extends ConsumerWidget {
+/// Sauvegarde la progression courante en Hive (Story 3.3). Attendre la fin avant de naviguer.
+Future<void> _saveProgress(WidgetRef ref, String investigationId) async {
+  final repo = ref.read(investigationProgressRepositoryProvider);
+  final index = ref.read(currentEnigmaIndexProvider(investigationId));
+  final completed = ref.read(completedEnigmaIdsProvider(investigationId));
+  await repo.saveProgress(
+    InvestigationProgress(
+      investigationId: investigationId,
+      currentEnigmaIndex: index,
+      completedEnigmaIds: completed.toList(),
+      updatedAtMs: DateTime.now().millisecondsSinceEpoch,
+    ),
+  );
+}
+
+/// Écran « enquête en cours » (Story 3.1 + 3.3) – navigation, pause, abandon, sauvegarde.
+class InvestigationPlayScreen extends ConsumerStatefulWidget {
   const InvestigationPlayScreen({super.key, required this.investigationId});
 
   final String investigationId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<InvestigationPlayScreen> createState() =>
+      _InvestigationPlayScreenState();
+}
+
+class _InvestigationPlayScreenState
+    extends ConsumerState<InvestigationPlayScreen> {
+  bool _progressRestored = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final investigationId = widget.investigationId;
     final asyncData = ref.watch(
       investigationWithEnigmasProvider(investigationId),
     );
     final currentIndex = ref.watch(currentEnigmaIndexProvider(investigationId));
 
     return asyncData.when(
-      data: (data) => _buildContent(context, ref, data, currentIndex),
+      data: (data) {
+        // Story 3.3 : restaurer une fois la progression sauvegardée depuis Hive.
+        if (data != null && !_progressRestored) {
+          final repo = ref.read(investigationProgressRepositoryProvider);
+          final progress = repo.getProgress(investigationId);
+          if (progress != null) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              ref
+                  .read(currentEnigmaIndexProvider(investigationId).notifier)
+                  .state = progress
+                  .currentEnigmaIndex;
+              final completedNotifier = ref.read(
+                completedEnigmaIdsProvider(investigationId).notifier,
+              );
+              completedNotifier.clear();
+              for (final eid in progress.completedEnigmaIds) {
+                completedNotifier.markCompleted(eid);
+              }
+              setState(() => _progressRestored = true);
+            });
+            return Semantics(
+              label: 'Reprise de l\'enquête en cours',
+              child: Scaffold(
+                appBar: AppBar(title: const Text('Enquête en cours')),
+                body: const Center(child: CircularProgressIndicator()),
+              ),
+            );
+          }
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            setState(() => _progressRestored = true);
+          });
+        }
+        return _buildContent(context, ref, data, currentIndex, investigationId);
+      },
       loading: () => Semantics(
         label: 'Chargement de l\'enquête en cours',
         child: Scaffold(
@@ -65,6 +127,7 @@ class InvestigationPlayScreen extends ConsumerWidget {
     WidgetRef ref,
     InvestigationWithEnigmas? data,
     int currentIndex,
+    String investigationId,
   ) {
     if (data == null) {
       return Semantics(
@@ -115,11 +178,42 @@ class InvestigationPlayScreen extends ConsumerWidget {
             button: true,
             child: IconButton(
               icon: const Icon(Icons.arrow_back),
-              onPressed: () => context.pop(),
+              onPressed: () async {
+                await _saveProgress(ref, investigationId);
+                if (!context.mounted) return;
+                context.pop();
+              },
               tooltip: 'Retour',
             ),
           ),
           actions: [
+            Semantics(
+              label: 'Mettre en pause – sauvegarde et retour à la liste',
+              button: true,
+              child: IconButton(
+                icon: const Icon(Icons.pause),
+                onPressed: () async {
+                  await _saveProgress(ref, investigationId);
+                  if (!context.mounted) return;
+                  context.go(AppRouter.investigations);
+                },
+                tooltip: 'Mettre en pause',
+              ),
+            ),
+            Semantics(
+              label:
+                  'Abandonner l\'enquête – sauvegarde et quitter (reprise possible plus tard)',
+              button: true,
+              child: IconButton(
+                icon: const Icon(Icons.exit_to_app),
+                onPressed: () async {
+                  await _saveProgress(ref, investigationId);
+                  if (!context.mounted) return;
+                  context.go(AppRouter.investigations);
+                },
+                tooltip: 'Abandonner',
+              ),
+            ),
             Semantics(
               label: 'Voir la carte',
               button: true,
@@ -160,6 +254,7 @@ class InvestigationPlayScreen extends ConsumerWidget {
                               )
                               .state =
                           safeIndex - 1;
+                      _saveProgress(ref, investigationId);
                     }
                   },
                   onNext: () {
@@ -179,6 +274,7 @@ class InvestigationPlayScreen extends ConsumerWidget {
                               )
                               .state =
                           safeIndex + 1;
+                      _saveProgress(ref, investigationId);
                     }
                   },
                 ),

@@ -81,11 +81,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Créer un compte'),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: _submitState.isLoading
-                ? null
-                : () => context.go(AppRouter.welcome),
+          leading: Semantics(
+            label: 'Retour à l\'écran d\'accueil',
+            button: true,
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: _submitState.isLoading
+                  ? null
+                  : () => context.go(AppRouter.welcome),
+            ),
           ),
         ),
         body: SafeArea(
@@ -99,6 +103,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   Semantics(
                     label: 'Adresse email',
                     child: TextFormField(
+                      key: const Key('register_email'),
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       autocorrect: false,
@@ -113,6 +118,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   Semantics(
                     label: 'Mot de passe (minimum 8 caractères)',
                     child: TextFormField(
+                      key: const Key('register_password'),
                       controller: _passwordController,
                       obscureText: true,
                       decoration: const InputDecoration(
@@ -125,6 +131,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   Semantics(
                     label: 'Confirmer le mot de passe',
                     child: TextFormField(
+                      key: const Key('register_confirm'),
                       controller: _confirmController,
                       obscureText: true,
                       decoration: const InputDecoration(

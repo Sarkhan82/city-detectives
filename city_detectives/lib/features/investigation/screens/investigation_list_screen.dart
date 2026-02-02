@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:city_detectives/features/investigation/models/investigation.dart';
 import 'package:city_detectives/features/investigation/providers/investigation_list_provider.dart';
+import 'package:city_detectives/features/investigation/repositories/investigation_progress_repository.dart';
 import 'package:city_detectives/shared/widgets/price_chip.dart';
 
 /// Message d'erreur utilisateur (sans stack ni détail technique).
@@ -30,7 +31,12 @@ class InvestigationListScreen extends ConsumerWidget {
         appBar: AppBar(title: const Text('Enquêtes')),
         body: SafeArea(
           child: asyncList.when(
-            data: (list) => _InvestigationList(list: list),
+            data: (list) => _InvestigationListWithInProgress(
+              list: list,
+              inProgressIds: ref
+                  .watch(investigationProgressRepositoryProvider)
+                  .getInProgressInvestigationIds(),
+            ),
             loading: () => const Center(
               child: Padding(
                 padding: EdgeInsets.all(24),
@@ -65,33 +71,136 @@ class InvestigationListScreen extends ConsumerWidget {
   }
 }
 
-class _InvestigationList extends StatelessWidget {
-  const _InvestigationList({required this.list});
+/// Liste avec section « Enquêtes en cours » en tête (Story 3.3).
+class _InvestigationListWithInProgress extends StatelessWidget {
+  const _InvestigationListWithInProgress({
+    required this.list,
+    required this.inProgressIds,
+  });
 
   final List<Investigation> list;
+  final List<String> inProgressIds;
 
   @override
   Widget build(BuildContext context) {
-    if (list.isEmpty) {
-      return Center(
-        child: Text(
-          'Aucune enquête disponible pour le moment.',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      children: [
+        if (inProgressIds.isNotEmpty) ...[
+          Semantics(
+            label: 'Enquêtes en cours – reprendre une enquête sauvegardée',
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                'Enquêtes en cours',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          ...inProgressIds.map((id) {
+            Investigation? inv;
+            try {
+              inv = list.firstWhere((e) => e.id == id);
+            } catch (_) {
+              inv = null;
+            }
+            final title = inv?.titre ?? 'Enquête en cours';
+            return _InProgressCard(
+              investigationId: id,
+              title: title,
+              onTap: () => context.push('/investigations/$id/start'),
+            );
+          }),
+          const SizedBox(height: 16),
+        ],
+        if (list.isEmpty && inProgressIds.isEmpty)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                'Aucune enquête disponible pour le moment.',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          )
+        else
+          ...list.map(
+            (inv) => _InvestigationCard(
+              investigation: inv,
+              onTap: () =>
+                  context.push('/investigations/${inv.id}', extra: inv),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Carte « Reprendre » pour une enquête en cours (Story 3.3).
+class _InProgressCard extends StatelessWidget {
+  const _InProgressCard({
+    required this.investigationId,
+    required this.title,
+    required this.onTap,
+  });
+
+  final String investigationId;
+  final String title;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Reprendre l\'enquête $title',
+      button: true,
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 12),
+        color: Theme.of(
+          context,
+        ).colorScheme.primaryContainer.withValues(alpha: 0.5),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.play_circle_filled,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 32,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        'Reprendre',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right),
+              ],
+            ),
           ),
         ),
-      );
-    }
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: list.length,
-      itemBuilder: (context, index) {
-        final inv = list[index];
-        return _InvestigationCard(
-          investigation: inv,
-          onTap: () => context.push('/investigations/${inv.id}', extra: inv),
-        );
-      },
+      ),
     );
   }
 }

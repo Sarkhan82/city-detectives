@@ -1,7 +1,7 @@
-# Résumé d'automatisation – City Detectives (Stories 1.2, 2.1, 2.2, 3.1, 3.2)
+# Résumé d'automatisation – City Detectives (Stories 1.2, 2.1, 2.2, 3.1, 3.2, 3.3)
 
 **Date :** 2026-02-02  
-**Stories couvertes :** 1.2 (Création de compte), 2.1 (Parcourir et consulter les enquêtes), 2.2 (Sélection enquête, gratuit/payant), 3.1 (Démarrer enquête et navigation énigmes), **3.2 (Progression, carte interactive et position)**  
+**Stories couvertes :** 1.2 (Création de compte), 2.1 (Parcourir et consulter les enquêtes), 2.2 (Sélection enquête, gratuit/payant), 3.1 (Démarrer enquête et navigation énigmes), 3.2 (Progression, carte interactive et position), **3.3 (Pause, reprise, abandon, sauvegarde)**  
 **Mode :** Standalone / Auto-discover  
 **Cible de couverture :** critical-paths  
 
@@ -11,7 +11,7 @@
 
 - **Stack :** Flutter (app mobile) + Rust (API GraphQL). Pas de Playwright/Cypress (Node/TS).
 - **Frameworks de test :** Flutter (widget tests, `flutter test`) ; Rust (`cargo test`, tests d’intégration API, tests in-process GraphQL).
-- **Artéfacts BMad :** Stories 1.2, 2.1, 2.2 et 3.1 ; workflow testarch-automate en mode autonome.
+- **Artéfacts BMad :** Stories 1.2, 2.1, 2.2, 3.1, 3.2 et 3.3 ; workflow testarch-automate en mode autonome.
 
 ---
 
@@ -38,16 +38,17 @@
 |---------|------------|
 | `register_screen_test.dart` | Formulaire, erreur mots de passe différents, isolation avec router. |
 | `onboarding_screen_test.dart` | Écran 1 (première enquête + CTA), écran 2 (LORE), navigation. |
-| `features/investigation/investigation_list_screen_test.dart` | Liste (durée, difficulté, description, gratuit), état vide, message d’erreur utilisateur. |
+| `features/investigation/investigation_list_screen_test.dart` | Liste (durée, difficulté, description, gratuit), état vide, message d’erreur. **Story 3.3** – section « Enquêtes en cours » quand progression sauvegardée, tap → reprise. |
 | `features/investigation/screens/investigation_detail_screen_test.dart` | Détail enquête : titre, description, chip Gratuit/Payant, CTA Démarrer (Story 2.2). |
 | `features/investigation/screens/investigation_start_placeholder_screen_test.dart` | Placeholder démarrage : id enquête, message Story 3.1, bouton Retour (Story 2.2). |
-| `features/investigation/screens/investigation_play_screen_test.dart` | **Story 3.1** – Écran enquête en cours : première énigme + stepper, Suivant/Précédent, loading, état erreur (message + Retour). 5 tests. |
+| `features/investigation/screens/investigation_play_screen_test.dart` | **Story 3.1** – Écran enquête en cours : première énigme + stepper, Suivant/Précédent, loading, état erreur. **Story 3.2** – indicateur progression, bouton carte. **Story 3.3** – restauration progression (index énigme sauvegardé). 9 tests. |
 | `features/investigation/widgets/investigation_map_sheet_test.dart` | **Story 3.2** – Carte : titre « Carte » + FlutterMap ; message si localisation indisponible ; marqueur position si disponible (mock GeolocationService). 3 tests. |
+| `features/investigation/repositories/investigation_progress_repository_test.dart` | **Story 3.3** – TU InvestigationProgressRepository (forTest) : getInProgressIds vide/null, saveProgress + getProgress, getInProgressInvestigationIds après save, overwrite, deleteProgress. 6 tests. |
 | `shared/widgets/price_chip_test.dart` | Widget PriceChip : Gratuit / Payant selon isFree (Story 2.2). |
 | `features/investigation/models/investigation_test.dart` | TU `Investigation.fromJson` (défensif, isFree, durationEstimate, **centerLat/centerLng**). |
 | `widget_test.dart` | App build, WelcomeScreen. |
 
-- **Total Flutter :** 39 tests widget (dont +3 pour Story 3.2 carte).
+- **Total Flutter :** 48 tests widget (dont Story 3.3 : 6 TU repository + 1 widget restauration progression + 1 widget « Enquêtes en cours » dans liste).
 - **Exécution :** `cd city_detectives && flutter test`.
 
 ---
@@ -61,10 +62,10 @@
 | In-process Rust | `graphql.rs` (tests) | – | 2 | – | listInvestigations (CI) ; investigation(id) + énigmes (3.1, CI) |
 | Unit Rust | `user.rs` | – | – | 3 | Validation RegisterInput |
 | Unit Rust | `auth_service.rs` | – | – | 2 | JWT / validation token |
-| Widget Flutter | register, onboarding, investigation_list, detail, placeholder, **play** (3.1), **map_sheet** (3.2), price_chip, models, widget | – | 39 | – | Écrans 1.2, 1.3, 2.1, 2.2, **3.1** (enquête en cours), **3.2** (carte + position), PriceChip) |
+| Widget Flutter | register, onboarding, investigation_list, detail, placeholder, **play** (3.1, 3.2, 3.3), **map_sheet** (3.2), **progress_repository** (3.3), price_chip, models, widget | – | 48 | – | Écrans 1.2, 1.3, 2.1, 2.2, **3.1** (enquête en cours), **3.2** (carte + position), **3.3** (pause/reprise/sauvegarde) |
 
-- **Résumé :** 7 tests API/in-process Rust (exécutables en CI), 5 tests unitaires Rust, 39 tests widget Flutter.
-- **Doublons évités :** Pas d’E2E pour 1.2/2.1/2.2 ; logique métier couverte en unitaire + API ; widget couvre UX critique.
+- **Résumé :** 7 tests API/in-process Rust (exécutables en CI), 5 tests unitaires Rust, 48 tests widget/unit Flutter.
+- **Doublons évités :** Pas d’E2E pour 1.2/2.1/2.2/3.x ; logique métier couverte en unitaire + API ; widget couvre UX critique.
 
 ---
 
@@ -95,10 +96,16 @@
    - ✅ Backend : champs optionnels center_lat/center_lng sur Investigation (GraphQL) ; couvert indirectement par test in-process si la query inclut ces champs.
    - ⚠️ Optionnel : TU GeolocatorServiceImpl (actuellement mocké dans les tests widget) ; test widget carte avec centerLat/centerLng non null (centre enquête).
 
-6. **E2E**
+6. **Story 3.3 (pause, reprise, abandon, sauvegarde)**
+   - ✅ Flutter : `InvestigationProgressRepository` – 6 TU (forTest) : getInProgressIds vide, getProgress null, save+get, getInProgressInvestigationIds après save, overwrite, deleteProgress.
+   - ✅ Flutter : `InvestigationPlayScreen` – restauration progression au chargement (index énigme sauvegardé) – 1 test widget.
+   - ✅ Flutter : `InvestigationListScreen` – section « Enquêtes en cours » quand progression existe, tap → reprise – 1 test widget.
+   - Pas de tests API Rust pour 3.3 (persistance locale Hive uniquement).
+
+7. **E2E**
    - Aucun test E2E (Flutter `integration_test` ou scénario réel API + app). À prévoir si une story le demande (ex. parcours complet inscription → liste enquêtes).
 
-7. **CI**
+8. **CI**
    - Rust : `cargo test` exécute unitaires + test in-process GraphQL ; tests `#[ignore]` à lancer avec serveur sur 8080.
    - Flutter : `flutter test` à exécuter en CI ; environnement SDK à configurer.
 
@@ -167,17 +174,23 @@ flutter test
 - **investigation_map_sheet_test.dart** : 3 tests – titre « Carte » + FlutterMap ; message « Localisation refusée ou indisponible » si position null ; marqueur Icons.my_location si position fournie (mock GeolocationService).
 - **investigation_test.dart** : cas `parse centerLat and centerLng when present` (déjà présent ; couvre modèle Flutter pour centre carte).
 
+**2026-02-02 – Story 3.3**
+- **investigation_progress_repository_test.dart** : 6 TU – InvestigationProgressRepository.forTest() : getInProgressInvestigationIds vide, getProgress null, saveProgress + getProgress, getInProgressInvestigationIds après save, overwrite, deleteProgress.
+- **investigation_play_screen_test.dart** : 1 test widget – restauration progression au chargement (index énigme sauvegardé affiché).
+- **investigation_list_screen_test.dart** : 1 test widget – section « Enquêtes en cours » affichée quand progression sauvegardée, tap → reprise.
+
 ---
 
 ## Definition of Done (workflow testarch-automate)
 
-- [x] Inventaire complet des tests existants (Rust + Flutter) pour 1.2, 2.1, 2.2 et 3.1.
+- [x] Inventaire complet des tests existants (Rust + Flutter) pour 1.2, 2.1, 2.2, 3.1, 3.2 et 3.3.
 - [x] Analyse des gaps (modèles, services, E2E) et recommandations spécifiques Flutter/Rust.
 - [x] Plan de couverture documenté (priorités P1/P2, niveaux API / unit / widget).
 - [x] Pas de doublon inutile ; E2E non requis pour les stories actuelles.
 - [x] Tests Story 2.2 ajoutés (écran détail, placeholder, PriceChip).
 - [x] Tests Story 3.1 ajoutés (backend investigation(id) in-process ; Flutter écran play – 5 tests widget).
 - [x] Tests Story 3.2 documentés (carte investigation_map_sheet_test – 3 tests ; centerLat/centerLng dans investigation_test).
+- [x] Tests Story 3.3 documentés (InvestigationProgressRepository 6 TU, restauration progression play screen, section « Enquêtes en cours » liste).
 - [x] Résumé sauvegardé dans `_bmad-output/automation-summary.md`.
 
 ---
@@ -193,11 +206,12 @@ flutter test
 | `city-detectives-api/tests/api/investigations_test.rs` | Tests intégration listInvestigations (HTTP). |
 | `city_detectives/test/register_screen_test.dart` | Widget inscription. |
 | `city_detectives/test/onboarding_screen_test.dart` | Widget onboarding. |
-| `city_detectives/test/features/investigation/investigation_list_screen_test.dart` | Widget liste enquêtes (2.1 + 2.2). |
+| `city_detectives/test/features/investigation/investigation_list_screen_test.dart` | Widget liste enquêtes (2.1 + 2.2), section « Enquêtes en cours » (3.3). |
 | `city_detectives/test/features/investigation/screens/investigation_detail_screen_test.dart` | Widget écran détail enquête (2.2). |
 | `city_detectives/test/features/investigation/screens/investigation_start_placeholder_screen_test.dart` | Widget placeholder démarrage (2.2). |
-| `city_detectives/test/features/investigation/screens/investigation_play_screen_test.dart` | Widget écran enquête en cours – première énigme, navigation, loading, erreur (3.1). |
+| `city_detectives/test/features/investigation/screens/investigation_play_screen_test.dart` | Widget écran enquête en cours – première énigme, navigation, loading, erreur (3.1), progression/carte (3.2), restauration progression (3.3). |
 | `city_detectives/test/features/investigation/widgets/investigation_map_sheet_test.dart` | Widget carte sheet – titre, carte, message localisation indisponible, marqueur position (3.2). |
+| `city_detectives/test/features/investigation/repositories/investigation_progress_repository_test.dart` | TU InvestigationProgressRepository (forTest) – save/get/delete progression (3.3). |
 | `city_detectives/test/shared/widgets/price_chip_test.dart` | Widget PriceChip Gratuit/Payant (2.2). |
 | `city_detectives/test/widget_test.dart` | Smoke app / welcome. |
 | `city_detectives/test/features/investigation/models/investigation_test.dart` | TU `Investigation.fromJson`. |
@@ -233,4 +247,4 @@ flutter test
 
 ---
 
-*Workflow : `_bmad/bmm/workflows/testarch/automate` (testarch-automate). Dernière mise à jour : 2026-02-02 (Story 3.2).*
+*Workflow : `_bmad/bmm/workflows/testarch/automate` (testarch-automate). Dernière mise à jour : 2026-02-02 (Story 3.3).*

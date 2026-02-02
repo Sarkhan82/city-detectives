@@ -3,7 +3,7 @@
 **Story ID:** 1.2  
 **Epic:** 1 – Onboarding & Account  
 **Story Key:** 1-2-creation-de-compte  
-**Status:** review  
+**Status:** done  
 **Depends on:** Story 1.1  
 **Lane:** A  
 **FR:** FR2
@@ -201,6 +201,7 @@ So that **ma progression soit sauvegardée et accessible sur mon appareil**.
 - Config : `.env.example` à la racine avec API_BASE_URL et variables backend commentées.
 - **Revue (2026-01-26)** : 9 findings traités — Task 1.2 décochée (MVP in-memory), AsyncValue dans RegisterScreen, rappel HTTPS en debug, JWT_SECRET depuis env, middleware auth extrait dans `api/middleware/auth.rs`, File List complétée, test affichage erreur ajouté, _formKey supprimé.
 - **Revue second pass (2026-01-26)** : 7 findings corrigés — 4.1 documenté (flutter test à valider en CI), src/db/mod.rs créé, JWT centralisé (default_jwt_secret), UX erreur effacée à l’édition mot de passe, .env.example (Flutter --dart-define), Library sqlx optionnel, getAuthenticatedClient debugPrint.
+- **Revue (2026-02-02)** : 5 findings corrigés — test widget affichage erreur API (mock register fail), Semantics bouton Retour, AuthService _userRepo en champ final, Keys sur champs formulaire (register_email/password/confirm), doc tests intégration auth en local (auth_test.rs).
 
 ### File List
 
@@ -232,6 +233,7 @@ So that **ma progression soit sauvegardée et accessible sur mon appareil**.
 
 ### Change Log
 
+- 2026-02-02 : Revue code (3e pass) – correctifs auto : test erreur API, Semantics Retour, AuthService repo final, Keys formulaire, doc auth_test.
 - 2026-01-26 : Implémentation Story 1.2 – création de compte (backend Rust register + JWT, Flutter formulaire + API + secure storage, tests, .env.example).
 - 2026-01-26 : Revue (code-review) – 9 findings corrigés automatiquement : Task 1.2 décochée (MVP in-memory), AsyncValue dans RegisterScreen, rappel HTTPS, JWT_SECRET depuis env, middleware auth extrait, File List complétée, test affichage erreur, _formKey supprimé.
 - 2026-01-26 : Revue second pass – 7 findings corrigés : 4.1 documenté (flutter test à valider en CI), src/db/mod.rs créé, JWT centralisé, UX erreur à l’édition, .env.example Flutter, Library sqlx optionnel, getAuthenticatedClient debugPrint.

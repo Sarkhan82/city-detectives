@@ -8,8 +8,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:city_detectives/features/investigation/models/enigma.dart';
 import 'package:city_detectives/features/investigation/models/investigation.dart';
+import 'package:city_detectives/features/investigation/models/investigation_progress.dart';
 import 'package:city_detectives/features/investigation/models/investigation_with_enigmas.dart';
 import 'package:city_detectives/features/investigation/providers/investigation_play_provider.dart';
+import 'package:city_detectives/features/investigation/repositories/investigation_progress_repository.dart';
 import 'package:city_detectives/features/investigation/screens/investigation_play_screen.dart';
 
 void main() {
@@ -36,6 +38,9 @@ void main() {
         investigationWithEnigmasProvider(
           investigationId,
         ).overrideWith((ref) => Future.value(mockData)),
+        investigationProgressRepositoryProvider.overrideWith(
+          (_) => InvestigationProgressRepository.forTest(),
+        ),
       ],
       child: MaterialApp(home: child),
     );
@@ -106,6 +111,9 @@ void main() {
           investigationWithEnigmasProvider(
             investigationId,
           ).overrideWith((ref) => completer.future),
+          investigationProgressRepositoryProvider.overrideWith(
+            (_) => InvestigationProgressRepository.forTest(),
+          ),
         ],
         child: MaterialApp(
           home: InvestigationPlayScreen(investigationId: investigationId),
@@ -130,6 +138,9 @@ void main() {
               (ref) => Future<InvestigationWithEnigmas?>.error(
                 Exception('Erreur réseau'),
               ),
+            ),
+            investigationProgressRepositoryProvider.overrideWith(
+              (_) => InvestigationProgressRepository.forTest(),
             ),
           ],
           child: MaterialApp(
@@ -192,4 +203,41 @@ void main() {
 
     expect(find.byIcon(Icons.map), findsOneWidget);
   });
+
+  // Story 3.3 Task 5.1 – reprise au bon index après sauvegarde
+  testWidgets(
+    'InvestigationPlayScreen restores progress and shows correct enigma index',
+    (WidgetTester tester) async {
+      final progressRepo = InvestigationProgressRepository.forTest();
+      await progressRepo.saveProgress(
+        InvestigationProgress(
+          investigationId: investigationId,
+          currentEnigmaIndex: 2,
+          completedEnigmaIds: ['e1', 'e2'],
+          updatedAtMs: DateTime.now().millisecondsSinceEpoch,
+        ),
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            investigationWithEnigmasProvider(
+              investigationId,
+            ).overrideWith((ref) => Future.value(mockData)),
+            investigationProgressRepositoryProvider.overrideWith(
+              (_) => progressRepo,
+            ),
+          ],
+          child: MaterialApp(
+            home: InvestigationPlayScreen(investigationId: investigationId),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Énigme 3 / 3'), findsOneWidget);
+      expect(find.text('Troisième énigme'), findsOneWidget);
+      expect(find.text('2 / 3 énigmes'), findsOneWidget);
+    },
+  );
 }

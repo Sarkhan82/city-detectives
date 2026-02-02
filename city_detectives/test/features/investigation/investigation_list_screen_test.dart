@@ -7,7 +7,9 @@ import 'package:go_router/go_router.dart';
 
 import 'package:city_detectives/core/router/app_router.dart';
 import 'package:city_detectives/features/investigation/models/investigation.dart';
+import 'package:city_detectives/features/investigation/models/investigation_progress.dart';
 import 'package:city_detectives/features/investigation/providers/investigation_list_provider.dart';
+import 'package:city_detectives/features/investigation/repositories/investigation_progress_repository.dart';
 import 'package:city_detectives/features/investigation/screens/investigation_list_screen.dart';
 
 /// Notifier factice pour tests – retourne une liste fixe sans appeler l'API.
@@ -59,6 +61,9 @@ void main() {
             investigationListProvider.overrideWith(
               () => FakeInvestigationListNotifier(mockList),
             ),
+            investigationProgressRepositoryProvider.overrideWith(
+              (_) => InvestigationProgressRepository.forTest(),
+            ),
           ],
           child: MaterialApp.router(routerConfig: router),
         ),
@@ -106,6 +111,9 @@ void main() {
             investigationListProvider.overrideWith(
               () => FakeInvestigationListNotifier(mockList),
             ),
+            investigationProgressRepositoryProvider.overrideWith(
+              (_) => InvestigationProgressRepository.forTest(),
+            ),
           ],
           child: MaterialApp.router(routerConfig: router),
         ),
@@ -136,6 +144,9 @@ void main() {
           overrides: [
             investigationListProvider.overrideWith(
               () => FakeInvestigationListNotifier(mockList),
+            ),
+            investigationProgressRepositoryProvider.overrideWith(
+              (_) => InvestigationProgressRepository.forTest(),
             ),
           ],
           child: MaterialApp.router(routerConfig: router),
@@ -171,6 +182,9 @@ void main() {
           investigationListProvider.overrideWith(
             () => FakeInvestigationListNotifier([]),
           ),
+          investigationProgressRepositoryProvider.overrideWith(
+            (_) => InvestigationProgressRepository.forTest(),
+          ),
         ],
         child: MaterialApp.router(routerConfig: router),
       ),
@@ -202,6 +216,9 @@ void main() {
           investigationListProvider.overrideWith(
             () => FakeErrorInvestigationListNotifier(errorMessage),
           ),
+          investigationProgressRepositoryProvider.overrideWith(
+            (_) => InvestigationProgressRepository.forTest(),
+          ),
         ],
         child: MaterialApp.router(routerConfig: router),
       ),
@@ -211,4 +228,58 @@ void main() {
     expect(find.byType(InvestigationListScreen), findsOneWidget);
     expect(find.text(errorMessage), findsOneWidget);
   });
+
+  // Story 3.3 – Enquêtes en cours et reprise
+  testWidgets(
+    'InvestigationListScreen shows Enquêtes en cours section when progress exists',
+    (WidgetTester tester) async {
+      final mockList = [
+        const Investigation(
+          id: 'inv-1',
+          titre: 'Le mystère du parc',
+          description: 'Une enquête.',
+          durationEstimate: 45,
+          difficulte: 'facile',
+          isFree: true,
+        ),
+      ];
+      final progressRepo = InvestigationProgressRepository.forTest();
+      await progressRepo.saveProgress(
+        InvestigationProgress(
+          investigationId: 'inv-1',
+          currentEnigmaIndex: 1,
+          completedEnigmaIds: ['e1'],
+          updatedAtMs: DateTime.now().millisecondsSinceEpoch,
+        ),
+      );
+
+      final router = GoRouter(
+        initialLocation: AppRouter.investigations,
+        routes: [
+          GoRoute(
+            path: AppRouter.investigations,
+            builder: (context, state) => const InvestigationListScreen(),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            investigationListProvider.overrideWith(
+              () => FakeInvestigationListNotifier(mockList),
+            ),
+            investigationProgressRepositoryProvider.overrideWith(
+              (_) => progressRepo,
+            ),
+          ],
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Enquêtes en cours'), findsOneWidget);
+      expect(find.text('Reprendre'), findsOneWidget);
+      expect(find.text('Le mystère du parc'), findsWidgets);
+    },
+  );
 }
