@@ -1,7 +1,7 @@
-# Résumé d'automatisation – City Detectives (Stories 1.2, 2.1, 2.2, 3.1)
+# Résumé d'automatisation – City Detectives (Stories 1.2, 2.1, 2.2, 3.1, 3.2)
 
 **Date :** 2026-02-02  
-**Stories couvertes :** 1.2 (Création de compte), 2.1 (Parcourir et consulter les enquêtes), 2.2 (Sélection enquête, gratuit/payant), 3.1 (Démarrer enquête et navigation énigmes)  
+**Stories couvertes :** 1.2 (Création de compte), 2.1 (Parcourir et consulter les enquêtes), 2.2 (Sélection enquête, gratuit/payant), 3.1 (Démarrer enquête et navigation énigmes), **3.2 (Progression, carte interactive et position)**  
 **Mode :** Standalone / Auto-discover  
 **Cible de couverture :** critical-paths  
 
@@ -42,11 +42,12 @@
 | `features/investigation/screens/investigation_detail_screen_test.dart` | Détail enquête : titre, description, chip Gratuit/Payant, CTA Démarrer (Story 2.2). |
 | `features/investigation/screens/investigation_start_placeholder_screen_test.dart` | Placeholder démarrage : id enquête, message Story 3.1, bouton Retour (Story 2.2). |
 | `features/investigation/screens/investigation_play_screen_test.dart` | **Story 3.1** – Écran enquête en cours : première énigme + stepper, Suivant/Précédent, loading, état erreur (message + Retour). 5 tests. |
+| `features/investigation/widgets/investigation_map_sheet_test.dart` | **Story 3.2** – Carte : titre « Carte » + FlutterMap ; message si localisation indisponible ; marqueur position si disponible (mock GeolocationService). 3 tests. |
 | `shared/widgets/price_chip_test.dart` | Widget PriceChip : Gratuit / Payant selon isFree (Story 2.2). |
-| `features/investigation/models/investigation_test.dart` | TU `Investigation.fromJson` (défensif, isFree, durationEstimate). |
+| `features/investigation/models/investigation_test.dart` | TU `Investigation.fromJson` (défensif, isFree, durationEstimate, **centerLat/centerLng**). |
 | `widget_test.dart` | App build, WelcomeScreen. |
 
-- **Total Flutter :** 31 tests widget (plusieurs `testWidgets` par fichier ; +5 pour Story 3.1 play screen).
+- **Total Flutter :** 39 tests widget (dont +3 pour Story 3.2 carte).
 - **Exécution :** `cd city_detectives && flutter test`.
 
 ---
@@ -60,9 +61,9 @@
 | In-process Rust | `graphql.rs` (tests) | – | 2 | – | listInvestigations (CI) ; investigation(id) + énigmes (3.1, CI) |
 | Unit Rust | `user.rs` | – | – | 3 | Validation RegisterInput |
 | Unit Rust | `auth_service.rs` | – | – | 2 | JWT / validation token |
-| Widget Flutter | register, onboarding, investigation_list, detail, placeholder, **play** (3.1), price_chip, models, widget | – | 31 | – | Écrans 1.2, 1.3, 2.1, 2.2, **3.1** (liste, détail, placeholder, **enquête en cours**, PriceChip) |
+| Widget Flutter | register, onboarding, investigation_list, detail, placeholder, **play** (3.1), **map_sheet** (3.2), price_chip, models, widget | – | 39 | – | Écrans 1.2, 1.3, 2.1, 2.2, **3.1** (enquête en cours), **3.2** (carte + position), PriceChip) |
 
-- **Résumé :** 7 tests API/in-process Rust (1 exécutable en CI), 5 tests unitaires Rust, 27 tests widget Flutter.
+- **Résumé :** 7 tests API/in-process Rust (exécutables en CI), 5 tests unitaires Rust, 39 tests widget Flutter.
 - **Doublons évités :** Pas d’E2E pour 1.2/2.1/2.2 ; logique métier couverte en unitaire + API ; widget couvre UX critique.
 
 ---
@@ -88,10 +89,16 @@
    - ✅ Flutter : écran play (InvestigationPlayScreen) – première énigme, stepper « Énigme 1/N », Suivant/Précédent, loading, état erreur (investigation_play_screen_test.dart, 5 tests).
    - ⚠️ Optionnel (LOW code review) : test widget pour cas `data == null` (enquête introuvable) ; Semantics sur boutons Retour états erreur/introuvable.
 
-5. **E2E**
+5. **Story 3.2 (progression, carte interactive, position)**
+   - ✅ Flutter : indicateur progression (X/N énigmes) + barre sur écran play (investigation_play_screen_test couvre l’écran) ; carte en sheet « Voir la carte » (investigation_map_sheet_test.dart) – 3 tests : titre + carte, message localisation indisponible, marqueur si position disponible (mock GeolocationService).
+   - ✅ Flutter : modèle Investigation – centerLat/centerLng (investigation_test.dart : parse centerLat/centerLng when present).
+   - ✅ Backend : champs optionnels center_lat/center_lng sur Investigation (GraphQL) ; couvert indirectement par test in-process si la query inclut ces champs.
+   - ⚠️ Optionnel : TU GeolocatorServiceImpl (actuellement mocké dans les tests widget) ; test widget carte avec centerLat/centerLng non null (centre enquête).
+
+6. **E2E**
    - Aucun test E2E (Flutter `integration_test` ou scénario réel API + app). À prévoir si une story le demande (ex. parcours complet inscription → liste enquêtes).
 
-6. **CI**
+7. **CI**
    - Rust : `cargo test` exécute unitaires + test in-process GraphQL ; tests `#[ignore]` à lancer avec serveur sur 8080.
    - Flutter : `flutter test` à exécuter en CI ; environnement SDK à configurer.
 
@@ -156,6 +163,10 @@ flutter test
 - **city-detectives-api/src/api/graphql.rs** : test `investigation_by_id_returns_investigation_with_enigmas` – query investigation(id) avec investigation + enigmas (id, orderIndex, type, titre).
 - **investigation_play_screen_test.dart** : 5 tests – première énigme + stepper, Suivant (2e énigme), Précédent, loading puis contenu, état erreur (message + bouton Retour).
 
+**2026-02-02 – Story 3.2**
+- **investigation_map_sheet_test.dart** : 3 tests – titre « Carte » + FlutterMap ; message « Localisation refusée ou indisponible » si position null ; marqueur Icons.my_location si position fournie (mock GeolocationService).
+- **investigation_test.dart** : cas `parse centerLat and centerLng when present` (déjà présent ; couvre modèle Flutter pour centre carte).
+
 ---
 
 ## Definition of Done (workflow testarch-automate)
@@ -166,6 +177,7 @@ flutter test
 - [x] Pas de doublon inutile ; E2E non requis pour les stories actuelles.
 - [x] Tests Story 2.2 ajoutés (écran détail, placeholder, PriceChip).
 - [x] Tests Story 3.1 ajoutés (backend investigation(id) in-process ; Flutter écran play – 5 tests widget).
+- [x] Tests Story 3.2 documentés (carte investigation_map_sheet_test – 3 tests ; centerLat/centerLng dans investigation_test).
 - [x] Résumé sauvegardé dans `_bmad-output/automation-summary.md`.
 
 ---
@@ -185,6 +197,7 @@ flutter test
 | `city_detectives/test/features/investigation/screens/investigation_detail_screen_test.dart` | Widget écran détail enquête (2.2). |
 | `city_detectives/test/features/investigation/screens/investigation_start_placeholder_screen_test.dart` | Widget placeholder démarrage (2.2). |
 | `city_detectives/test/features/investigation/screens/investigation_play_screen_test.dart` | Widget écran enquête en cours – première énigme, navigation, loading, erreur (3.1). |
+| `city_detectives/test/features/investigation/widgets/investigation_map_sheet_test.dart` | Widget carte sheet – titre, carte, message localisation indisponible, marqueur position (3.2). |
 | `city_detectives/test/shared/widgets/price_chip_test.dart` | Widget PriceChip Gratuit/Payant (2.2). |
 | `city_detectives/test/widget_test.dart` | Smoke app / welcome. |
 | `city_detectives/test/features/investigation/models/investigation_test.dart` | TU `Investigation.fromJson`. |
@@ -216,7 +229,8 @@ flutter test
 3. Vérifier en CI que les jobs Rust et Flutter exécutent ces commandes.
 4. Si besoin : mocks API pour E2E « onboarding → liste enquêtes » (inscription réussie puis navigation).
 5. Optionnel (LOW) : test widget pour cas « enquête introuvable » (data == null) ; Semantics sur boutons Retour des états erreur/introuvable (écran play).
+6. Optionnel : test widget carte avec centerLat/centerLng non null (centre enquête depuis backend) ; TU GeolocatorServiceImpl (mock suffit pour les tests widget).
 
 ---
 
-*Workflow : `_bmad/bmm/workflows/testarch/automate` (testarch-automate). Dernière mise à jour : 2026-02-02 (Story 3.1).*
+*Workflow : `_bmad/bmm/workflows/testarch/automate` (testarch-automate). Dernière mise à jour : 2026-02-02 (Story 3.2).*

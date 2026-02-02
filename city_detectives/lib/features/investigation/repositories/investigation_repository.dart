@@ -34,6 +34,8 @@ class InvestigationRepository {
           durationEstimate
           difficulte
           isFree
+          centerLat
+          centerLng
         }
         enigmas {
           id

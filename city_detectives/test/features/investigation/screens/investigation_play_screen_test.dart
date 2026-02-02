@@ -143,4 +143,53 @@ void main() {
       expect(find.text('Retour'), findsOneWidget);
     },
   );
+
+  // Story 3.2 – progression et accès carte
+  testWidgets(
+    'InvestigationPlayScreen shows progression indicator (completed/total énigmes)',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        wrapWithProviders(
+          InvestigationPlayScreen(investigationId: investigationId),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('0 / 3 énigmes'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'InvestigationPlayScreen updates progression when tapping Suivant',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        wrapWithProviders(
+          InvestigationPlayScreen(investigationId: investigationId),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('0 / 3 énigmes'), findsOneWidget);
+      await tester.tap(find.text('Suivant'));
+      await tester.pumpAndSettle();
+      expect(find.text('1 / 3 énigmes'), findsOneWidget);
+
+      await tester.tap(find.text('Suivant'));
+      await tester.pumpAndSettle();
+      expect(find.text('2 / 3 énigmes'), findsOneWidget);
+    },
+  );
+
+  testWidgets('InvestigationPlayScreen shows map button (Voir la carte)', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      wrapWithProviders(
+        InvestigationPlayScreen(investigationId: investigationId),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.map), findsOneWidget);
+  });
 }

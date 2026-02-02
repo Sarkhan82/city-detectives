@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:city_detectives/features/investigation/models/enigma.dart';
 import 'package:city_detectives/features/investigation/models/investigation_with_enigmas.dart';
 import 'package:city_detectives/features/investigation/providers/investigation_play_provider.dart';
+import 'package:city_detectives/features/investigation/widgets/investigation_map_sheet.dart';
 
 /// Écran « enquête en cours » (Story 3.1) – première énigme ou intro, navigation Suivant/Précédent.
 /// Affichage minimal par énigme : titre, ordre (ex. « Énigme 1/5 »), placeholder contenu.
@@ -98,10 +99,14 @@ class InvestigationPlayScreen extends ConsumerWidget {
     // Clamp index to avoid crash if state is stale (e.g. hot reload, fewer enigmas after refresh).
     final safeIndex = hasEnigmas ? (currentIndex.clamp(0, total - 1)) : 0;
     final currentEnigma = hasEnigmas ? enigmas[safeIndex] : null;
+    final completedIds = ref.watch(completedEnigmaIdsProvider(investigationId));
+    final completedCount = enigmas
+        .where((e) => completedIds.contains(e.id))
+        .length;
 
     return Semantics(
       label:
-          'Enquête en cours ${inv.titre}. Énigme ${safeIndex + 1} sur $total. Navigation précédent suivant.',
+          'Enquête en cours ${inv.titre}. Énigme ${safeIndex + 1} sur $total. $completedCount énigmes complétées sur $total. Navigation précédent suivant.',
       child: Scaffold(
         appBar: AppBar(
           title: Text(inv.titre),
@@ -114,12 +119,27 @@ class InvestigationPlayScreen extends ConsumerWidget {
               tooltip: 'Retour',
             ),
           ),
+          actions: [
+            Semantics(
+              label: 'Voir la carte',
+              button: true,
+              child: IconButton(
+                icon: const Icon(Icons.map),
+                onPressed: () => _showMap(context, ref, investigationId),
+                tooltip: 'Voir la carte',
+              ),
+            ),
+          ],
         ),
         body: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (hasEnigmas) ...[
+                _ProgressIndicator(
+                  completedCount: completedCount,
+                  total: total,
+                ),
                 _EnigmaStepper(current: safeIndex + 1, total: total),
                 Expanded(
                   child: SingleChildScrollView(
@@ -144,6 +164,13 @@ class InvestigationPlayScreen extends ConsumerWidget {
                   },
                   onNext: () {
                     if (safeIndex < total - 1) {
+                      ref
+                          .read(
+                            completedEnigmaIdsProvider(
+                              investigationId,
+                            ).notifier,
+                          )
+                          .markCompleted(currentEnigma.id);
                       ref
                               .read(
                                 currentEnigmaIndexProvider(
@@ -174,6 +201,73 @@ class InvestigationPlayScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Indicateur de progression (Story 3.2) – énigmes complétées vs restantes, design « carnet de détective ».
+class _ProgressIndicator extends StatelessWidget {
+  const _ProgressIndicator({required this.completedCount, required this.total});
+
+  final int completedCount;
+  final int total;
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = total > 0 ? completedCount / total : 0.0;
+    return Semantics(
+      label: 'Progression : $completedCount énigmes complétées sur $total',
+      value: '$completedCount',
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant,
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '$completedCount / $total énigmes',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: 6),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 6,
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+void _showMap(BuildContext context, WidgetRef ref, String investigationId) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (context) => DraggableScrollableSheet(
+      initialChildSize: 0.6,
+      minChildSize: 0.3,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (context, scrollController) =>
+          InvestigationMapSheet(investigationId: investigationId),
+    ),
+  );
 }
 
 class _EnigmaStepper extends StatelessWidget {
