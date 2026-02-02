@@ -47,8 +47,10 @@
 | `shared/widgets/price_chip_test.dart` | Widget PriceChip : Gratuit / Payant selon isFree (Story 2.2). |
 | `features/investigation/models/investigation_test.dart` | TU `Investigation.fromJson` (défensif, isFree, durationEstimate, **centerLat/centerLng**). |
 | `widget_test.dart` | App build, WelcomeScreen. |
+| `features/onboarding/screens/welcome_screen_test.dart` | **Story 1.1/1.3** – WelcomeScreen : titre + Continuer ; tap → register ; Semantics ; **token + onboarding non fait → redirect onboarding** ; **token + onboarding fait → redirect home**. 5 tests. |
+| `features/onboarding/providers/onboarding_provider_test.dart` | **Story 1.3** – TU OnboardingNotifier avec stockage injecté (FakeOnboardingStorage) : build() false si clé absente / "false", true si "true" ; markCompleted() écrit et met à jour state ; invalidation puis re-read. 5 tests. |
 
-- **Total Flutter :** 48 tests widget (dont Story 3.3 : 6 TU repository + 1 widget restauration progression + 1 widget « Enquêtes en cours » dans liste).
+- **Total Flutter :** 76 tests (dont Story 1.1/1.3 : welcome_screen 5 tests, onboarding_screen 4 tests, **onboarding_provider 5 TU** ; Story 3.3 : 6 TU repository + widgets).
 - **Exécution :** `cd city_detectives && flutter test`.
 
 ---
@@ -179,6 +181,12 @@ flutter test
 - **investigation_play_screen_test.dart** : 1 test widget – restauration progression au chargement (index énigme sauvegardé affiché).
 - **investigation_list_screen_test.dart** : 1 test widget – section « Enquêtes en cours » affichée quand progression sauvegardée, tap → reprise.
 
+**2026-02-02 – Workflow testarch-automate (Standalone)**
+- **welcome_screen_test.dart** : 3 tests widget – WelcomeScreen affiche titre/sous-titre/bouton Continuer (FR1) ; tap « Continuer » → navigation vers RegisterScreen (« Créer un compte ») ; Semantics pour accessibilité WCAG 2.1 Level A.
+- **welcome_screen_test.dart** (étapes 1 et 2) : 2 tests widget – token présent + onboarding non fait → redirection vers OnboardingScreen (« Votre première enquête ») ; token présent + onboarding fait → redirection vers home (« Bienvenue – vous êtes connecté »). Overrides : FakeAuthService, _FakeOnboardingStorage.
+- **onboarding_provider.dart** : refactor – stockage onboarding injectable via `OnboardingStorage` et `onboardingStorageProvider` (production = FlutterSecureStorage via adaptateur).
+- **onboarding_provider_test.dart** : 5 TU – OnboardingNotifier avec FakeOnboardingStorage : build() selon valeur stockée ; markCompleted() écrit et met state à true ; invalidation puis re-read.
+
 ---
 
 ## Definition of Done (workflow testarch-automate)
@@ -192,6 +200,8 @@ flutter test
 - [x] Tests Story 3.2 documentés (carte investigation_map_sheet_test – 3 tests ; centerLat/centerLng dans investigation_test).
 - [x] Tests Story 3.3 documentés (InvestigationProgressRepository 6 TU, restauration progression play screen, section « Enquêtes en cours » liste).
 - [x] Résumé sauvegardé dans `_bmad-output/automation-summary.md`.
+- [x] **2026-02-02 testarch-automate** : WelcomeScreen – 3 tests widget (contenu FR1, navigation Continuer → register, Semantics).
+- [x] **2026-02-02 étapes 1 et 2** : WelcomeScreen – 2 tests redirect (token + onboarding non fait → onboarding ; token + onboarding fait → home). OnboardingNotifier – refactor stockage injectable (OnboardingStorage) + 5 TU avec FakeOnboardingStorage.
 
 ---
 
@@ -214,6 +224,9 @@ flutter test
 | `city_detectives/test/features/investigation/repositories/investigation_progress_repository_test.dart` | TU InvestigationProgressRepository (forTest) – save/get/delete progression (3.3). |
 | `city_detectives/test/shared/widgets/price_chip_test.dart` | Widget PriceChip Gratuit/Payant (2.2). |
 | `city_detectives/test/widget_test.dart` | Smoke app / welcome. |
+| `city_detectives/test/features/onboarding/screens/welcome_screen_test.dart` | Widget WelcomeScreen (1.1/1.3) : contenu, navigation Continuer → register, Semantics, redirect token → onboarding/home. |
+| `city_detectives/test/features/onboarding/providers/onboarding_provider_test.dart` | TU OnboardingNotifier (1.3) avec stockage injecté. |
+| `city_detectives/lib/features/onboarding/providers/onboarding_storage.dart` | Interface OnboardingStorage pour injection (prod + test). |
 | `city_detectives/test/features/investigation/models/investigation_test.dart` | TU `Investigation.fromJson`. |
 | `city_detectives/integration_test/app_test.dart` | E2E welcome → register, retour. |
 
@@ -247,4 +260,4 @@ flutter test
 
 ---
 
-*Workflow : `_bmad/bmm/workflows/testarch/automate` (testarch-automate). Dernière mise à jour : 2026-02-02 (Story 3.3).*
+*Workflow : `_bmad/bmm/workflows/testarch/automate` (testarch-automate). Dernière mise à jour : 2026-02-02 (testarch-automate Standalone – welcome_screen_test).*

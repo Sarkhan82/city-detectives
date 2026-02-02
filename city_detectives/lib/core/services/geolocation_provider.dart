@@ -8,7 +8,8 @@ final geolocationServiceProvider = Provider<GeolocationService>(
   (ref) => GeolocatorServiceImpl(),
 );
 
-/// Position actuelle pour la carte (Story 3.2) – demande permission puis récupère la position.
+/// Position actuelle pour la carte (Story 3.2, 3.4) – demande permission puis récupère la position.
+/// À la demande uniquement (pas de flux continu) pour économiser la batterie (FR80).
 /// Auto-dispose pour ne pas garder en mémoire ; family par investigationId pour isoler.
 final currentPositionForMapProvider = FutureProvider.autoDispose
     .family<GeoPosition?, String>((ref, investigationId) async {

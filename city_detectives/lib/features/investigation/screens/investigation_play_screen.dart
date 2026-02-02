@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:city_detectives/core/services/investigation_error_handler.dart';
 import 'package:city_detectives/features/investigation/models/enigma.dart';
 import 'package:city_detectives/features/investigation/models/investigation_progress.dart';
 import 'package:city_detectives/features/investigation/models/investigation_with_enigmas.dart';
@@ -9,6 +10,7 @@ import 'package:city_detectives/features/investigation/providers/investigation_p
 import 'package:city_detectives/features/investigation/repositories/investigation_progress_repository.dart';
 import 'package:city_detectives/core/router/app_router.dart';
 import 'package:city_detectives/features/investigation/widgets/investigation_map_sheet.dart';
+import 'package:city_detectives/shared/widgets/connectivity_status_indicator.dart';
 
 /// Sauvegarde la progression courante en Hive (Story 3.3). Attendre la fin avant de naviguer.
 Future<void> _saveProgress(WidgetRef ref, String investigationId) async {
@@ -92,33 +94,44 @@ class _InvestigationPlayScreenState
           body: const Center(child: CircularProgressIndicator()),
         ),
       ),
-      error: (err, _) => Semantics(
-        label: 'Erreur lors du chargement de l\'enquête',
-        child: Scaffold(
-          appBar: AppBar(title: const Text('Enquête en cours')),
-          body: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    err.toString(),
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 16),
-                  FilledButton.icon(
-                    onPressed: () => context.pop(),
-                    icon: const Icon(Icons.arrow_back),
-                    label: const Text('Retour'),
-                  ),
-                ],
+      error: (err, stackTrace) {
+        logInvestigationError(err, stackTrace);
+        return Semantics(
+          label: 'Erreur lors du chargement de l\'enquête',
+          child: Scaffold(
+            appBar: AppBar(title: const Text('Enquête en cours')),
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      userFriendlyInvestigationError(err),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton.icon(
+                      onPressed: () => ref.invalidate(
+                        investigationWithEnigmasProvider(investigationId),
+                      ),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Réessayer'),
+                    ),
+                    const SizedBox(height: 8),
+                    FilledButton.icon(
+                      onPressed: () => context.pop(),
+                      icon: const Icon(Icons.arrow_back),
+                      label: const Text('Retour'),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -222,6 +235,10 @@ class _InvestigationPlayScreenState
                 onPressed: () => _showMap(context, ref, investigationId),
                 tooltip: 'Voir la carte',
               ),
+            ),
+            const Padding(
+              padding: EdgeInsets.only(right: 8),
+              child: ConnectivityStatusIndicator(compact: true),
             ),
           ],
         ),
