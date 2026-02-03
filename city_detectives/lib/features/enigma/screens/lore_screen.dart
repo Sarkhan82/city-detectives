@@ -97,8 +97,8 @@ class _LoreScreenState extends ConsumerState<LoreScreen> {
                   child: Text(
                     lore.title,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -153,8 +153,8 @@ class _LoreScreenState extends ConsumerState<LoreScreen> {
               Text(
                 err.toString().replaceFirst('Exception: ', ''),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
+                  color: Theme.of(context).colorScheme.error,
+                ),
               ),
               const SizedBox(height: 16),
               Semantics(
@@ -199,7 +199,9 @@ class _LoreMediaSection extends StatelessWidget {
                     imageUrl: url,
                     fit: BoxFit.cover,
                     placeholder: (_, __) => Container(
-                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
                       alignment: Alignment.center,
                       child: const SizedBox(
                         width: 24,
@@ -208,7 +210,9 @@ class _LoreMediaSection extends StatelessWidget {
                       ),
                     ),
                     errorWidget: (_, __, ___) => Container(
-                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
                       child: Center(
                         child: Icon(
                           Icons.broken_image_outlined,

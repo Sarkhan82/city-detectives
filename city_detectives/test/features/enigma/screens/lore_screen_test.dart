@@ -14,15 +14,14 @@ import 'package:city_detectives/features/enigma/screens/lore_screen.dart';
 void main() {
   Widget wrapWithProviders(Widget child, InvestigationRepository repo) {
     return ProviderScope(
-      overrides: [
-        investigationRepositoryProvider.overrideWith((ref) => repo),
-      ],
+      overrides: [investigationRepositoryProvider.overrideWith((ref) => repo)],
       child: MaterialApp(home: child),
     );
   }
 
-  testWidgets('LoreScreen shows loading then LORE content and Sauter button',
-      (WidgetTester tester) async {
+  testWidgets('LoreScreen shows loading then LORE content and Sauter button', (
+    WidgetTester tester,
+  ) async {
     final fake = _FakeLoreRepository();
     await tester.pumpWidget(
       wrapWithProviders(
@@ -46,7 +45,9 @@ void main() {
     expect(find.text('Continuer'), findsOneWidget);
   });
 
-  testWidgets('LoreScreen Sauter button calls onContinue', (WidgetTester tester) async {
+  testWidgets('LoreScreen Sauter button calls onContinue', (
+    WidgetTester tester,
+  ) async {
     var continueCalled = false;
     final fake = _FakeLoreRepository();
     await tester.pumpWidget(
@@ -68,7 +69,9 @@ void main() {
     expect(continueCalled, isTrue);
   });
 
-  testWidgets('LoreScreen Continuer button calls onContinue', (WidgetTester tester) async {
+  testWidgets('LoreScreen Continuer button calls onContinue', (
+    WidgetTester tester,
+  ) async {
     var continueCalled = false;
     final fake = _FakeLoreRepository();
     await tester.pumpWidget(
@@ -90,8 +93,9 @@ void main() {
     expect(continueCalled, isTrue);
   });
 
-  testWidgets('LoreScreen shows empty state when getLoreContent returns null',
-      (WidgetTester tester) async {
+  testWidgets('LoreScreen shows empty state when getLoreContent returns null', (
+    WidgetTester tester,
+  ) async {
     final fake = _FakeLoreRepositoryNull();
     await tester.pumpWidget(
       wrapWithProviders(
@@ -110,8 +114,9 @@ void main() {
     expect(find.text('Continuer'), findsOneWidget);
   });
 
-  testWidgets('LoreScreen shows media section when mediaUrls is not empty',
-      (WidgetTester tester) async {
+  testWidgets('LoreScreen shows media section when mediaUrls is not empty', (
+    WidgetTester tester,
+  ) async {
     final fake = _FakeLoreRepositoryWithMedia();
     await tester.pumpWidget(
       wrapWithProviders(
@@ -134,12 +139,12 @@ void main() {
 
 class _FakeLoreRepository extends InvestigationRepository {
   _FakeLoreRepository()
-      : super(
-          GraphQLClient(
-            cache: GraphQLCache(store: InMemoryStore()),
-            link: HttpLink('http://localhost:8080/graphql'),
-          ),
-        );
+    : super(
+        GraphQLClient(
+          cache: GraphQLCache(store: InMemoryStore()),
+          link: HttpLink('http://localhost:8080/graphql'),
+        ),
+      );
 
   @override
   Future<LoreContent?> getLoreContent({
@@ -157,12 +162,12 @@ class _FakeLoreRepository extends InvestigationRepository {
 
 class _FakeLoreRepositoryNull extends InvestigationRepository {
   _FakeLoreRepositoryNull()
-      : super(
-          GraphQLClient(
-            cache: GraphQLCache(store: InMemoryStore()),
-            link: HttpLink('http://localhost:8080/graphql'),
-          ),
-        );
+    : super(
+        GraphQLClient(
+          cache: GraphQLCache(store: InMemoryStore()),
+          link: HttpLink('http://localhost:8080/graphql'),
+        ),
+      );
 
   @override
   Future<LoreContent?> getLoreContent({
@@ -175,12 +180,12 @@ class _FakeLoreRepositoryNull extends InvestigationRepository {
 
 class _FakeLoreRepositoryWithMedia extends InvestigationRepository {
   _FakeLoreRepositoryWithMedia()
-      : super(
-          GraphQLClient(
-            cache: GraphQLCache(store: InMemoryStore()),
-            link: HttpLink('http://localhost:8080/graphql'),
-          ),
-        );
+    : super(
+        GraphQLClient(
+          cache: GraphQLCache(store: InMemoryStore()),
+          link: HttpLink('http://localhost:8080/graphql'),
+        ),
+      );
 
   @override
   Future<LoreContent?> getLoreContent({

@@ -22,9 +22,9 @@ class LoreContent {
     final mediaRaw = json['mediaUrls'];
     final mediaUrls = mediaRaw is List
         ? mediaRaw
-            .map((e) => e?.toString() ?? '')
-            .where((s) => s.isNotEmpty)
-            .toList()
+              .map((e) => e?.toString() ?? '')
+              .where((s) => s.isNotEmpty)
+              .toList()
         : <String>[];
     return LoreContent(
       sequenceIndex: sequenceIndex,

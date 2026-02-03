@@ -7,8 +7,7 @@ use tower_http::cors::{Any, CorsLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use city_detectives_api::{
-    api, auth_service, create_schema, AuthService, EnigmaService, InvestigationService,
-    LoreService,
+    api, auth_service, create_schema, AuthService, EnigmaService, InvestigationService, LoreService,
 };
 
 #[tokio::main]

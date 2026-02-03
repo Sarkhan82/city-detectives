@@ -295,10 +295,24 @@ mod tests {
             .get("getLoreContent")
             .and_then(|v| v.as_object())
             .expect("getLoreContent object");
-        assert_eq!(lore.get("sequenceIndex").and_then(|v| v.as_i64()).unwrap(), 0);
-        assert!(!lore.get("title").and_then(|v| v.as_str()).unwrap().is_empty());
-        assert!(!lore.get("contentText").and_then(|v| v.as_str()).unwrap().is_empty());
-        let urls = lore.get("mediaUrls").and_then(|v| v.as_array()).expect("mediaUrls array");
+        assert_eq!(
+            lore.get("sequenceIndex").and_then(|v| v.as_i64()).unwrap(),
+            0
+        );
+        assert!(!lore
+            .get("title")
+            .and_then(|v| v.as_str())
+            .unwrap()
+            .is_empty());
+        assert!(!lore
+            .get("contentText")
+            .and_then(|v| v.as_str())
+            .unwrap()
+            .is_empty());
+        let urls = lore
+            .get("mediaUrls")
+            .and_then(|v| v.as_array())
+            .expect("mediaUrls array");
         assert!(!urls.is_empty());
     }
 

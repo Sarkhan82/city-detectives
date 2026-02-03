@@ -46,6 +46,7 @@ class InvestigationPlayScreen extends ConsumerStatefulWidget {
 class _InvestigationPlayScreenState
     extends ConsumerState<InvestigationPlayScreen> {
   bool _progressRestored = false;
+
   /// Story 4.4 : index de séquences LORE déjà affichés (0 = intro, 1+ = entre énigmes).
   final Set<int> _shownLoreSequenceIndexes = {};
 
