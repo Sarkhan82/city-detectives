@@ -92,6 +92,53 @@ void main() {
     expect(find.text('Classement'), findsOneWidget);
   });
 
+  testWidgets(
+    'GamificationScreen highlights current user in leaderboard (Task 4.3 / FR45)',
+    (WidgetTester tester) async {
+      final mockBadges = <UserBadge>[];
+      final mockSkills = <UserSkill>[];
+      final mockPostcards = <UserPostcard>[];
+      final mockLeaderboard = [
+        const LeaderboardEntry(
+          rank: 1,
+          userId: 'other',
+          score: 100,
+          displayName: 'Autre',
+        ),
+        const LeaderboardEntry(
+          rank: 2,
+          userId: 'me',
+          score: 50,
+          displayName: 'Vous',
+        ),
+      ];
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            userBadgesProvider.overrideWith((ref) => Future.value(mockBadges)),
+            userSkillsProvider.overrideWith((ref) => Future.value(mockSkills)),
+            userPostcardsProvider.overrideWith(
+              (ref) => Future.value(mockPostcards),
+            ),
+            leaderboardProvider(
+              null,
+            ).overrideWith((ref) => Future.value(mockLeaderboard)),
+          ],
+          child: MaterialApp(home: Scaffold(body: const GamificationScreen())),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.drag(find.byType(ListView), const Offset(0, -400));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Vous'), findsOneWidget);
+      expect(find.text('50'), findsOneWidget);
+      // Task 4.3 / FR45 : la ligne « Vous » est affichée dans le classement (mise en évidence et sémantique « c'est vous » implémentées dans _LeaderboardSection).
+    },
+  );
+
   testWidgets('GamificationScreen has semantics for accessibility', (
     WidgetTester tester,
   ) async {

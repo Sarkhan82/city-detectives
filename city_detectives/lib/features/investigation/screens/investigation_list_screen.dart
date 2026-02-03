@@ -238,9 +238,11 @@ class _InvestigationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final inv = investigation;
     final priceLabel = inv.isFree ? 'Gratuit' : 'Payant';
+    final priceText = inv.formattedPrice;
+    final semanticsPrice = priceText != null ? ' Prix $priceText.' : '';
     return Semantics(
       label:
-          'Enquête ${inv.titre}. $priceLabel. ${inv.description}. Durée ${inv.durationEstimate} minutes. Difficulté ${inv.difficulte}. Bouton pour ouvrir le détail et démarrer.',
+          'Enquête ${inv.titre}. $priceLabel.$semanticsPrice ${inv.description}. Durée ${inv.durationEstimate} minutes. Difficulté ${inv.difficulte}. Bouton pour ouvrir le détail et démarrer.',
       button: true,
       child: Card(
         margin: const EdgeInsets.only(bottom: 12),
@@ -261,7 +263,21 @@ class _InvestigationCard extends StatelessWidget {
                             ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ),
-                    PriceChip(isFree: inv.isFree),
+                    PriceChip(isFree: inv.isFree, priceLabel: priceText),
+                    if (priceText != null) ...[
+                      const SizedBox(width: 8),
+                      Semantics(
+                        label: 'Prix $priceText',
+                        child: Text(
+                          priceText,
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 8),

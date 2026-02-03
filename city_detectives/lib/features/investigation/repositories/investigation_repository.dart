@@ -25,6 +25,8 @@ class InvestigationRepository {
         durationEstimate
         difficulte
         isFree
+        priceAmount
+        priceCurrency
       }
     }
   ''';
@@ -39,6 +41,8 @@ class InvestigationRepository {
           durationEstimate
           difficulte
           isFree
+          priceAmount
+          priceCurrency
           centerLat
           centerLng
         }
@@ -98,6 +102,8 @@ class InvestigationRepository {
     'durationEstimate': i.durationEstimate,
     'difficulte': i.difficulte,
     'isFree': i.isFree,
+    'priceAmount': i.priceAmount,
+    'priceCurrency': i.priceCurrency,
     'centerLat': i.centerLat,
     'centerLng': i.centerLng,
   };

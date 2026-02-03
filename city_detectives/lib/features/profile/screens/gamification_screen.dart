@@ -419,7 +419,27 @@ class _PostcardsSection extends StatelessWidget {
                 children: [
                   Expanded(
                     child: p.imageUrl != null && p.imageUrl!.isNotEmpty
-                        ? Image.network(p.imageUrl!, fit: BoxFit.cover)
+                        ? Image.network(
+                            p.imageUrl!,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (_, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Center(
+                                child: Icon(
+                                  Icons.place,
+                                  size: 48,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.primary.withValues(alpha: 0.5),
+                                ),
+                              );
+                            },
+                            errorBuilder: (_, _, _) => Icon(
+                              Icons.broken_image_outlined,
+                              size: 48,
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                          )
                         : Icon(
                             Icons.place,
                             size: 48,
@@ -528,7 +548,7 @@ class _LeaderboardSection extends StatelessWidget {
   }
 }
 
-/// Message d'erreur avec bouton Réessayer pour une section gamification.
+/// Message d'erreur avec bouton Réessayer pour une section gamification (WCAG 2.1 Level A).
 class _SectionError extends StatelessWidget {
   const _SectionError({required this.message, required this.onRetry});
 
@@ -537,25 +557,32 @@ class _SectionError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            message,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.error,
+    return Semantics(
+      label: 'Erreur. $message. Bouton Réessayer.',
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              message,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.error,
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          FilledButton.icon(
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh, size: 18),
-            label: const Text('Réessayer'),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Semantics(
+              label: 'Réessayer',
+              button: true,
+              child: FilledButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Réessayer'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,4 +1,4 @@
-//! Modèles gamification (Story 5.2 – FR42) – badges, compétences, cartes postales, leaderboard.
+//! Modèles gamification (Story 5.2 – FR42–FR45) – badges, compétences, cartes postales, leaderboard.
 
 use async_graphql::*;
 use serde::{Deserialize, Serialize};
