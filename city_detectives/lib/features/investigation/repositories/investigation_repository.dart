@@ -3,6 +3,7 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:city_detectives/features/investigation/models/enigma.dart';
 import 'package:city_detectives/features/investigation/models/investigation.dart';
 import 'package:city_detectives/features/investigation/models/investigation_with_enigmas.dart';
+import 'package:city_detectives/features/investigation/models/lore_content.dart';
 import 'package:city_detectives/core/services/investigation_error_handler.dart';
 import 'package:city_detectives/features/investigation/repositories/investigation_cache.dart';
 
@@ -47,6 +48,17 @@ class InvestigationRepository {
           type
           titre
         }
+      }
+    }
+  ''';
+
+  static const String _loreContentQuery = r'''
+    query GetLoreContent($investigationId: String!, $sequenceIndex: Int!) {
+      getLoreContent(investigationId: $investigationId, sequenceIndex: $sequenceIndex) {
+        sequenceIndex
+        title
+        contentText
+        mediaUrls
       }
     }
   ''';
@@ -180,5 +192,34 @@ class InvestigationRepository {
       await _cache.putDetail(id, root);
     }
     return data;
+  }
+
+  /// Contenu LORE pour une enquête et un index de séquence (Story 4.4 – FR34, FR37).
+  /// sequenceIndex 0 = intro, 1+ = entre énigmes. Retourne null si pas de LORE à cet index.
+  Future<LoreContent?> getLoreContent({
+    required String investigationId,
+    required int sequenceIndex,
+  }) async {
+    final result = await _client.query(
+      QueryOptions(
+        document: gql(_loreContentQuery),
+        variables: <String, dynamic>{
+          'investigationId': investigationId,
+          'sequenceIndex': sequenceIndex,
+        },
+      ),
+    );
+    if (result.hasException) {
+      final errors = result.exception?.graphqlErrors ?? [];
+      final message = errors.isNotEmpty
+          ? errors.first.message
+          : result.exception?.linkException?.toString() ??
+                'Erreur lors du chargement du contenu LORE';
+      logInvestigationError(Exception(message));
+      throw Exception(message);
+    }
+    final raw = result.data?['getLoreContent'] as Map<String, dynamic>?;
+    if (raw == null) return null;
+    return LoreContent.fromJson(raw);
   }
 }

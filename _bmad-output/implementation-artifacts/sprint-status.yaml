@@ -62,7 +62,7 @@ development_status:
   4-1-enigmes-photo-geolocalisation: done
   4-2-enigmes-mots-puzzle: done
   4-3-aide-contextuelle-explications-historiques: done
-  4-4-lore-option-saut: ready-for-dev
+  4-4-lore-option-saut: done
   epic-4-retrospective: optional
 
   epic-5: in-progress
@@ -72,7 +72,7 @@ development_status:
 
   epic-6: in-progress
   6-1-premiere-enquete-gratuite-visibilite-payant: ready-for-dev
-  6-2-achat-simulation-paiement: backlog
+  6-2-achat-simulation-paiement: ready-for-dev
   epic-6-retrospective: optional
 
   epic-7: backlog
@@ -91,4 +91,3 @@ development_status:
   9-1-notation-apres-completion: backlog
   9-2-avis-consultation-avis: backlog
   epic-9-retrospective: optional
-onal

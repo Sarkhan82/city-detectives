@@ -1,7 +1,7 @@
-# Résumé d'automatisation – City Detectives (Stories 1.2, 2.1, 2.2, 3.1, 3.2, 3.3, 4.1, 4.2, 4.3)
+# Résumé d'automatisation – City Detectives (Stories 1.2–4.4)
 
 **Date :** 2026-02-03  
-**Stories couvertes :** 1.2 (Création de compte), 2.1 (Parcourir et consulter les enquêtes), 2.2 (Sélection enquête, gratuit/payant), 3.1 (Démarrer enquête et navigation énigmes), 3.2 (Progression, carte interactive et position), 3.3 (Pause, reprise, abandon, sauvegarde), 4.1 (Énigmes photo et géolocalisation), 4.2 (Énigmes mots et puzzle), **4.3 (Aide contextuelle et explications historiques)**  
+**Stories couvertes :** 1.2 (Création de compte), 2.1 (Parcourir et consulter les enquêtes), 2.2 (Sélection enquête, gratuit/payant), 3.1 (Démarrer enquête et navigation énigmes), 3.2 (Progression, carte interactive et position), 3.3 (Pause, reprise, abandon, sauvegarde), 4.1 (Énigmes photo et géolocalisation), 4.2 (Énigmes mots et puzzle), 4.3 (Aide contextuelle et explications historiques), **4.4 (LORE et option de saut)**  
 **Mode :** Standalone / Auto-discover  
 **Cible de couverture :** critical-paths  
 
@@ -21,10 +21,10 @@
 
 | Fichier | Type | Exécution | Description |
 |---------|------|-----------|-------------|
-| `src/api/graphql.rs` (mod tests) | In-process | `cargo test` | `list_investigations_in_process_returns_array` (2.1) ; `investigation_by_id_returns_investigation_with_enigmas` (3.1) – query investigation(id) + énigmes ordonnées, exécutable en CI. |
+| `src/api/graphql.rs` (mod tests) | In-process | `cargo test` | `list_investigations_in_process_returns_array` (2.1) ; `investigation_by_id_returns_investigation_with_enigmas` (3.1) ; **Story 4.4** – `get_lore_content_returns_content_for_investigation_and_sequence`, `get_lore_content_returns_null_for_unknown_sequence_index`, `get_lore_sequence_indexes_returns_ordered_list`. |
 | `tests/api/auth_test.rs` | Intégration HTTP | `--ignored` (serveur 8080) | 4 tests : register JWT, email dupliqué, email invalide, mot de passe court. |
 | `tests/api/investigations_test.rs` | Intégration HTTP | `--ignored` (serveur 8080) | 2 tests : listInvestigations retourne un tableau ; items ont les champs requis. |
-| `tests/api/enigmas_test.rs` | In-process GraphQL | `cargo test` | **Story 4.1** – 4 tests : validateEnigmaResponse (géoloc valide/invalide, photo valide/invalide). **Story 4.2** – 4 tests : validateEnigmaResponse (words valide/invalide, puzzle valide/invalide). **Story 4.3** – 3 tests : getEnigmaHints (nominal), getEnigmaExplanation (nominal), getEnigmaHints (ID inconnu → erreur). Auth Bearer requise. **Total : 11 tests.** |
+| `tests/api/enigmas_test.rs` | In-process GraphQL | `cargo test` | **Story 4.1** – 4 tests : validateEnigmaResponse (géoloc/photo). **Story 4.2** – 4 tests : validateEnigmaResponse (words/puzzle). **Story 4.3** – 3 tests : getEnigmaHints, getEnigmaExplanation, getEnigmaHints (ID inconnu). Auth Bearer requise. **Total : 11 tests.** (Story 4.4 LORE couverte par graphql.rs in-process.) |
 
 **Rust – Unitaires (exécutés par défaut)**
 
@@ -56,8 +56,9 @@
 | `features/enigma/types/puzzle/puzzle_enigma_widget_test.dart` | **Story 4.2** – Widget énigme puzzle : titre, consigne, champ code, bouton « Valider le code » ; saisie + envoi + affichage résultat (succès/erreur) ; repository mocké. 3 tests. |
 | `features/enigma/widgets/enigma_help_button_test.dart` | **Story 4.3** – Bouton Aide : icône ; ouverture bottom sheet avec panneau indices ; flux complet suggestion → indice → solution (2 taps « Voir l'indice suivant », puis Solution + Fermer). 3 tests. |
 | `features/enigma/screens/enigma_explanation_screen_test.dart` | **Story 4.3** – Écran Explications : chargement puis contenu (Contexte historique, Pour en savoir plus) ; bouton Continuer appelle onContinue. 2 tests. |
+| `features/enigma/screens/lore_screen_test.dart` | **Story 4.4** – Écran LORE : chargement puis titre/texte/Sauter/Continuer ; Sauter et Continuer appellent onContinue ; état vide (getLoreContent null) ; section médias quand mediaUrls non vide (CachedNetworkImage). 5 tests. |
 
-- **Total Flutter :** 89+ tests (dont Story 4.3 : help button 3, explanation screen 2).
+- **Total Flutter :** 94+ tests (dont Story 4.3 : help 3, explanation 2 ; Story 4.4 : lore_screen 5).
 - **Exécution :** `cd city_detectives && flutter test`.
 
 ---
@@ -68,13 +69,13 @@
 |--------|------|----|----|----|-------------|
 | API Rust | `auth_test.rs` | – | 4 | – | Register JWT, email dupliqué, email invalide, mot de passe court |
 | API Rust | `investigations_test.rs` | – | 2 | – | listInvestigations tableau + champs requis |
-| In-process Rust | `graphql.rs` (tests) | – | 2 | – | listInvestigations (CI) ; investigation(id) + énigmes (3.1, CI) |
+| In-process Rust | `graphql.rs` (tests) | – | 5 | – | listInvestigations (CI) ; investigation(id) + énigmes (3.1) ; **4.4** getLoreContent (nominal + null), getLoreSequenceIndexes (CI) |
 | Unit Rust | `user.rs` | – | – | 3 | Validation RegisterInput |
 | Unit Rust | `auth_service.rs` | – | – | 2 | JWT / validation token |
-| Widget Flutter | register, onboarding, investigation_list, detail, placeholder, **play** (3.1, 3.2, 3.3), **map_sheet** (3.2), **progress_repository** (3.3), price_chip, models, widget, **photo_enigma**, **geolocation_enigma** (4.1) | – | 50 | – | Écrans 1.2, 1.3, 2.1, 2.2, **3.1** (enquête en cours), **3.2** (carte + position), **3.3** (pause/reprise/sauvegarde), **4.1** (énigmes photo/géo). |
+| Widget Flutter | register, onboarding, investigation_list, detail, placeholder, **play** (3.1, 3.2, 3.3), **map_sheet** (3.2), **progress_repository** (3.3), price_chip, models, widget, **photo_enigma**, **geolocation_enigma** (4.1), **lore_screen** (4.4) | – | 55 | – | + **4.4** (LORE : écran, Sauter/Continuer, état vide, médias). |
 | In-process Rust | `enigmas_test.rs` | – | 11 | – | **Story 4.1** – validateEnigmaResponse (géoloc/photo). **Story 4.2** – validateEnigmaResponse (words/puzzle). **Story 4.3** – getEnigmaHints (nominal + ID inconnu), getEnigmaExplanation (nominal). Auth requise. |
 
-- **Résumé :** 18 tests API/in-process Rust (7 unit + 11 énigmes in-process, exécutables en CI), 89+ tests widget/unit Flutter (dont Story 4.3 : bouton Aide 3, écran Explications 2).
+- **Résumé :** 21 tests API/in-process Rust (7 unit + 11 énigmas + 3 LORE in-process), 94+ tests widget/unit Flutter (dont 4.3 : Aide 3, Explications 2 ; 4.4 : LORE 5).
 - **Doublons évités :** Pas d’E2E pour 1.2/2.1/2.2/3.x ; logique métier couverte en unitaire + API ; widget couvre UX critique.
 
 ---
@@ -225,6 +226,10 @@ flutter test
 **2026-02-03 – testarch-automate (expansion couverture)**
 - **city-detectives-api/tests/api/enigmas_test.rs** : 1 test ajouté – get_enigma_hints_returns_error_for_unknown_enigma (couverture cas d’erreur ID inconnu pour Story 4.3).
 
+**2026-02-03 – Story 4.4 (LORE et option de saut)**
+- **city-detectives-api/src/api/graphql.rs** (mod tests) : 3 tests in-process – `get_lore_content_returns_content_for_investigation_and_sequence`, `get_lore_content_returns_null_for_unknown_sequence_index`, `get_lore_sequence_indexes_returns_ordered_list`.
+- **city_detectives/test/features/enigma/screens/lore_screen_test.dart** : 5 tests widget – chargement puis titre/texte et boutons Sauter/Continuer ; Sauter et Continuer appellent onContinue ; état vide quand getLoreContent null ; section médias avec CachedNetworkImage quand mediaUrls non vide.
+
 ---
 
 ## Definition of Done (workflow testarch-automate)
@@ -243,6 +248,7 @@ flutter test
 - [x] **2026-02-03 testarch-automate** : Story 4.1 documentée – enigmas_test.rs (4 tests in-process), photo_enigma_widget_test.dart, geolocation_enigma_widget_test.dart ; inventaire et plan de couverture mis à jour.
 - [x] **2026-02-03 testarch-automate** : Story 4.2 documentée – enigmas_test.rs (8 tests au total : +4 words/puzzle), words_enigma_widget_test.dart (3 tests), puzzle_enigma_widget_test.dart (3 tests) ; inventaire et gaps mis à jour.
 - [x] **2026-02-03 testarch-automate** : Story 4.3 documentée – enigmas_test.rs (11 tests : +3 getEnigmaHints/getEnigmaExplanation dont 1 cas erreur ID inconnu), enigma_help_button_test.dart (3 tests), enigma_explanation_screen_test.dart (2 tests) ; inventaire et plan de couverture mis à jour.
+- [x] **2026-02-03 testarch-automate** : Story 4.4 (LORE) documentée – graphql.rs (3 tests in-process : getLoreContent nominal + null, getLoreSequenceIndexes), lore_screen_test.dart (5 tests : contenu, Sauter/Continuer, état vide, médias) ; inventaire et plan de couverture à jour.
 
 ---
 
@@ -313,9 +319,9 @@ flutter test
 
 ## Résultats d'exécution (2026-02-03)
 
-- **Rust** (`cargo test`) : 18 tests passés (7 unit + 11 enigmas in-process dont 3 pour Story 4.3) ; auth_test et investigations_test ignorés (serveur 8080).
-- **Flutter** (`flutter test`) : 89+ tests passés (dont 5 pour Story 4.3 : help button 3, explanation screen 2). Des `ClientException` (tile.openstreetmap.org 400) peuvent apparaître en log sans faire échouer les tests.
+- **Rust** (`cargo test`) : 21 tests passés (7 unit + 4 graphql in-process dont 3 LORE Story 4.4 + 11 enigmas_test) ; auth_test et investigations_test ignorés (serveur 8080).
+- **Flutter** (`flutter test`) : 94 tests passés (dont Story 4.3 : help 3, explanation 2 ; Story 4.4 : lore_screen 5). Des `ClientException` (tile.openstreetmap.org 400) peuvent apparaître en log sans faire échouer les tests.
 
 ---
 
-*Workflow : `_bmad/bmm/workflows/testarch/automate` (testarch-automate). Dernière mise à jour : 2026-02-03 (Story 4.3 – aide contextuelle et explications ; test Rust ID inconnu).*
+*Workflow : `_bmad/bmm/workflows/testarch/automate` (testarch-automate). Dernière mise à jour : 2026-02-03 (Story 4.4 – LORE et option de saut ; tests Rust getLoreContent/getLoreSequenceIndexes, Flutter lore_screen 5 tests).*

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:city_detectives/features/enigma/screens/enigma_explanation_screen.dart';
+import 'package:city_detectives/features/enigma/screens/lore_screen.dart';
 import 'package:city_detectives/features/investigation/models/investigation.dart';
 import 'package:city_detectives/features/investigation/screens/investigation_detail_screen.dart';
 import 'package:city_detectives/features/investigation/screens/investigation_list_screen.dart';
@@ -78,6 +79,31 @@ class AppRouter {
                 }
                 return EnigmaExplanationScreen(
                   enigmaId: enigmaId,
+                  onContinue: () => context.pop(true),
+                );
+              },
+            ),
+            GoRoute(
+              path: 'lore',
+              builder: (context, state) {
+                final id = state.pathParameters['id'] ?? '';
+                final extra = state.extra;
+                int sequenceIndex = 0;
+                if (extra is int) {
+                  sequenceIndex = extra;
+                } else if (extra is Map<String, dynamic>) {
+                  final v = extra['sequenceIndex'];
+                  if (v is int) sequenceIndex = v;
+                }
+                if (id.isEmpty) {
+                  return Scaffold(
+                    appBar: AppBar(title: const Text('Contexte')),
+                    body: const Center(child: Text('Paramètre manquant.')),
+                  );
+                }
+                return LoreScreen(
+                  investigationId: id,
+                  sequenceIndex: sequenceIndex,
                   onContinue: () => context.pop(true),
                 );
               },

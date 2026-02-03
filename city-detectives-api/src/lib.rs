@@ -10,3 +10,4 @@ pub use api::graphql::{create_schema, AppSchema};
 pub use services::auth_service::{self, AuthService};
 pub use services::enigma_service::EnigmaService;
 pub use services::investigation_service::InvestigationService;
+pub use services::lore_service::LoreService;
