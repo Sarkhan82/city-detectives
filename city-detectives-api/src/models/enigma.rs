@@ -4,30 +4,141 @@ use async_graphql::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-/// Énigme exposée en GraphQL (champs camelCase en API).
+/// Énigme exposée en GraphQL (champs camelCase en API). Champs optionnels pour édition admin (Story 7.2 – FR63).
 #[derive(Debug, Clone, Serialize, Deserialize, SimpleObject)]
 pub struct Enigma {
     /// ID opaque (UUID) en string pour l'API.
     pub id: String,
+    /// ID de l'enquête (pour édition admin).
+    #[graphql(name = "investigationId")]
+    pub investigation_id: Option<String>,
     /// Index d'ordre dans l'enquête (1-based pour affichage).
     #[graphql(name = "orderIndex")]
     pub order_index: u32,
-    /// Type d'énigme (ex. "text", "photo", "geolocation") – résolution réelle = Epic 4.
+    /// Type d'énigme (ex. "text", "photo", "geolocation", "words", "puzzle").
     #[graphql(name = "type")]
     pub enigma_type: String,
     /// Titre ou description minimale pour l'affichage.
     pub titre: String,
+    // --- Optionnels selon type (géolocalisation, photo, mots, puzzle, indices, explication) ---
+    #[graphql(name = "targetLat")]
+    pub target_lat: Option<f64>,
+    #[graphql(name = "targetLng")]
+    pub target_lng: Option<f64>,
+    #[graphql(name = "toleranceMeters")]
+    pub tolerance_meters: Option<f64>,
+    #[graphql(name = "referencePhotoUrl")]
+    pub reference_photo_url: Option<String>,
+    pub consigne: Option<String>,
+    #[graphql(name = "hintSuggestion")]
+    pub hint_suggestion: Option<String>,
+    #[graphql(name = "hintHint")]
+    pub hint_hint: Option<String>,
+    #[graphql(name = "hintSolution")]
+    pub hint_solution: Option<String>,
+    #[graphql(name = "historicalExplanation")]
+    pub historical_explanation: Option<String>,
+    #[graphql(name = "educationalContent")]
+    pub educational_content: Option<String>,
+    #[graphql(name = "historicalContentValidated")]
+    pub historical_content_validated: Option<bool>,
 }
 
 impl Enigma {
     pub fn from_parts(id: Uuid, order_index: u32, enigma_type: String, titre: String) -> Self {
         Self {
             id: id.to_string(),
+            investigation_id: None,
             order_index,
             enigma_type,
             titre,
+            target_lat: None,
+            target_lng: None,
+            tolerance_meters: None,
+            reference_photo_url: None,
+            consigne: None,
+            hint_suggestion: None,
+            hint_hint: None,
+            hint_solution: None,
+            historical_explanation: None,
+            educational_content: None,
+            historical_content_validated: None,
         }
     }
+}
+
+/// Input pour la création d'une énigme (Story 7.2 – FR63).
+#[derive(Debug, Clone, InputObject)]
+#[graphql(name = "CreateEnigmaInput")]
+pub struct CreateEnigmaInput {
+    #[graphql(name = "investigationId")]
+    pub investigation_id: String,
+    #[graphql(name = "orderIndex")]
+    pub order_index: u32,
+    #[graphql(name = "type")]
+    pub enigma_type: String,
+    pub titre: String,
+    #[graphql(name = "targetLat")]
+    pub target_lat: Option<f64>,
+    #[graphql(name = "targetLng")]
+    pub target_lng: Option<f64>,
+    #[graphql(name = "toleranceMeters")]
+    pub tolerance_meters: Option<f64>,
+    #[graphql(name = "referencePhotoUrl")]
+    pub reference_photo_url: Option<String>,
+    pub consigne: Option<String>,
+    #[graphql(name = "expectedTextAnswer")]
+    pub expected_text_answer: Option<String>,
+    #[graphql(name = "expectedCodeAnswer")]
+    pub expected_code_answer: Option<String>,
+    #[graphql(name = "hintSuggestion")]
+    pub hint_suggestion: Option<String>,
+    #[graphql(name = "hintHint")]
+    pub hint_hint: Option<String>,
+    #[graphql(name = "hintSolution")]
+    pub hint_solution: Option<String>,
+    #[graphql(name = "historicalExplanation")]
+    pub historical_explanation: Option<String>,
+    #[graphql(name = "educationalContent")]
+    pub educational_content: Option<String>,
+    #[graphql(name = "historicalContentValidated")]
+    pub historical_content_validated: Option<bool>,
+}
+
+/// Input pour la mise à jour d'une énigme (Story 7.2 – FR63). Tous les champs optionnels.
+#[derive(Debug, Clone, InputObject, Default)]
+#[graphql(name = "UpdateEnigmaInput")]
+pub struct UpdateEnigmaInput {
+    #[graphql(name = "orderIndex")]
+    pub order_index: Option<u32>,
+    #[graphql(name = "type")]
+    pub enigma_type: Option<String>,
+    pub titre: Option<String>,
+    #[graphql(name = "targetLat")]
+    pub target_lat: Option<f64>,
+    #[graphql(name = "targetLng")]
+    pub target_lng: Option<f64>,
+    #[graphql(name = "toleranceMeters")]
+    pub tolerance_meters: Option<f64>,
+    #[graphql(name = "referencePhotoUrl")]
+    pub reference_photo_url: Option<String>,
+    pub consigne: Option<String>,
+    #[graphql(name = "expectedTextAnswer")]
+    pub expected_text_answer: Option<String>,
+    #[graphql(name = "expectedCodeAnswer")]
+    pub expected_code_answer: Option<String>,
+    #[graphql(name = "hintSuggestion")]
+    pub hint_suggestion: Option<String>,
+    #[graphql(name = "hintHint")]
+    pub hint_hint: Option<String>,
+    #[graphql(name = "hintSolution")]
+    pub hint_solution: Option<String>,
+    #[graphql(name = "historicalExplanation")]
+    pub historical_explanation: Option<String>,
+    #[graphql(name = "educationalContent")]
+    pub educational_content: Option<String>,
+    #[graphql(name = "historicalContentValidated")]
+    pub historical_content_validated: Option<bool>,
 }
 
 // --- Story 4.1 : types et validation ---

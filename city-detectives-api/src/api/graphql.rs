@@ -9,10 +9,12 @@ use serde::Deserialize;
 use std::sync::Arc;
 
 use crate::api::middleware::auth::{extract_bearer, BearerToken};
+use crate::models::enigma::{CreateEnigmaInput, UpdateEnigmaInput};
 use crate::models::enigma::{
     EnigmaExplanation, EnigmaHints, LoreContent, ValidateEnigmaPayload, ValidateEnigmaResult,
 };
 use crate::models::gamification::{LeaderboardEntry, UserBadge, UserPostcard, UserSkill};
+use crate::models::investigation::{CreateInvestigationInput, UpdateInvestigationInput};
 use crate::models::user::{RegisterInput, Role};
 use crate::services::admin_service::{AdminService, DashboardOverview};
 use crate::services::auth_service::AuthService;
@@ -105,7 +107,7 @@ impl QueryRoot {
     async fn get_admin_dashboard(&self, ctx: &Context<'_>) -> Result<DashboardOverview, Error> {
         let _admin_id = require_admin(ctx)?;
         let admin_svc = ctx.data::<Arc<AdminService>>()?;
-        Ok(admin_svc.get_dashboard_overview())
+        Ok(admin_svc.get_dashboard_overview().await)
     }
 
     /// Liste des enquêtes disponibles (Story 2.1) – durée, difficulté, description.
@@ -114,7 +116,7 @@ impl QueryRoot {
         ctx: &Context<'_>,
     ) -> Result<Vec<crate::models::investigation::Investigation>, Error> {
         let svc = ctx.data::<Arc<InvestigationService>>()?;
-        Ok(svc.list_investigations())
+        Ok(svc.list_investigations().await)
     }
 
     /// Enquête par id avec liste ordonnée d'énigmes (Story 3.1) – pour écran « enquête en cours ».
@@ -125,7 +127,7 @@ impl QueryRoot {
     ) -> Result<Option<crate::models::investigation::InvestigationWithEnigmas>, Error> {
         let id = Uuid::parse_str(&id).map_err(|_| Error::new("ID enquête invalide"))?;
         let svc = ctx.data::<Arc<InvestigationService>>()?;
-        Ok(svc.get_investigation_by_id_with_enigmas(id))
+        Ok(svc.get_investigation_by_id_with_enigmas(id).await)
     }
 
     /// Indices progressifs par énigme (Story 4.3 – FR30). Requiert authentification.
@@ -304,6 +306,7 @@ impl MutationRoot {
         let inv_svc = ctx.data::<Arc<InvestigationService>>()?;
         if inv_svc
             .get_investigation_by_id_with_enigmas(inv_id)
+            .await
             .is_none()
         {
             return Err(Error::new("Enquête introuvable"));
@@ -332,6 +335,7 @@ impl MutationRoot {
         let inv_svc = ctx.data::<Arc<InvestigationService>>()?;
         if inv_svc
             .get_investigation_by_id_with_enigmas(inv_id)
+            .await
             .is_none()
         {
             return Err(Error::new("Enquête introuvable"));
@@ -341,6 +345,70 @@ impl MutationRoot {
             .simulate_purchase(user_id, inv_id)
             .map_err(Error::from)?;
         Ok(true)
+    }
+
+    /// Crée une enquête (admin, Story 7.2 – FR62). Réservé aux admins.
+    async fn create_investigation(
+        &self,
+        ctx: &Context<'_>,
+        input: CreateInvestigationInput,
+    ) -> Result<crate::models::investigation::Investigation, Error> {
+        let _admin_id = require_admin(ctx)?;
+        let svc = ctx.data::<Arc<InvestigationService>>()?;
+        svc.create_investigation(input).await.map_err(Error::from)
+    }
+
+    /// Met à jour une enquête (admin, Story 7.2 – FR62). Réservé aux admins.
+    async fn update_investigation(
+        &self,
+        ctx: &Context<'_>,
+        id: String,
+        input: UpdateInvestigationInput,
+    ) -> Result<crate::models::investigation::Investigation, Error> {
+        let _admin_id = require_admin(ctx)?;
+        let id = Uuid::parse_str(&id).map_err(|_| Error::new("ID enquête invalide"))?;
+        let svc = ctx.data::<Arc<InvestigationService>>()?;
+        svc.update_investigation(id, input)
+            .await
+            .map_err(Error::from)
+    }
+
+    /// Crée une énigme (admin, Story 7.2 – FR63). Réservé aux admins.
+    async fn create_enigma(
+        &self,
+        ctx: &Context<'_>,
+        input: CreateEnigmaInput,
+    ) -> Result<crate::models::enigma::Enigma, Error> {
+        let _admin_id = require_admin(ctx)?;
+        let enigma_svc = ctx.data::<Arc<EnigmaService>>()?;
+        enigma_svc.create_enigma(input).map_err(Error::from)
+    }
+
+    /// Met à jour une énigme (admin, Story 7.2 – FR63). Réservé aux admins.
+    async fn update_enigma(
+        &self,
+        ctx: &Context<'_>,
+        id: String,
+        input: UpdateEnigmaInput,
+    ) -> Result<crate::models::enigma::Enigma, Error> {
+        let _admin_id = require_admin(ctx)?;
+        let id = Uuid::parse_str(&id).map_err(|_| Error::new("ID énigme invalide"))?;
+        let enigma_svc = ctx.data::<Arc<EnigmaService>>()?;
+        enigma_svc.update_enigma(id, input).map_err(Error::from)
+    }
+
+    /// Marque le contenu historique d'une énigme comme validé (Story 7.2 – FR64). Réservé aux admins.
+    async fn validate_enigma_historical_content(
+        &self,
+        ctx: &Context<'_>,
+        enigma_id: String,
+    ) -> Result<crate::models::enigma::Enigma, Error> {
+        let _admin_id = require_admin(ctx)?;
+        let id = Uuid::parse_str(&enigma_id).map_err(|_| Error::new("ID énigme invalide"))?;
+        let enigma_svc = ctx.data::<Arc<EnigmaService>>()?;
+        enigma_svc
+            .validate_enigma_historical_content(id)
+            .map_err(Error::from)
     }
 }
 
