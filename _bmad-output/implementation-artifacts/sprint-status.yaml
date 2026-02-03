@@ -72,7 +72,7 @@ development_status:
 
   epic-6: in-progress
   6-1-premiere-enquete-gratuite-visibilite-payant: done
-  6-2-achat-simulation-paiement: ready-for-dev
+  6-2-achat-simulation-paiement: done
   epic-6-retrospective: optional
 
   epic-7: in-progress

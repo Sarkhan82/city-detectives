@@ -19,6 +19,7 @@ use crate::services::enigma_service::EnigmaService;
 use crate::services::gamification_service::GamificationService;
 use crate::services::investigation_service::InvestigationService;
 use crate::services::lore_service::LoreService;
+use crate::services::payment_service::PaymentService;
 use uuid::Uuid;
 
 pub type AppSchema = Schema<QueryRoot, MutationRoot, EmptySubscription>;
@@ -29,6 +30,7 @@ pub fn create_schema(
     enigma_service: Arc<EnigmaService>,
     lore_service: Arc<LoreService>,
     gamification_service: Arc<GamificationService>,
+    payment_service: Arc<PaymentService>,
 ) -> AppSchema {
     Schema::build(QueryRoot, MutationRoot, EmptySubscription)
         .data(auth_service)
@@ -36,6 +38,7 @@ pub fn create_schema(
         .data(enigma_service)
         .data(lore_service)
         .data(gamification_service)
+        .data(payment_service)
         .finish()
 }
 
@@ -184,6 +187,17 @@ impl QueryRoot {
         let gamification_svc = ctx.data::<Arc<GamificationService>>()?;
         Ok(gamification_svc.get_leaderboard(user_id, inv_id))
     }
+
+    /// Enquêtes achetées par l'utilisateur courant (Story 6.2 – FR48). Requiert authentification.
+    async fn get_user_purchases(&self, ctx: &Context<'_>) -> Result<Vec<String>, Error> {
+        let auth = ctx.data::<Arc<AuthService>>()?;
+        let token = ctx.data::<BearerToken>().ok().and_then(|t| t.0.clone());
+        let token = token.as_deref().ok_or("Token manquant")?;
+        let user_id = auth.validate_token(token).map_err(Error::from)?;
+        let payment_svc = ctx.data::<Arc<PaymentService>>()?;
+        let ids = payment_svc.get_user_purchases(user_id);
+        Ok(ids.iter().map(Uuid::to_string).collect())
+    }
 }
 
 pub struct MutationRoot;
@@ -222,6 +236,62 @@ impl MutationRoot {
         enigma_svc
             .validate_response(id, payload)
             .map_err(Error::from)
+    }
+
+    /// Enregistre une intention d'achat (clic Acheter/Payer) – Story 6.2 FR52. Requiert authentification.
+    async fn record_purchase_intent(
+        &self,
+        ctx: &Context<'_>,
+        investigation_id: String,
+    ) -> Result<bool, Error> {
+        let auth = ctx.data::<Arc<AuthService>>()?;
+        let token = ctx.data::<BearerToken>().ok().and_then(|t| t.0.clone());
+        let token = token
+            .as_deref()
+            .ok_or_else(|| Error::new("Authentification requise"))?;
+        let user_id = auth.validate_token(token).map_err(Error::from)?;
+        let inv_id =
+            Uuid::parse_str(&investigation_id).map_err(|_| Error::new("ID enquête invalide"))?;
+        let inv_svc = ctx.data::<Arc<InvestigationService>>()?;
+        if inv_svc
+            .get_investigation_by_id_with_enigmas(inv_id)
+            .is_none()
+        {
+            return Err(Error::new("Enquête introuvable"));
+        }
+        let payment_svc = ctx.data::<Arc<PaymentService>>()?;
+        payment_svc
+            .record_purchase_intent(user_id, inv_id)
+            .map_err(Error::from)?;
+        Ok(true)
+    }
+
+    /// Simule un achat réussi (MVP) – Story 6.2 FR48, FR53. Requiert authentification.
+    async fn simulate_purchase(
+        &self,
+        ctx: &Context<'_>,
+        investigation_id: String,
+    ) -> Result<bool, Error> {
+        let auth = ctx.data::<Arc<AuthService>>()?;
+        let token = ctx.data::<BearerToken>().ok().and_then(|t| t.0.clone());
+        let token = token
+            .as_deref()
+            .ok_or_else(|| Error::new("Authentification requise"))?;
+        let user_id = auth.validate_token(token).map_err(Error::from)?;
+        let inv_id =
+            Uuid::parse_str(&investigation_id).map_err(|_| Error::new("ID enquête invalide"))?;
+        let inv_svc = ctx.data::<Arc<InvestigationService>>()?;
+        if inv_svc
+            .get_investigation_by_id_with_enigmas(inv_id)
+            .is_none()
+        {
+            return Err(Error::new("Enquête introuvable"));
+        }
+        let payment_svc = ctx.data::<Arc<PaymentService>>()?;
+        payment_svc
+            .simulate_purchase(user_id, inv_id)
+            .map_err(Error::from)?;
+        Ok(true)
     }
 }
 
@@ -269,7 +339,14 @@ mod tests {
         let inv_svc = Arc::new(InvestigationService::new(enigma_svc.clone()));
         let lore_svc = Arc::new(LoreService::new());
         let gamification_svc = Arc::new(GamificationService::new());
-        let schema = create_schema(auth, inv_svc, enigma_svc, lore_svc, gamification_svc);
+        let schema = create_schema(
+            auth,
+            inv_svc,
+            enigma_svc,
+            lore_svc,
+            gamification_svc,
+            Arc::new(PaymentService::new()),
+        );
         let request = async_graphql::Request::new(
             r#"query { listInvestigations { id titre description durationEstimate difficulte isFree priceAmount priceCurrency } }"#,
         );
@@ -324,7 +401,14 @@ mod tests {
         let inv_svc = Arc::new(InvestigationService::new(enigma_svc.clone()));
         let lore_svc = Arc::new(LoreService::new());
         let gamification_svc = Arc::new(GamificationService::new());
-        let schema = create_schema(auth, inv_svc, enigma_svc, lore_svc, gamification_svc);
+        let schema = create_schema(
+            auth,
+            inv_svc,
+            enigma_svc,
+            lore_svc,
+            gamification_svc,
+            Arc::new(PaymentService::new()),
+        );
         let id_paid = "22222222-2222-2222-2222-222222222222";
         let request = async_graphql::Request::new(format!(
             r#"query {{ investigation(id: "{}") {{ investigation {{ id titre isFree priceAmount priceCurrency }} enigmas {{ id }} }} }}"#,
@@ -358,7 +442,14 @@ mod tests {
         let inv_svc = Arc::new(InvestigationService::new(enigma_svc.clone()));
         let lore_svc = Arc::new(LoreService::new());
         let gamification_svc = Arc::new(GamificationService::new());
-        let schema = create_schema(auth, inv_svc, enigma_svc, lore_svc, gamification_svc);
+        let schema = create_schema(
+            auth,
+            inv_svc,
+            enigma_svc,
+            lore_svc,
+            gamification_svc,
+            Arc::new(PaymentService::new()),
+        );
         let id = "11111111-1111-1111-1111-111111111111";
         let request = async_graphql::Request::new(format!(
             r#"query {{ investigation(id: "{}") {{ investigation {{ id titre }} enigmas {{ id orderIndex type titre }} }} }}"#,
@@ -397,7 +488,14 @@ mod tests {
         let inv_svc = Arc::new(InvestigationService::new(enigma_svc.clone()));
         let lore_svc = Arc::new(LoreService::new());
         let gamification_svc = Arc::new(GamificationService::new());
-        let schema = create_schema(auth, inv_svc, enigma_svc, lore_svc, gamification_svc);
+        let schema = create_schema(
+            auth,
+            inv_svc,
+            enigma_svc,
+            lore_svc,
+            gamification_svc,
+            Arc::new(PaymentService::new()),
+        );
         let id = "11111111-1111-1111-1111-111111111111";
         let request = async_graphql::Request::new(format!(
             r#"query {{ getLoreContent(investigationId: "{}", sequenceIndex: 0) {{ sequenceIndex title contentText mediaUrls }} }}"#,
@@ -439,7 +537,14 @@ mod tests {
         let inv_svc = Arc::new(InvestigationService::new(enigma_svc.clone()));
         let lore_svc = Arc::new(LoreService::new());
         let gamification_svc = Arc::new(GamificationService::new());
-        let schema = create_schema(auth, inv_svc, enigma_svc, lore_svc, gamification_svc);
+        let schema = create_schema(
+            auth,
+            inv_svc,
+            enigma_svc,
+            lore_svc,
+            gamification_svc,
+            Arc::new(PaymentService::new()),
+        );
         let id = "11111111-1111-1111-1111-111111111111";
         let request = async_graphql::Request::new(format!(
             r#"query {{ getLoreContent(investigationId: "{}", sequenceIndex: 99) {{ sequenceIndex title }} }}"#,
@@ -463,7 +568,14 @@ mod tests {
         let inv_svc = Arc::new(InvestigationService::new(enigma_svc.clone()));
         let lore_svc = Arc::new(LoreService::new());
         let gamification_svc = Arc::new(GamificationService::new());
-        let schema = create_schema(auth, inv_svc, enigma_svc, lore_svc, gamification_svc);
+        let schema = create_schema(
+            auth,
+            inv_svc,
+            enigma_svc,
+            lore_svc,
+            gamification_svc,
+            Arc::new(PaymentService::new()),
+        );
         let id = "11111111-1111-1111-1111-111111111111";
         let request = async_graphql::Request::new(format!(
             r#"query {{ getLoreSequenceIndexes(investigationId: "{}") }}"#,
@@ -479,5 +591,93 @@ mod tests {
         assert!(!indexes.is_empty());
         assert_eq!(indexes[0].as_i64(), Some(0));
         assert_eq!(indexes[1].as_i64(), Some(1));
+    }
+
+    /// Test recordPurchaseIntent + simulatePurchase + getUserPurchases (Story 6.2 – FR48, FR52).
+    #[tokio::test]
+    async fn payment_record_intent_and_simulate_purchase_persist_and_read() {
+        use crate::api::middleware::auth::BearerToken;
+
+        let auth = Arc::new(AuthService::default());
+        let enigma_svc = Arc::new(EnigmaService::new());
+        let inv_svc = Arc::new(InvestigationService::new(enigma_svc.clone()));
+        let lore_svc = Arc::new(LoreService::new());
+        let gamification_svc = Arc::new(GamificationService::new());
+        let payment_svc = Arc::new(PaymentService::new());
+        let schema = create_schema(
+            auth.clone(),
+            inv_svc,
+            enigma_svc,
+            lore_svc,
+            gamification_svc,
+            payment_svc,
+        );
+
+        let register_req = async_graphql::Request::new(
+            r#"mutation { register(email: "payment-test@example.com", password: "password123") }"#,
+        );
+        let reg_res = schema.execute(register_req).await;
+        assert!(reg_res.is_ok(), "register: {:?}", reg_res.errors);
+        let token = reg_res
+            .data
+            .into_json()
+            .unwrap()
+            .get("register")
+            .and_then(|v| v.as_str())
+            .expect("register returns JWT")
+            .to_string();
+
+        let inv_id = "22222222-2222-2222-2222-222222222222";
+
+        let record_req = async_graphql::Request::new(format!(
+            r#"mutation {{ recordPurchaseIntent(investigationId: "{}") }}"#,
+            inv_id
+        ))
+        .data(BearerToken(Some(token.clone())));
+
+        let record_res = schema.execute(record_req).await;
+        assert!(
+            record_res.is_ok(),
+            "recordPurchaseIntent: {:?}",
+            record_res.errors
+        );
+        let record_ok = record_res
+            .data
+            .into_json()
+            .unwrap()
+            .get("recordPurchaseIntent")
+            .and_then(|v| v.as_bool());
+        assert_eq!(record_ok, Some(true));
+
+        let sim_req = async_graphql::Request::new(format!(
+            r#"mutation {{ simulatePurchase(investigationId: "{}") }}"#,
+            inv_id
+        ))
+        .data(BearerToken(Some(token.clone())));
+
+        let sim_res = schema.execute(sim_req).await;
+        assert!(sim_res.is_ok(), "simulatePurchase: {:?}", sim_res.errors);
+        let sim_ok = sim_res
+            .data
+            .into_json()
+            .unwrap()
+            .get("simulatePurchase")
+            .and_then(|v| v.as_bool());
+        assert_eq!(sim_ok, Some(true));
+
+        let get_req = async_graphql::Request::new(r#"query { getUserPurchases }"#)
+            .data(BearerToken(Some(token)));
+        let get_res = schema.execute(get_req).await;
+        assert!(get_res.is_ok(), "getUserPurchases: {:?}", get_res.errors);
+        let data = get_res.data.into_json().unwrap();
+        let ids = data
+            .get("getUserPurchases")
+            .and_then(|v| v.as_array())
+            .expect("getUserPurchases array");
+        assert!(
+            ids.iter().any(|v| v.as_str() == Some(inv_id)),
+            "getUserPurchases doit contenir l'enquête achetée: {:?}",
+            ids
+        );
     }
 }

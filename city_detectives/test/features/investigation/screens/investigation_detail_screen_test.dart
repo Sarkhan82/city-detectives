@@ -1,10 +1,19 @@
-// Story 2.2 – Tests widget écran détail enquête (titre, description, chip Gratuit/Payant, CTA Démarrer).
+// Story 2.2, 6.2 – Tests widget écran détail enquête (titre, description, chip Gratuit/Payant/Achetée, CTA).
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:city_detectives/features/investigation/models/investigation.dart';
+import 'package:city_detectives/features/investigation/providers/payment_provider.dart';
 import 'package:city_detectives/features/investigation/screens/investigation_detail_screen.dart';
+
+Widget wrapWithProviders(Widget child) {
+  return ProviderScope(
+    overrides: [userPurchasesProvider.overrideWith((ref) async => <String>[])],
+    child: MaterialApp(home: child),
+  );
+}
 
 void main() {
   testWidgets(
@@ -20,7 +29,7 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(home: InvestigationDetailScreen(investigation: inv)),
+        wrapWithProviders(InvestigationDetailScreen(investigation: inv)),
       );
 
       expect(find.text('Le mystère du parc'), findsOneWidget);
@@ -47,7 +56,7 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(home: InvestigationDetailScreen(investigation: inv)),
+        wrapWithProviders(InvestigationDetailScreen(investigation: inv)),
       );
 
       expect(find.text('Payant'), findsOneWidget);
@@ -55,6 +64,38 @@ void main() {
       expect(find.text('Gratuit'), findsNothing);
       expect(find.textContaining('Acheter'), findsOneWidget);
       expect(find.text('Démarrer l\'enquête (après achat)'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'InvestigationDetailScreen shows only Démarrer when payant but purchased (Story 6.2)',
+    (WidgetTester tester) async {
+      const inv = Investigation(
+        id: 'id-paid',
+        titre: 'Enquête premium',
+        description: 'Enquête payante.',
+        durationEstimate: 60,
+        difficulte: 'moyen',
+        isFree: false,
+        priceAmount: 499,
+        priceCurrency: 'EUR',
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            userPurchasesProvider.overrideWith((ref) async => ['id-paid']),
+          ],
+          child: MaterialApp(
+            home: InvestigationDetailScreen(investigation: inv),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Démarrer l\'enquête'), findsOneWidget);
+      expect(find.textContaining('Acheter'), findsNothing);
+      expect(find.text('Démarrer l\'enquête (après achat)'), findsNothing);
     },
   );
 }
