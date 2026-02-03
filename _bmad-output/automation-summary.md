@@ -1,7 +1,7 @@
-# Résumé d'automatisation – City Detectives (Stories 1.2, 2.1, 2.2, 3.1, 3.2, 3.3)
+# Résumé d'automatisation – City Detectives (Stories 1.2, 2.1, 2.2, 3.1, 3.2, 3.3, 4.1)
 
-**Date :** 2026-02-02  
-**Stories couvertes :** 1.2 (Création de compte), 2.1 (Parcourir et consulter les enquêtes), 2.2 (Sélection enquête, gratuit/payant), 3.1 (Démarrer enquête et navigation énigmes), 3.2 (Progression, carte interactive et position), **3.3 (Pause, reprise, abandon, sauvegarde)**  
+**Date :** 2026-02-03  
+**Stories couvertes :** 1.2 (Création de compte), 2.1 (Parcourir et consulter les enquêtes), 2.2 (Sélection enquête, gratuit/payant), 3.1 (Démarrer enquête et navigation énigmes), 3.2 (Progression, carte interactive et position), 3.3 (Pause, reprise, abandon, sauvegarde), **4.1 (Énigmes photo et géolocalisation)**  
 **Mode :** Standalone / Auto-discover  
 **Cible de couverture :** critical-paths  
 
@@ -11,7 +11,7 @@
 
 - **Stack :** Flutter (app mobile) + Rust (API GraphQL). Pas de Playwright/Cypress (Node/TS).
 - **Frameworks de test :** Flutter (widget tests, `flutter test`) ; Rust (`cargo test`, tests d’intégration API, tests in-process GraphQL).
-- **Artéfacts BMad :** Stories 1.2, 2.1, 2.2, 3.1, 3.2 et 3.3 ; workflow testarch-automate en mode autonome.
+- **Artéfacts BMad :** Stories 1.2, 2.1, 2.2, 3.1, 3.2, 3.3 et 4.1 ; workflow testarch-automate en mode autonome.
 
 ---
 
@@ -24,6 +24,7 @@
 | `src/api/graphql.rs` (mod tests) | In-process | `cargo test` | `list_investigations_in_process_returns_array` (2.1) ; `investigation_by_id_returns_investigation_with_enigmas` (3.1) – query investigation(id) + énigmes ordonnées, exécutable en CI. |
 | `tests/api/auth_test.rs` | Intégration HTTP | `--ignored` (serveur 8080) | 4 tests : register JWT, email dupliqué, email invalide, mot de passe court. |
 | `tests/api/investigations_test.rs` | Intégration HTTP | `--ignored` (serveur 8080) | 2 tests : listInvestigations retourne un tableau ; items ont les champs requis. |
+| `tests/api/enigmas_test.rs` | In-process GraphQL | `cargo test` | **Story 4.1** – 4 tests : validateEnigmaResponse (géoloc valide/invalide, photo valide/invalide) ; auth Bearer requise (register puis token). |
 
 **Rust – Unitaires (exécutés par défaut)**
 
@@ -49,8 +50,10 @@
 | `widget_test.dart` | App build, WelcomeScreen. |
 | `features/onboarding/screens/welcome_screen_test.dart` | **Story 1.1/1.3** – WelcomeScreen : titre + Continuer ; tap → register ; Semantics ; **token + onboarding non fait → redirect onboarding** ; **token + onboarding fait → redirect home**. 5 tests. |
 | `features/onboarding/providers/onboarding_provider_test.dart` | **Story 1.3** – TU OnboardingNotifier avec stockage injecté (FakeOnboardingStorage) : build() false si clé absente / "false", true si "true" ; markCompleted() écrit et met à jour state ; invalidation puis re-read. 5 tests. |
+| `features/enigma/types/photo/photo_enigma_widget_test.dart` | **Story 4.1** – Widget énigme photo : titre, bouton « Prendre une photo », consigne ; client GraphQL mocké. |
+| `features/enigma/types/geolocation/geolocation_enigma_widget_test.dart` | **Story 4.1** – Widget énigme géolocalisation : titre, bouton « Valider ma position », consigne ; GeolocationService + client GraphQL mockés. |
 
-- **Total Flutter :** 76 tests (dont Story 1.1/1.3 : welcome_screen 5 tests, onboarding_screen 4 tests, **onboarding_provider 5 TU** ; Story 3.3 : 6 TU repository + widgets).
+- **Total Flutter :** 78 tests (dont Story 4.1 : photo_enigma_widget 1 test, geolocation_enigma_widget 1 test).
 - **Exécution :** `cd city_detectives && flutter test`.
 
 ---
@@ -64,9 +67,10 @@
 | In-process Rust | `graphql.rs` (tests) | – | 2 | – | listInvestigations (CI) ; investigation(id) + énigmes (3.1, CI) |
 | Unit Rust | `user.rs` | – | – | 3 | Validation RegisterInput |
 | Unit Rust | `auth_service.rs` | – | – | 2 | JWT / validation token |
-| Widget Flutter | register, onboarding, investigation_list, detail, placeholder, **play** (3.1, 3.2, 3.3), **map_sheet** (3.2), **progress_repository** (3.3), price_chip, models, widget | – | 48 | – | Écrans 1.2, 1.3, 2.1, 2.2, **3.1** (enquête en cours), **3.2** (carte + position), **3.3** (pause/reprise/sauvegarde) |
+| Widget Flutter | register, onboarding, investigation_list, detail, placeholder, **play** (3.1, 3.2, 3.3), **map_sheet** (3.2), **progress_repository** (3.3), price_chip, models, widget, **photo_enigma**, **geolocation_enigma** (4.1) | – | 50 | – | Écrans 1.2, 1.3, 2.1, 2.2, **3.1** (enquête en cours), **3.2** (carte + position), **3.3** (pause/reprise/sauvegarde), **4.1** (énigmes photo/géo). |
+| In-process Rust | `enigmas_test.rs` | – | 4 | – | **Story 4.1** – validateEnigmaResponse (géoloc/photo, auth requise). |
 
-- **Résumé :** 7 tests API/in-process Rust (exécutables en CI), 5 tests unitaires Rust, 48 tests widget/unit Flutter.
+- **Résumé :** 11 tests API/in-process Rust (exécutables en CI dont 4 énigmes), 5 tests unitaires Rust, 78 tests widget/unit Flutter.
 - **Doublons évités :** Pas d’E2E pour 1.2/2.1/2.2/3.x ; logique métier couverte en unitaire + API ; widget couvre UX critique.
 
 ---
@@ -104,10 +108,16 @@
    - ✅ Flutter : `InvestigationListScreen` – section « Enquêtes en cours » quand progression existe, tap → reprise – 1 test widget.
    - Pas de tests API Rust pour 3.3 (persistance locale Hive uniquement).
 
-7. **E2E**
+7. **Story 4.1 (énigmes photo et géolocalisation)**
+   - ✅ **Rust :** `tests/api/enigmas_test.rs` – 4 tests in-process : validateEnigmaResponse (géoloc dans tolérance / hors tolérance, photo fournie / non fournie) ; auth Bearer (register puis token).
+   - ✅ **Flutter :** `photo_enigma_widget_test.dart` – titre, bouton « Prendre une photo », consigne (client mocké).
+   - ✅ **Flutter :** `geolocation_enigma_widget_test.dart` – titre, bouton « Valider ma position », consigne (GeolocationService + client mockés).
+   - ⚠️ Optionnel (LOW code review) : test widget « fallback galerie » si permission caméra refusée.
+
+8. **E2E**
    - Aucun test E2E (Flutter `integration_test` ou scénario réel API + app). À prévoir si une story le demande (ex. parcours complet inscription → liste enquêtes).
 
-8. **CI**
+9. **CI**
    - Rust : `cargo test` exécute unitaires + test in-process GraphQL ; tests `#[ignore]` à lancer avec serveur sur 8080.
    - Flutter : `flutter test` à exécuter en CI ; environnement SDK à configurer.
 
@@ -187,6 +197,11 @@ flutter test
 - **onboarding_provider.dart** : refactor – stockage onboarding injectable via `OnboardingStorage` et `onboardingStorageProvider` (production = FlutterSecureStorage via adaptateur).
 - **onboarding_provider_test.dart** : 5 TU – OnboardingNotifier avec FakeOnboardingStorage : build() selon valeur stockée ; markCompleted() écrit et met state à true ; invalidation puis re-read.
 
+**2026-02-03 – Story 4.1 (énigmes photo et géolocalisation)**
+- **city-detectives-api/tests/api/enigmas_test.rs** : 4 tests in-process – validateEnigmaResponse (géoloc valide/invalide, photo valide/invalide) ; auth Bearer (register puis token).
+- **city_detectives/test/features/enigma/types/photo/photo_enigma_widget_test.dart** : 1 test widget – titre, bouton « Prendre une photo », consigne (client GraphQL mocké).
+- **city_detectives/test/features/enigma/types/geolocation/geolocation_enigma_widget_test.dart** : 1 test widget – titre, bouton « Valider ma position », consigne (GeolocationService + client mockés).
+
 ---
 
 ## Definition of Done (workflow testarch-automate)
@@ -202,6 +217,7 @@ flutter test
 - [x] Résumé sauvegardé dans `_bmad-output/automation-summary.md`.
 - [x] **2026-02-02 testarch-automate** : WelcomeScreen – 3 tests widget (contenu FR1, navigation Continuer → register, Semantics).
 - [x] **2026-02-02 étapes 1 et 2** : WelcomeScreen – 2 tests redirect (token + onboarding non fait → onboarding ; token + onboarding fait → home). OnboardingNotifier – refactor stockage injectable (OnboardingStorage) + 5 TU avec FakeOnboardingStorage.
+- [x] **2026-02-03 testarch-automate** : Story 4.1 documentée – enigmas_test.rs (4 tests in-process), photo_enigma_widget_test.dart, geolocation_enigma_widget_test.dart ; inventaire et plan de couverture mis à jour.
 
 ---
 
@@ -228,6 +244,9 @@ flutter test
 | `city_detectives/test/features/onboarding/providers/onboarding_provider_test.dart` | TU OnboardingNotifier (1.3) avec stockage injecté. |
 | `city_detectives/lib/features/onboarding/providers/onboarding_storage.dart` | Interface OnboardingStorage pour injection (prod + test). |
 | `city_detectives/test/features/investigation/models/investigation_test.dart` | TU `Investigation.fromJson`. |
+| `city_detectives/test/features/enigma/types/photo/photo_enigma_widget_test.dart` | **Story 4.1** – Widget énigme photo. |
+| `city_detectives/test/features/enigma/types/geolocation/geolocation_enigma_widget_test.dart` | **Story 4.1** – Widget énigme géolocalisation. |
+| `city-detectives-api/tests/api/enigmas_test.rs` | **Story 4.1** – Intégration validateEnigmaResponse (in-process). |
 | `city_detectives/integration_test/app_test.dart` | E2E welcome → register, retour. |
 
 ---
@@ -257,7 +276,17 @@ flutter test
 4. Si besoin : mocks API pour E2E « onboarding → liste enquêtes » (inscription réussie puis navigation).
 5. Optionnel (LOW) : test widget pour cas « enquête introuvable » (data == null) ; Semantics sur boutons Retour des états erreur/introuvable (écran play).
 6. Optionnel : test widget carte avec centerLat/centerLng non null (centre enquête depuis backend) ; TU GeolocatorServiceImpl (mock suffit pour les tests widget).
+7. Optionnel (LOW code review 4.1) : test widget « fallback galerie » si permission caméra refusée (photo énigme).
 
 ---
 
-*Workflow : `_bmad/bmm/workflows/testarch/automate` (testarch-automate). Dernière mise à jour : 2026-02-02 (testarch-automate Standalone – welcome_screen_test).*
+---
+
+## Résultats d'exécution (2026-02-03)
+
+- **Rust** (`cargo test`) : 11 tests passés (7 unit + 4 enigmas in-process) ; auth_test et investigations_test ignorés (serveur 8080).
+- **Flutter** (`flutter test`) : 78 tests passés. Des `ClientException` (tile.openstreetmap.org 400) peuvent apparaître en log sans faire échouer les tests.
+
+---
+
+*Workflow : `_bmad/bmm/workflows/testarch/automate` (testarch-automate). Dernière mise à jour : 2026-02-03 (Story 4.1 – énigmes photo/géolocalisation).*

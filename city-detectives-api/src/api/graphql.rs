@@ -1,4 +1,4 @@
-//! Schéma GraphQL (Story 1.2, 2.1) – register, me, listInvestigations.
+//! Schéma GraphQL (Story 1.2, 2.1, 4.1) – register, me, listInvestigations, validateEnigmaResponse.
 
 use async_graphql::*;
 use axum::extract::State;
@@ -9,8 +9,10 @@ use serde::Deserialize;
 use std::sync::Arc;
 
 use crate::api::middleware::auth::{extract_bearer, BearerToken};
+use crate::models::enigma::{ValidateEnigmaPayload, ValidateEnigmaResult};
 use crate::models::user::RegisterInput;
 use crate::services::auth_service::AuthService;
+use crate::services::enigma_service::EnigmaService;
 use crate::services::investigation_service::InvestigationService;
 use uuid::Uuid;
 
@@ -19,10 +21,12 @@ pub type AppSchema = Schema<QueryRoot, MutationRoot, EmptySubscription>;
 pub fn create_schema(
     auth_service: Arc<AuthService>,
     investigation_service: Arc<InvestigationService>,
+    enigma_service: Arc<EnigmaService>,
 ) -> AppSchema {
     Schema::build(QueryRoot, MutationRoot, EmptySubscription)
         .data(auth_service)
         .data(investigation_service)
+        .data(enigma_service)
         .finish()
 }
 
@@ -79,6 +83,28 @@ impl MutationRoot {
         let input = RegisterInput { email, password };
         auth.register(input).map_err(Error::from)
     }
+
+    /// Validation d'une réponse d'énigme (Story 4.1) – géo (userLat/userLng) ou photo (photoUrl/photoBase64).
+    /// Requiert authentification (Authorization: Bearer <token>).
+    async fn validate_enigma_response(
+        &self,
+        ctx: &Context<'_>,
+        enigma_id: String,
+        payload: ValidateEnigmaPayload,
+    ) -> Result<ValidateEnigmaResult, Error> {
+        let auth = ctx.data::<Arc<AuthService>>()?;
+        let token = ctx.data::<BearerToken>().ok().and_then(|t| t.0.clone());
+        let token = token
+            .as_deref()
+            .ok_or_else(|| Error::new("Authentification requise"))?;
+        auth.validate_token(token).map_err(Error::from)?;
+
+        let enigma_svc = ctx.data::<Arc<EnigmaService>>()?;
+        let id = Uuid::parse_str(&enigma_id).map_err(|_| Error::new("ID énigme invalide"))?;
+        enigma_svc
+            .validate_response(id, payload)
+            .map_err(Error::from)
+    }
 }
 
 #[derive(Deserialize)]
@@ -112,14 +138,16 @@ pub async fn graphql_handler(
 mod tests {
     use super::*;
     use crate::services::auth_service::AuthService;
+    use crate::services::enigma_service::EnigmaService;
     use crate::services::investigation_service::InvestigationService;
 
     /// Test listInvestigations sans serveur HTTP – exécutable en CI.
     #[tokio::test]
     async fn list_investigations_in_process_returns_array() {
         let auth = Arc::new(AuthService::default());
-        let inv_svc = Arc::new(InvestigationService::new());
-        let schema = create_schema(auth, inv_svc);
+        let enigma_svc = Arc::new(EnigmaService::new());
+        let inv_svc = Arc::new(InvestigationService::new(enigma_svc.clone()));
+        let schema = create_schema(auth, inv_svc, enigma_svc);
         let request = async_graphql::Request::new(
             r#"query { listInvestigations { id titre description durationEstimate difficulte isFree } }"#,
         );
@@ -144,8 +172,9 @@ mod tests {
     #[tokio::test]
     async fn investigation_by_id_returns_investigation_with_enigmas() {
         let auth = Arc::new(AuthService::default());
-        let inv_svc = Arc::new(InvestigationService::new());
-        let schema = create_schema(auth, inv_svc);
+        let enigma_svc = Arc::new(EnigmaService::new());
+        let inv_svc = Arc::new(InvestigationService::new(enigma_svc.clone()));
+        let schema = create_schema(auth, inv_svc, enigma_svc);
         let id = "11111111-1111-1111-1111-111111111111";
         let request = async_graphql::Request::new(format!(
             r#"query {{ investigation(id: "{}") {{ investigation {{ id titre }} enigmas {{ id orderIndex type titre }} }} }}"#,

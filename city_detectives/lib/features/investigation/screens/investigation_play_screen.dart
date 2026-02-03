@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:city_detectives/core/services/investigation_error_handler.dart';
+import 'package:city_detectives/features/enigma/types/geolocation/geolocation_enigma_widget.dart';
+import 'package:city_detectives/features/enigma/types/photo/photo_enigma_widget.dart';
 import 'package:city_detectives/features/investigation/models/enigma.dart';
 import 'package:city_detectives/features/investigation/models/investigation_progress.dart';
 import 'package:city_detectives/features/investigation/models/investigation_with_enigmas.dart';
@@ -255,7 +257,29 @@ class _InvestigationPlayScreenState
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(16),
-                    child: _EnigmaCard(enigma: currentEnigma!),
+                    child: _EnigmaContent(
+                      enigma: currentEnigma!,
+                      onValidated: () {
+                        ref
+                            .read(
+                              completedEnigmaIdsProvider(
+                                investigationId,
+                              ).notifier,
+                            )
+                            .markCompleted(currentEnigma.id);
+                        if (safeIndex < total - 1) {
+                          ref
+                                  .read(
+                                    currentEnigmaIndexProvider(
+                                      investigationId,
+                                    ).notifier,
+                                  )
+                                  .state =
+                              safeIndex + 1;
+                        }
+                        _saveProgress(ref, investigationId);
+                      },
+                    ),
                   ),
                 ),
                 _NavigationBar(
@@ -400,6 +424,29 @@ class _EnigmaStepper extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// Contenu de l'énigme selon le type (Story 4.1 – Task 4.1) : photo, géolocalisation ou placeholder.
+class _EnigmaContent extends StatelessWidget {
+  const _EnigmaContent({required this.enigma, required this.onValidated});
+
+  final Enigma enigma;
+  final VoidCallback onValidated;
+
+  @override
+  Widget build(BuildContext context) {
+    switch (enigma.type) {
+      case 'photo':
+        return PhotoEnigmaWidget(enigma: enigma, onValidated: onValidated);
+      case 'geolocation':
+        return GeolocationEnigmaWidget(
+          enigma: enigma,
+          onValidated: onValidated,
+        );
+      default:
+        return _EnigmaCard(enigma: enigma);
+    }
   }
 }
 
