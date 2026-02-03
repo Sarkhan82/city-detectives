@@ -118,3 +118,29 @@ pub struct ValidateEnigmaResult {
     pub validated: bool,
     pub message: String,
 }
+
+// --- Story 4.3 : aide contextuelle et explications (FR30, FR31, FR32) ---
+
+/// Indices progressifs par énigme (suggestion → indice → solution). Exposé en GraphQL.
+#[derive(Debug, Clone, Serialize, Deserialize, SimpleObject)]
+#[graphql(name = "EnigmaHints")]
+pub struct EnigmaHints {
+    /// Niveau 1 : suggestion légère.
+    pub suggestion: String,
+    /// Niveau 2 : indice plus direct.
+    pub hint: String,
+    /// Niveau 3 : solution.
+    pub solution: String,
+}
+
+/// Explications historiques et contenu éducatif par énigme (FR31, FR32, FR36–FR38). Exposé en GraphQL.
+#[derive(Debug, Clone, Serialize, Deserialize, SimpleObject)]
+#[graphql(name = "EnigmaExplanation")]
+pub struct EnigmaExplanation {
+    /// Texte historique sur le lieu ou le thème de l'énigme.
+    #[graphql(name = "historicalExplanation")]
+    pub historical_explanation: String,
+    /// Contenu éducatif sur le lieu ou le thème.
+    #[graphql(name = "educationalContent")]
+    pub educational_content: String,
+}

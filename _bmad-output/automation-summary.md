@@ -1,7 +1,7 @@
-# Résumé d'automatisation – City Detectives (Stories 1.2, 2.1, 2.2, 3.1, 3.2, 3.3, 4.1, 4.2)
+# Résumé d'automatisation – City Detectives (Stories 1.2, 2.1, 2.2, 3.1, 3.2, 3.3, 4.1, 4.2, 4.3)
 
 **Date :** 2026-02-03  
-**Stories couvertes :** 1.2 (Création de compte), 2.1 (Parcourir et consulter les enquêtes), 2.2 (Sélection enquête, gratuit/payant), 3.1 (Démarrer enquête et navigation énigmes), 3.2 (Progression, carte interactive et position), 3.3 (Pause, reprise, abandon, sauvegarde), 4.1 (Énigmes photo et géolocalisation), **4.2 (Énigmes mots et puzzle)**  
+**Stories couvertes :** 1.2 (Création de compte), 2.1 (Parcourir et consulter les enquêtes), 2.2 (Sélection enquête, gratuit/payant), 3.1 (Démarrer enquête et navigation énigmes), 3.2 (Progression, carte interactive et position), 3.3 (Pause, reprise, abandon, sauvegarde), 4.1 (Énigmes photo et géolocalisation), 4.2 (Énigmes mots et puzzle), **4.3 (Aide contextuelle et explications historiques)**  
 **Mode :** Standalone / Auto-discover  
 **Cible de couverture :** critical-paths  
 
@@ -24,7 +24,7 @@
 | `src/api/graphql.rs` (mod tests) | In-process | `cargo test` | `list_investigations_in_process_returns_array` (2.1) ; `investigation_by_id_returns_investigation_with_enigmas` (3.1) – query investigation(id) + énigmes ordonnées, exécutable en CI. |
 | `tests/api/auth_test.rs` | Intégration HTTP | `--ignored` (serveur 8080) | 4 tests : register JWT, email dupliqué, email invalide, mot de passe court. |
 | `tests/api/investigations_test.rs` | Intégration HTTP | `--ignored` (serveur 8080) | 2 tests : listInvestigations retourne un tableau ; items ont les champs requis. |
-| `tests/api/enigmas_test.rs` | In-process GraphQL | `cargo test` | **Story 4.1** – 4 tests : validateEnigmaResponse (géoloc valide/invalide, photo valide/invalide). **Story 4.2** – 4 tests : validateEnigmaResponse (words valide/invalide, puzzle valide/invalide). Auth Bearer requise (register puis token). **Total : 8 tests.** |
+| `tests/api/enigmas_test.rs` | In-process GraphQL | `cargo test` | **Story 4.1** – 4 tests : validateEnigmaResponse (géoloc valide/invalide, photo valide/invalide). **Story 4.2** – 4 tests : validateEnigmaResponse (words valide/invalide, puzzle valide/invalide). **Story 4.3** – 3 tests : getEnigmaHints (nominal), getEnigmaExplanation (nominal), getEnigmaHints (ID inconnu → erreur). Auth Bearer requise. **Total : 11 tests.** |
 
 **Rust – Unitaires (exécutés par défaut)**
 
@@ -54,8 +54,10 @@
 | `features/enigma/types/geolocation/geolocation_enigma_widget_test.dart` | **Story 4.1** – Widget énigme géolocalisation : titre, bouton « Valider ma position », consigne ; GeolocationService + client GraphQL mockés. |
 | `features/enigma/types/words/words_enigma_widget_test.dart` | **Story 4.2** – Widget énigme mots : titre, consigne, champ texte, bouton « Valider ma réponse » ; saisie + envoi + affichage résultat (succès/erreur) ; repository mocké. 3 tests. |
 | `features/enigma/types/puzzle/puzzle_enigma_widget_test.dart` | **Story 4.2** – Widget énigme puzzle : titre, consigne, champ code, bouton « Valider le code » ; saisie + envoi + affichage résultat (succès/erreur) ; repository mocké. 3 tests. |
+| `features/enigma/widgets/enigma_help_button_test.dart` | **Story 4.3** – Bouton Aide : icône ; ouverture bottom sheet avec panneau indices ; flux complet suggestion → indice → solution (2 taps « Voir l'indice suivant », puis Solution + Fermer). 3 tests. |
+| `features/enigma/screens/enigma_explanation_screen_test.dart` | **Story 4.3** – Écran Explications : chargement puis contenu (Contexte historique, Pour en savoir plus) ; bouton Continuer appelle onContinue. 2 tests. |
 
-- **Total Flutter :** 84 tests (dont Story 4.1 : photo 1, geolocation 1 ; Story 4.2 : words 3, puzzle 3).
+- **Total Flutter :** 89+ tests (dont Story 4.3 : help button 3, explanation screen 2).
 - **Exécution :** `cd city_detectives && flutter test`.
 
 ---
@@ -70,9 +72,9 @@
 | Unit Rust | `user.rs` | – | – | 3 | Validation RegisterInput |
 | Unit Rust | `auth_service.rs` | – | – | 2 | JWT / validation token |
 | Widget Flutter | register, onboarding, investigation_list, detail, placeholder, **play** (3.1, 3.2, 3.3), **map_sheet** (3.2), **progress_repository** (3.3), price_chip, models, widget, **photo_enigma**, **geolocation_enigma** (4.1) | – | 50 | – | Écrans 1.2, 1.3, 2.1, 2.2, **3.1** (enquête en cours), **3.2** (carte + position), **3.3** (pause/reprise/sauvegarde), **4.1** (énigmes photo/géo). |
-| In-process Rust | `enigmas_test.rs` | – | 8 | – | **Story 4.1** – validateEnigmaResponse (géoloc/photo). **Story 4.2** – validateEnigmaResponse (words/puzzle). Auth requise. |
+| In-process Rust | `enigmas_test.rs` | – | 11 | – | **Story 4.1** – validateEnigmaResponse (géoloc/photo). **Story 4.2** – validateEnigmaResponse (words/puzzle). **Story 4.3** – getEnigmaHints (nominal + ID inconnu), getEnigmaExplanation (nominal). Auth requise. |
 
-- **Résumé :** 15 tests API/in-process Rust (7 unit + 8 énigmes in-process, exécutables en CI), 78+ tests widget/unit Flutter (84 au total dont 6 pour énigmes words/puzzle).
+- **Résumé :** 18 tests API/in-process Rust (7 unit + 11 énigmes in-process, exécutables en CI), 89+ tests widget/unit Flutter (dont Story 4.3 : bouton Aide 3, écran Explications 2).
 - **Doublons évités :** Pas d’E2E pour 1.2/2.1/2.2/3.x ; logique métier couverte en unitaire + API ; widget couvre UX critique.
 
 ---
@@ -215,6 +217,14 @@ flutter test
 - **city_detectives/test/features/enigma/types/words/words_enigma_widget_test.dart** : 3 tests widget – affichage titre/consigne/bouton ; soumission → message succès ; soumission → message erreur (FakeWordsRepository).
 - **city_detectives/test/features/enigma/types/puzzle/puzzle_enigma_widget_test.dart** : 3 tests widget – affichage titre/consigne/bouton ; soumission → message succès ; soumission → message erreur (FakePuzzleRepository).
 
+**2026-02-03 – Story 4.3 (aide contextuelle et explications historiques)**
+- **city-detectives-api/tests/api/enigmas_test.rs** : 3 tests in-process – get_enigma_hints_returns_suggestion_hint_solution, get_enigma_explanation_returns_historical_and_educational, get_enigma_hints_returns_error_for_unknown_enigma (ID inconnu → erreur GraphQL avec message « Énigme introuvable »).
+- **city_detectives/test/features/enigma/widgets/enigma_help_button_test.dart** : 3 tests widget – icône Aide ; ouverture bottom sheet avec Indice 1 + « Voir l'indice suivant » ; flux complet suggestion → indice 2 → solution + bouton Fermer.
+- **city_detectives/test/features/enigma/screens/enigma_explanation_screen_test.dart** : 2 tests widget – affichage Contexte historique / Pour en savoir plus après chargement ; tap Continuer appelle onContinue.
+
+**2026-02-03 – testarch-automate (expansion couverture)**
+- **city-detectives-api/tests/api/enigmas_test.rs** : 1 test ajouté – get_enigma_hints_returns_error_for_unknown_enigma (couverture cas d’erreur ID inconnu pour Story 4.3).
+
 ---
 
 ## Definition of Done (workflow testarch-automate)
@@ -232,6 +242,7 @@ flutter test
 - [x] **2026-02-02 étapes 1 et 2** : WelcomeScreen – 2 tests redirect (token + onboarding non fait → onboarding ; token + onboarding fait → home). OnboardingNotifier – refactor stockage injectable (OnboardingStorage) + 5 TU avec FakeOnboardingStorage.
 - [x] **2026-02-03 testarch-automate** : Story 4.1 documentée – enigmas_test.rs (4 tests in-process), photo_enigma_widget_test.dart, geolocation_enigma_widget_test.dart ; inventaire et plan de couverture mis à jour.
 - [x] **2026-02-03 testarch-automate** : Story 4.2 documentée – enigmas_test.rs (8 tests au total : +4 words/puzzle), words_enigma_widget_test.dart (3 tests), puzzle_enigma_widget_test.dart (3 tests) ; inventaire et gaps mis à jour.
+- [x] **2026-02-03 testarch-automate** : Story 4.3 documentée – enigmas_test.rs (11 tests : +3 getEnigmaHints/getEnigmaExplanation dont 1 cas erreur ID inconnu), enigma_help_button_test.dart (3 tests), enigma_explanation_screen_test.dart (2 tests) ; inventaire et plan de couverture mis à jour.
 
 ---
 
@@ -262,7 +273,9 @@ flutter test
 | `city_detectives/test/features/enigma/types/geolocation/geolocation_enigma_widget_test.dart` | **Story 4.1** – Widget énigme géolocalisation. |
 | `city_detectives/test/features/enigma/types/words/words_enigma_widget_test.dart` | **Story 4.2** – Widget énigme mots (3 tests). |
 | `city_detectives/test/features/enigma/types/puzzle/puzzle_enigma_widget_test.dart` | **Story 4.2** – Widget énigme puzzle (3 tests). |
-| `city-detectives-api/tests/api/enigmas_test.rs` | **Story 4.1 + 4.2** – Intégration validateEnigmaResponse (8 tests in-process). |
+| `city-detectives-api/tests/api/enigmas_test.rs` | **Story 4.1 + 4.2 + 4.3** – Intégration validateEnigmaResponse (8 tests), getEnigmaHints/getEnigmaExplanation (3 tests dont 1 erreur ID inconnu). |
+| `city_detectives/test/features/enigma/widgets/enigma_help_button_test.dart` | **Story 4.3** – Bouton Aide + panneau indices (3 tests). |
+| `city_detectives/test/features/enigma/screens/enigma_explanation_screen_test.dart` | **Story 4.3** – Écran Explications (2 tests). |
 | `city_detectives/integration_test/app_test.dart` | E2E welcome → register, retour. |
 
 ---
@@ -300,9 +313,9 @@ flutter test
 
 ## Résultats d'exécution (2026-02-03)
 
-- **Rust** (`cargo test`) : 15 tests passés (7 unit + 8 enigmas in-process) ; auth_test et investigations_test ignorés (serveur 8080).
-- **Flutter** (`flutter test`) : 84 tests passés. Des `ClientException` (tile.openstreetmap.org 400) peuvent apparaître en log sans faire échouer les tests.
+- **Rust** (`cargo test`) : 18 tests passés (7 unit + 11 enigmas in-process dont 3 pour Story 4.3) ; auth_test et investigations_test ignorés (serveur 8080).
+- **Flutter** (`flutter test`) : 89+ tests passés (dont 5 pour Story 4.3 : help button 3, explanation screen 2). Des `ClientException` (tile.openstreetmap.org 400) peuvent apparaître en log sans faire échouer les tests.
 
 ---
 
-*Workflow : `_bmad/bmm/workflows/testarch/automate` (testarch-automate). Dernière mise à jour : 2026-02-03 (Story 4.2 – énigmes mots et puzzle).*
+*Workflow : `_bmad/bmm/workflows/testarch/automate` (testarch-automate). Dernière mise à jour : 2026-02-03 (Story 4.3 – aide contextuelle et explications ; test Rust ID inconnu).*
