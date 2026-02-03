@@ -9,6 +9,7 @@ use city_detectives_api::services::enigma_service::EnigmaService;
 use city_detectives_api::services::gamification_service::GamificationService;
 use city_detectives_api::services::investigation_service::InvestigationService;
 use city_detectives_api::services::lore_service::LoreService;
+use city_detectives_api::services::payment_service::PaymentService;
 use std::sync::Arc;
 
 fn make_schema() -> city_detectives_api::api::graphql::AppSchema {
@@ -17,7 +18,15 @@ fn make_schema() -> city_detectives_api::api::graphql::AppSchema {
     let inv_svc = Arc::new(InvestigationService::new(enigma_svc.clone()));
     let lore_svc = Arc::new(LoreService::new());
     let gamification_svc = Arc::new(GamificationService::new());
-    create_schema(auth, inv_svc, enigma_svc, lore_svc, gamification_svc)
+    let payment_svc = Arc::new(PaymentService::new());
+    create_schema(
+        auth,
+        inv_svc,
+        enigma_svc,
+        lore_svc,
+        gamification_svc,
+        payment_svc,
+    )
 }
 
 async fn get_test_token(schema: &city_detectives_api::api::graphql::AppSchema) -> String {

@@ -7,6 +7,7 @@ import 'package:city_detectives/features/investigation/models/investigation.dart
 import 'package:city_detectives/features/investigation/screens/investigation_detail_screen.dart';
 import 'package:city_detectives/features/investigation/screens/investigation_list_screen.dart';
 import 'package:city_detectives/features/investigation/screens/investigation_play_screen.dart';
+import 'package:city_detectives/features/investigation/screens/purchase_simulation_screen.dart';
 import 'package:city_detectives/features/onboarding/screens/onboarding_screen.dart';
 import 'package:city_detectives/features/onboarding/screens/register_screen.dart';
 import 'package:city_detectives/features/onboarding/screens/welcome_screen.dart';
@@ -30,6 +31,9 @@ class AppRouter {
   /// Démarrer une enquête (Story 2.2 placeholder ; Story 3.1 = écran de jeu).
   static const String investigationStart = '/investigations/:id/start';
 
+  /// Simulation achat (Story 6.2 – FR53).
+  static const String investigationPurchase = '/investigations/:id/purchase';
+
   /// Écran Profil / Progression (Story 5.1, FR39, FR40, FR41).
   static const String progression = '/progression';
 
@@ -42,6 +46,8 @@ class AppRouter {
   static String investigationDetailPath(String id) => '/investigations/$id';
   static String investigationStartPath(String id) =>
       '/investigations/$id/start';
+  static String investigationPurchasePath(String id) =>
+      '/investigations/$id/purchase';
 
   static GoRouter createRouter() {
     return GoRouter(
@@ -72,6 +78,20 @@ class AppRouter {
               );
             }
             return InvestigationDetailScreen(investigation: inv);
+          },
+        ),
+        GoRoute(
+          path: investigationPurchase,
+          builder: (context, state) {
+            final extra = state.extra;
+            final inv = extra is Investigation ? extra : null;
+            if (inv == null) {
+              return Scaffold(
+                appBar: AppBar(title: const Text('Achat')),
+                body: const Center(child: Text('Enquête introuvable.')),
+              );
+            }
+            return PurchaseSimulationScreen(investigation: inv);
           },
         ),
         GoRoute(

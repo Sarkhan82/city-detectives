@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:city_detectives/core/router/app_router.dart';
 import 'package:city_detectives/features/investigation/models/investigation.dart';
 import 'package:city_detectives/features/investigation/providers/investigation_list_provider.dart';
+import 'package:city_detectives/features/investigation/providers/payment_provider.dart';
 import 'package:city_detectives/core/services/investigation_error_handler.dart';
 import 'package:city_detectives/features/investigation/repositories/investigation_progress_repository.dart';
 import 'package:city_detectives/shared/widgets/connectivity_status_indicator.dart';
@@ -42,12 +43,17 @@ class InvestigationListScreen extends ConsumerWidget {
         ),
         body: SafeArea(
           child: asyncList.when(
-            data: (list) => _InvestigationListWithInProgress(
-              list: list,
-              inProgressIds: ref
-                  .watch(investigationProgressRepositoryProvider)
-                  .getInProgressInvestigationIds(),
-            ),
+            data: (list) {
+              final purchasedIds =
+                  ref.watch(userPurchasesProvider).valueOrNull ?? [];
+              return _InvestigationListWithInProgress(
+                list: list,
+                inProgressIds: ref
+                    .watch(investigationProgressRepositoryProvider)
+                    .getInProgressInvestigationIds(),
+                purchasedIds: purchasedIds,
+              );
+            },
             loading: () => const Center(
               child: Padding(
                 padding: EdgeInsets.all(24),
@@ -92,15 +98,17 @@ class InvestigationListScreen extends ConsumerWidget {
   }
 }
 
-/// Liste avec section « Enquêtes en cours » en tête (Story 3.3).
+/// Liste avec section « Enquêtes en cours » en tête (Story 3.3, 6.2).
 class _InvestigationListWithInProgress extends StatelessWidget {
   const _InvestigationListWithInProgress({
     required this.list,
     required this.inProgressIds,
+    required this.purchasedIds,
   });
 
   final List<Investigation> list;
   final List<String> inProgressIds;
+  final List<String> purchasedIds;
 
   @override
   Widget build(BuildContext context) {
@@ -153,8 +161,11 @@ class _InvestigationListWithInProgress extends StatelessWidget {
           ...list.map(
             (inv) => _InvestigationCard(
               investigation: inv,
-              onTap: () =>
-                  context.push('/investigations/${inv.id}', extra: inv),
+              isPurchased: purchasedIds.contains(inv.id),
+              onTap: () => context.push(
+                AppRouter.investigationDetailPath(inv.id),
+                extra: inv,
+              ),
             ),
           ),
       ],
@@ -226,19 +237,26 @@ class _InProgressCard extends StatelessWidget {
   }
 }
 
-/// Carte enquête – design carnet de détective (Story 2.1 + 2.2).
-/// Affiche durée, difficulté, description, libellé Gratuit/Payant ; tap → détail (Story 2.2).
+/// Carte enquête – design carnet de détective (Story 2.1, 2.2, 6.2).
+/// Affiche Gratuit/Payant/Achetée ; tap → détail (Story 2.2, 4.1).
 class _InvestigationCard extends StatelessWidget {
-  const _InvestigationCard({required this.investigation, required this.onTap});
+  const _InvestigationCard({
+    required this.investigation,
+    required this.isPurchased,
+    required this.onTap,
+  });
 
   final Investigation investigation;
+  final bool isPurchased;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final inv = investigation;
-    final priceLabel = inv.isFree ? 'Gratuit' : 'Payant';
-    final priceText = inv.formattedPrice;
+    final priceLabel = inv.isFree
+        ? 'Gratuit'
+        : (isPurchased ? 'Achetée' : 'Payant');
+    final priceText = isPurchased ? null : inv.formattedPrice;
     final semanticsPrice = priceText != null ? ' Prix $priceText.' : '';
     return Semantics(
       label:
@@ -263,7 +281,21 @@ class _InvestigationCard extends StatelessWidget {
                             ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ),
-                    PriceChip(isFree: inv.isFree, priceLabel: priceText),
+                    isPurchased
+                        ? Semantics(
+                            label: 'Achetée',
+                            child: Chip(
+                              label: const Text('Achetée'),
+                              backgroundColor: Theme.of(context)
+                                  .colorScheme
+                                  .primaryContainer
+                                  .withValues(alpha: 0.6),
+                              padding: EdgeInsets.zero,
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
+                            ),
+                          )
+                        : PriceChip(isFree: inv.isFree, priceLabel: priceText),
                     if (priceText != null) ...[
                       const SizedBox(width: 8),
                       Semantics(
