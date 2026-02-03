@@ -297,7 +297,11 @@ async fn validate_words_invalid_when_wrong_answer() {
         "réponse incorrecte ne doit pas être validée"
     );
     assert!(
-        !result.get("message").and_then(|v| v.as_str()).unwrap().is_empty(),
+        !result
+            .get("message")
+            .and_then(|v| v.as_str())
+            .unwrap()
+            .is_empty(),
         "message explicite attendu (FR29)"
     );
 }

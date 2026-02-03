@@ -282,10 +282,7 @@ impl EnigmaService {
         def: &EnigmaDef,
         payload: ValidateEnigmaPayload,
     ) -> Result<ValidateEnigmaResult, String> {
-        let expected = def
-            .expected_text_answer
-            .as_deref()
-            .unwrap_or("");
+        let expected = def.expected_text_answer.as_deref().unwrap_or("");
         words::validate(expected, payload.text_answer)
     }
 
@@ -294,10 +291,7 @@ impl EnigmaService {
         def: &EnigmaDef,
         payload: ValidateEnigmaPayload,
     ) -> Result<ValidateEnigmaResult, String> {
-        let expected = def
-            .expected_code_answer
-            .as_deref()
-            .unwrap_or("");
+        let expected = def.expected_code_answer.as_deref().unwrap_or("");
         puzzle::validate(expected, payload.code_answer)
     }
 }
