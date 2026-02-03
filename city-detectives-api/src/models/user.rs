@@ -1,8 +1,17 @@
-//! Modèle User (Story 1.2) – email, password_hash.
+//! Modèle User (Story 1.2, 7.1) – email, password_hash, role (admin/user).
 
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use validator::Validate;
+
+/// Rôle utilisateur (Story 7.1 – FR61). Détermine l'accès au dashboard admin.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Role {
+    #[default]
+    User,
+    Admin,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct User {
@@ -11,6 +20,8 @@ pub struct User {
     #[serde(skip_serializing)]
     #[allow(dead_code)] // utilisé pour vérification mot de passe (login futur)
     pub password_hash: String,
+    /// Rôle pour autorisation (Story 7.1 – admin only pour dashboard).
+    pub role: Role,
 }
 
 #[derive(Debug, Clone, Deserialize, Validate)]
