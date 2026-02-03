@@ -87,4 +87,58 @@ class EnigmaValidationRepository {
     if (data == null) throw Exception('Réponse invalide');
     return ValidateEnigmaResult.fromJson(data);
   }
+
+  /// Valide une réponse énigme mots (Story 4.2 – FR25, FR28, FR29).
+  Future<ValidateEnigmaResult> validateWords({
+    required String enigmaId,
+    required String textAnswer,
+  }) async {
+    final result = await _client.mutate(
+      MutationOptions(
+        document: gql(_mutation),
+        variables: <String, dynamic>{
+          'enigmaId': enigmaId,
+          'payload': {'textAnswer': textAnswer},
+        },
+      ),
+    );
+    if (result.hasException) {
+      final msg = result.exception?.graphqlErrors.isNotEmpty == true
+          ? result.exception!.graphqlErrors.first.message
+          : result.exception?.linkException?.toString() ??
+                'Erreur de validation';
+      throw Exception(msg);
+    }
+    final data =
+        result.data?['validateEnigmaResponse'] as Map<String, dynamic>?;
+    if (data == null) throw Exception('Réponse invalide');
+    return ValidateEnigmaResult.fromJson(data);
+  }
+
+  /// Valide une réponse énigme puzzle (Story 4.2 – FR26, FR28, FR29).
+  Future<ValidateEnigmaResult> validatePuzzle({
+    required String enigmaId,
+    required String codeAnswer,
+  }) async {
+    final result = await _client.mutate(
+      MutationOptions(
+        document: gql(_mutation),
+        variables: <String, dynamic>{
+          'enigmaId': enigmaId,
+          'payload': {'codeAnswer': codeAnswer},
+        },
+      ),
+    );
+    if (result.hasException) {
+      final msg = result.exception?.graphqlErrors.isNotEmpty == true
+          ? result.exception!.graphqlErrors.first.message
+          : result.exception?.linkException?.toString() ??
+                'Erreur de validation';
+      throw Exception(msg);
+    }
+    final data =
+        result.data?['validateEnigmaResponse'] as Map<String, dynamic>?;
+    if (data == null) throw Exception('Réponse invalide');
+    return ValidateEnigmaResult.fromJson(data);
+  }
 }

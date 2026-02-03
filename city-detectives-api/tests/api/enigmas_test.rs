@@ -43,6 +43,18 @@ fn photo_enigma_id() -> String {
     id.to_string()
 }
 
+/// ID énigme mots enquête 1, ordre 1 (réponse attendue "paris" normalisée) – Story 4.2.
+fn words_enigma_id() -> String {
+    let id = EnigmaService::enigma_id_for(uuid::uuid!("11111111-1111-1111-1111-111111111111"), 1);
+    id.to_string()
+}
+
+/// ID énigme puzzle enquête 2, ordre 3 (code attendu "1234") – Story 4.2.
+fn puzzle_enigma_id() -> String {
+    let id = EnigmaService::enigma_id_for(uuid::uuid!("22222222-2222-2222-2222-222222222222"), 3);
+    id.to_string()
+}
+
 #[tokio::test]
 async fn validate_geolocation_valid_when_within_tolerance() {
     let schema = make_schema();
@@ -212,5 +224,152 @@ async fn validate_photo_invalid_when_no_photo() {
                 .unwrap()
                 .contains("Aucune"),
         "message explicite attendu (FR29)"
+    );
+}
+
+// --- Story 4.2 : validation énigmes mots et puzzle (FR25, FR26, FR28, FR29) ---
+
+#[tokio::test]
+async fn validate_words_valid_when_correct_answer() {
+    let schema = make_schema();
+    let token = get_test_token(&schema).await;
+    let enigma_id = words_enigma_id();
+    // Réponse attendue mock "paris" ; normalisation minuscules/accents/espaces
+    let request = Request::new(format!(
+        r#"
+        mutation {{
+            validateEnigmaResponse(
+                enigmaId: "{}",
+                payload: {{ textAnswer: "Paris" }}
+            ) {{
+                validated
+                message
+            }}
+        }}
+        "#,
+        enigma_id
+    ))
+    .data(BearerToken(Some(token)));
+    let res = schema.execute(request).await;
+    assert!(res.is_ok(), "errors: {:?}", res.errors);
+    let data = res.data.into_json().unwrap();
+    let result = data
+        .get("validateEnigmaResponse")
+        .and_then(|v| v.as_object())
+        .expect("validateEnigmaResponse object");
+    assert_eq!(
+        result.get("validated").and_then(|v| v.as_bool()),
+        Some(true),
+        "réponse correcte (normalisée) doit être validée"
+    );
+}
+
+#[tokio::test]
+async fn validate_words_invalid_when_wrong_answer() {
+    let schema = make_schema();
+    let token = get_test_token(&schema).await;
+    let enigma_id = words_enigma_id();
+    let request = Request::new(format!(
+        r#"
+        mutation {{
+            validateEnigmaResponse(
+                enigmaId: "{}",
+                payload: {{ textAnswer: "Lyon" }}
+            ) {{
+                validated
+                message
+            }}
+        }}
+        "#,
+        enigma_id
+    ))
+    .data(BearerToken(Some(token)));
+    let res = schema.execute(request).await;
+    assert!(res.is_ok(), "errors: {:?}", res.errors);
+    let data = res.data.into_json().unwrap();
+    let result = data
+        .get("validateEnigmaResponse")
+        .and_then(|v| v.as_object())
+        .expect("validateEnigmaResponse object");
+    assert_eq!(
+        result.get("validated").and_then(|v| v.as_bool()),
+        Some(false),
+        "réponse incorrecte ne doit pas être validée"
+    );
+    assert!(
+        !result
+            .get("message")
+            .and_then(|v| v.as_str())
+            .unwrap()
+            .is_empty(),
+        "message explicite attendu (FR29)"
+    );
+}
+
+#[tokio::test]
+async fn validate_puzzle_valid_when_correct_code() {
+    let schema = make_schema();
+    let token = get_test_token(&schema).await;
+    let enigma_id = puzzle_enigma_id();
+    let request = Request::new(format!(
+        r#"
+        mutation {{
+            validateEnigmaResponse(
+                enigmaId: "{}",
+                payload: {{ codeAnswer: "1234" }}
+            ) {{
+                validated
+                message
+            }}
+        }}
+        "#,
+        enigma_id
+    ))
+    .data(BearerToken(Some(token)));
+    let res = schema.execute(request).await;
+    assert!(res.is_ok(), "errors: {:?}", res.errors);
+    let data = res.data.into_json().unwrap();
+    let result = data
+        .get("validateEnigmaResponse")
+        .and_then(|v| v.as_object())
+        .expect("validateEnigmaResponse object");
+    assert_eq!(
+        result.get("validated").and_then(|v| v.as_bool()),
+        Some(true),
+        "code correct doit être validé"
+    );
+}
+
+#[tokio::test]
+async fn validate_puzzle_invalid_when_wrong_code() {
+    let schema = make_schema();
+    let token = get_test_token(&schema).await;
+    let enigma_id = puzzle_enigma_id();
+    let request = Request::new(format!(
+        r#"
+        mutation {{
+            validateEnigmaResponse(
+                enigmaId: "{}",
+                payload: {{ codeAnswer: "0000" }}
+            ) {{
+                validated
+                message
+            }}
+        }}
+        "#,
+        enigma_id
+    ))
+    .data(BearerToken(Some(token)));
+    let res = schema.execute(request).await;
+    assert!(res.is_ok(), "errors: {:?}", res.errors);
+    let data = res.data.into_json().unwrap();
+    let result = data
+        .get("validateEnigmaResponse")
+        .and_then(|v| v.as_object())
+        .expect("validateEnigmaResponse object");
+    assert_eq!(
+        result.get("validated").and_then(|v| v.as_bool()),
+        Some(false),
+        "code incorrect ne doit pas être validé"
     );
 }
