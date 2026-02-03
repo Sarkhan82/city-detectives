@@ -1,5 +1,5 @@
-//! Tests d'intégration API admin (Story 7.1 – FR61).
-//! getAdminDashboard avec JWT admin → données ; avec JWT utilisateur normal → erreur 403 / FORBIDDEN.
+//! Tests d'intégration API admin (Story 7.1 – FR61, 7.2 – FR62).
+//! getAdminDashboard, createInvestigation, updateInvestigation : JWT admin → succès ; JWT user → 403.
 
 use async_graphql::Request;
 use city_detectives_api::api::graphql::create_schema;
@@ -144,4 +144,342 @@ async fn get_admin_dashboard_returns_forbidden_when_user_jwt() {
         "error code must be FORBIDDEN for non-admin, got: {:?}",
         errors
     );
+}
+
+#[tokio::test]
+async fn create_investigation_succeeds_when_admin_jwt() {
+    let schema = make_schema();
+    let token = get_admin_token(&schema).await;
+    let mutation = r#"mutation {
+        createInvestigation(input: {
+            titre: "Nouvelle enquête"
+            description: "Description test"
+            durationEstimate: 60
+            difficulte: "moyen"
+            isFree: true
+            status: "draft"
+        }) { id titre status }
+    }"#;
+    let request = Request::new(mutation).data(BearerToken(Some(token)));
+    let res = schema.execute(request).await;
+    assert!(
+        res.is_ok(),
+        "createInvestigation must succeed for admin: {:?}",
+        res.errors
+    );
+    let data = res.data.into_json().unwrap();
+    let inv = data
+        .get("createInvestigation")
+        .and_then(|v| v.as_object())
+        .expect("createInvestigation object");
+    assert!(inv.get("id").and_then(|v| v.as_str()).unwrap().len() > 0);
+    assert_eq!(
+        inv.get("titre").and_then(|v| v.as_str()),
+        Some("Nouvelle enquête")
+    );
+    assert_eq!(inv.get("status").and_then(|v| v.as_str()), Some("draft"));
+}
+
+#[tokio::test]
+async fn create_investigation_returns_forbidden_when_user_jwt() {
+    let schema = make_schema();
+    let token = get_user_token(&schema).await;
+    let mutation = r#"mutation {
+        createInvestigation(input: {
+            titre: "Nouvelle enquête"
+            description: "Description"
+            durationEstimate: 60
+            difficulte: "moyen"
+            isFree: true
+        }) { id }
+    }"#;
+    let request = Request::new(mutation).data(BearerToken(Some(token)));
+    let res = schema.execute(request).await;
+    assert!(!res.is_ok(), "createInvestigation must fail for non-admin");
+    let code = res.errors.first().and_then(|e| {
+        e.extensions
+            .as_ref()
+            .and_then(|ext| ext.get("code"))
+            .and_then(|v| match v {
+                async_graphql::Value::String(s) => Some(s.as_str()),
+                _ => None,
+            })
+    });
+    assert_eq!(code, Some("FORBIDDEN"));
+}
+
+#[tokio::test]
+async fn update_investigation_succeeds_when_admin_jwt() {
+    let schema = make_schema();
+    let token = get_admin_token(&schema).await;
+    let id = "11111111-1111-1111-1111-111111111111";
+    let mutation = format!(
+        r#"mutation {{
+            updateInvestigation(id: "{}", input: {{ titre: "Titre mis à jour", status: "draft" }}) {{ id titre status }}
+        }}"#,
+        id
+    );
+    let request = Request::new(mutation).data(BearerToken(Some(token)));
+    let res = schema.execute(request).await;
+    assert!(
+        res.is_ok(),
+        "updateInvestigation must succeed for admin: {:?}",
+        res.errors
+    );
+    let data = res.data.into_json().unwrap();
+    let inv = data
+        .get("updateInvestigation")
+        .and_then(|v| v.as_object())
+        .expect("updateInvestigation object");
+    assert_eq!(inv.get("id").and_then(|v| v.as_str()), Some(id));
+    assert_eq!(
+        inv.get("titre").and_then(|v| v.as_str()),
+        Some("Titre mis à jour")
+    );
+    assert_eq!(inv.get("status").and_then(|v| v.as_str()), Some("draft"));
+}
+
+#[tokio::test]
+async fn update_investigation_returns_forbidden_when_user_jwt() {
+    let schema = make_schema();
+    let token = get_user_token(&schema).await;
+    let mutation = r#"mutation {
+        updateInvestigation(id: "11111111-1111-1111-1111-111111111111", input: { titre: "Hack" }) { id }
+    }"#;
+    let request = Request::new(mutation).data(BearerToken(Some(token)));
+    let res = schema.execute(request).await;
+    assert!(!res.is_ok(), "updateInvestigation must fail for non-admin");
+    let code = res.errors.first().and_then(|e| {
+        e.extensions
+            .as_ref()
+            .and_then(|ext| ext.get("code"))
+            .and_then(|v| match v {
+                async_graphql::Value::String(s) => Some(s.as_str()),
+                _ => None,
+            })
+    });
+    assert_eq!(code, Some("FORBIDDEN"));
+}
+
+#[tokio::test]
+async fn create_enigma_succeeds_when_admin_jwt() {
+    let schema = make_schema();
+    let token = get_admin_token(&schema).await;
+    let mutation = r#"mutation {
+        createEnigma(input: {
+            investigationId: "11111111-1111-1111-1111-111111111111"
+            orderIndex: 4
+            type: "words"
+            titre: "Nouvelle énigme"
+        }) { id investigationId orderIndex type titre }
+    }"#;
+    let request = Request::new(mutation).data(BearerToken(Some(token)));
+    let res = schema.execute(request).await;
+    assert!(
+        res.is_ok(),
+        "createEnigma must succeed for admin: {:?}",
+        res.errors
+    );
+    let data = res.data.into_json().unwrap();
+    let enigma = data
+        .get("createEnigma")
+        .and_then(|v| v.as_object())
+        .expect("createEnigma object");
+    assert!(enigma.get("id").and_then(|v| v.as_str()).unwrap().len() > 0);
+    assert_eq!(enigma.get("orderIndex").and_then(|v| v.as_u64()), Some(4));
+    assert_eq!(enigma.get("type").and_then(|v| v.as_str()), Some("words"));
+    assert_eq!(
+        enigma.get("titre").and_then(|v| v.as_str()),
+        Some("Nouvelle énigme")
+    );
+}
+
+#[tokio::test]
+async fn create_enigma_returns_forbidden_when_user_jwt() {
+    let schema = make_schema();
+    let token = get_user_token(&schema).await;
+    let mutation = r#"mutation {
+        createEnigma(input: {
+            investigationId: "11111111-1111-1111-1111-111111111111"
+            orderIndex: 4
+            type: "words"
+            titre: "Nouvelle énigme"
+        }) { id }
+    }"#;
+    let request = Request::new(mutation).data(BearerToken(Some(token)));
+    let res = schema.execute(request).await;
+    assert!(!res.is_ok(), "createEnigma must fail for non-admin");
+    let code = res.errors.first().and_then(|e| {
+        e.extensions
+            .as_ref()
+            .and_then(|ext| ext.get("code"))
+            .and_then(|v| match v {
+                async_graphql::Value::String(s) => Some(s.as_str()),
+                _ => None,
+            })
+    });
+    assert_eq!(code, Some("FORBIDDEN"));
+}
+
+#[tokio::test]
+async fn validate_enigma_historical_content_succeeds_when_admin_jwt() {
+    let schema = make_schema();
+    let token = get_admin_token(&schema).await;
+    let request = Request::new(
+        r#"query { investigation(id: "11111111-1111-1111-1111-111111111111") { enigmas { id } } }"#,
+    );
+    let res = schema.execute(request).await;
+    let data = res.data.into_json().unwrap();
+    let first_id = data
+        .get("investigation")
+        .and_then(|v| v.as_object())
+        .and_then(|o| o.get("enigmas"))
+        .and_then(|v| v.as_array())
+        .and_then(|a| a.first())
+        .and_then(|e| e.get("id"))
+        .and_then(|v| v.as_str())
+        .expect("first enigma id");
+    let mutation = format!(
+        r#"mutation {{ validateEnigmaHistoricalContent(enigmaId: "{}") {{ id historicalContentValidated }} }}"#,
+        first_id
+    );
+    let request = Request::new(mutation).data(BearerToken(Some(token)));
+    let res = schema.execute(request).await;
+    assert!(
+        res.is_ok(),
+        "validateEnigmaHistoricalContent must succeed for admin: {:?}",
+        res.errors
+    );
+    let data = res.data.into_json().unwrap();
+    let enigma = data
+        .get("validateEnigmaHistoricalContent")
+        .and_then(|v| v.as_object())
+        .expect("validateEnigmaHistoricalContent object");
+    assert_eq!(
+        enigma
+            .get("historicalContentValidated")
+            .and_then(|v| v.as_bool()),
+        Some(true)
+    );
+}
+
+#[tokio::test]
+async fn validate_enigma_historical_content_returns_forbidden_when_user_jwt() {
+    let schema = make_schema();
+    let token = get_user_token(&schema).await;
+    let request = Request::new(
+        r#"query { investigation(id: "11111111-1111-1111-1111-111111111111") { enigmas { id } } }"#,
+    );
+    let res = schema.execute(request).await;
+    let data = res.data.into_json().unwrap();
+    let first_id = data
+        .get("investigation")
+        .and_then(|v| v.as_object())
+        .and_then(|o| o.get("enigmas"))
+        .and_then(|v| v.as_array())
+        .and_then(|a| a.first())
+        .and_then(|e| e.get("id"))
+        .and_then(|v| v.as_str())
+        .expect("first enigma id");
+    let mutation = format!(
+        r#"mutation {{ validateEnigmaHistoricalContent(enigmaId: "{}") {{ id }} }}"#,
+        first_id
+    );
+    let request = Request::new(mutation).data(BearerToken(Some(token)));
+    let res = schema.execute(request).await;
+    assert!(
+        !res.is_ok(),
+        "validateEnigmaHistoricalContent must fail for non-admin"
+    );
+    let code = res.errors.first().and_then(|e| {
+        e.extensions
+            .as_ref()
+            .and_then(|ext| ext.get("code"))
+            .and_then(|v| match v {
+                async_graphql::Value::String(s) => Some(s.as_str()),
+                _ => None,
+            })
+    });
+    assert_eq!(code, Some("FORBIDDEN"));
+}
+
+#[tokio::test]
+async fn update_enigma_succeeds_when_admin_jwt() {
+    let schema = make_schema();
+    let token = get_admin_token(&schema).await;
+    let request = Request::new(
+        r#"query { investigation(id: "11111111-1111-1111-1111-111111111111") { enigmas { id } } }"#,
+    );
+    let res = schema.execute(request).await;
+    assert!(res.is_ok(), "investigation query: {:?}", res.errors);
+    let data = res.data.into_json().unwrap();
+    let root = data
+        .get("investigation")
+        .and_then(|v| v.as_object())
+        .expect("investigation");
+    let enigmas = root
+        .get("enigmas")
+        .and_then(|v| v.as_array())
+        .expect("enigmas");
+    let first_id = enigmas[0]
+        .get("id")
+        .and_then(|v| v.as_str())
+        .expect("first enigma id");
+    let mutation = format!(
+        r#"mutation {{ updateEnigma(id: "{}", input: {{ titre: "Titre énigme mis à jour" }}) {{ id titre }} }}"#,
+        first_id
+    );
+    let request = Request::new(mutation).data(BearerToken(Some(token)));
+    let res = schema.execute(request).await;
+    assert!(
+        res.is_ok(),
+        "updateEnigma must succeed for admin: {:?}",
+        res.errors
+    );
+    let data = res.data.into_json().unwrap();
+    let enigma = data
+        .get("updateEnigma")
+        .and_then(|v| v.as_object())
+        .expect("updateEnigma object");
+    assert_eq!(
+        enigma.get("titre").and_then(|v| v.as_str()),
+        Some("Titre énigme mis à jour")
+    );
+}
+
+#[tokio::test]
+async fn update_enigma_returns_forbidden_when_user_jwt() {
+    let schema = make_schema();
+    let token = get_user_token(&schema).await;
+    let request = Request::new(
+        r#"query { investigation(id: "11111111-1111-1111-1111-111111111111") { enigmas { id } } }"#,
+    );
+    let res = schema.execute(request).await;
+    let data = res.data.into_json().unwrap();
+    let first_id = data
+        .get("investigation")
+        .and_then(|v| v.as_object())
+        .and_then(|o| o.get("enigmas"))
+        .and_then(|v| v.as_array())
+        .and_then(|a| a.first())
+        .and_then(|e| e.get("id"))
+        .and_then(|v| v.as_str())
+        .expect("first enigma id");
+    let mutation = format!(
+        r#"mutation {{ updateEnigma(id: "{}", input: {{ titre: "Hack" }}) {{ id }} }}"#,
+        first_id
+    );
+    let request = Request::new(mutation).data(BearerToken(Some(token)));
+    let res = schema.execute(request).await;
+    assert!(!res.is_ok(), "updateEnigma must fail for non-admin");
+    let code = res.errors.first().and_then(|e| {
+        e.extensions
+            .as_ref()
+            .and_then(|ext| ext.get("code"))
+            .and_then(|v| match v {
+                async_graphql::Value::String(s) => Some(s.as_str()),
+                _ => None,
+            })
+    });
+    assert_eq!(code, Some("FORBIDDEN"));
 }

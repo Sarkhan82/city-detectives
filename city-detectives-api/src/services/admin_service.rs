@@ -1,4 +1,4 @@
-//! Service admin (Story 7.1 – FR61) – agrégation vue d'ensemble dashboard (enquêtes, énigmes, métriques de base).
+//! Service admin (Story 7.1 – FR61, 7.2) – agrégation vue d'ensemble dashboard (enquêtes, énigmes, métriques).
 
 use async_graphql::*;
 use std::sync::Arc;
@@ -37,10 +37,18 @@ impl AdminService {
         }
     }
 
-    /// Agrège les compteurs pour la vue d'ensemble (Story 7.1 – FR61). MVP : pas de statut publié/brouillon en base, tout compté comme publié.
-    pub fn get_dashboard_overview(&self) -> DashboardOverview {
-        let investigations = self.investigation_service.list_investigations();
+    /// Agrège les compteurs pour la vue d'ensemble (Story 7.1 – FR61, 7.2 avec statut draft/published).
+    pub async fn get_dashboard_overview(&self) -> DashboardOverview {
+        let investigations = self.investigation_service.list_investigations().await;
         let investigation_count = investigations.len() as u32;
+        let published_count = investigations
+            .iter()
+            .filter(|i| i.status == "published")
+            .count() as u32;
+        let draft_count = investigations
+            .iter()
+            .filter(|i| i.status == "draft")
+            .count() as u32;
         let mut enigma_count = 0u32;
         for inv in &investigations {
             if let Ok(uuid) = Uuid::parse_str(&inv.id) {
@@ -50,8 +58,8 @@ impl AdminService {
         }
         DashboardOverview {
             investigation_count,
-            published_count: investigation_count,
-            draft_count: 0,
+            published_count,
+            draft_count,
             enigma_count,
         }
     }

@@ -1,7 +1,7 @@
 # Résumé d'automatisation – City Detectives (Stories 1.2–6.1)
 
 **Date :** 2026-02-03  
-**Stories couvertes :** 1.2 (Création de compte), 2.1 (Parcourir et consulter les enquêtes), 2.2 (Sélection enquête, gratuit/payant), 3.1 (Démarrer enquête et navigation énigmes), 3.2 (Progression, carte interactive et position), 3.3 (Pause, reprise, abandon, sauvegarde), 4.1 (Énigmes photo et géolocalisation), 4.2 (Énigmes mots et puzzle), 4.3 (Aide contextuelle et explications historiques), 4.4 (LORE et option de saut), 5.1 (Statut completion et historique), 5.2 (Badges, compétences, leaderboard), 6.1 (Première enquête gratuite, visibilité payant et prix), **7.1 (Accès dashboard admin)**  
+**Stories couvertes :** 1.2 (Création de compte), 2.1 (Parcourir et consulter les enquêtes), 2.2 (Sélection enquête, gratuit/payant), 3.1 (Démarrer enquête et navigation énigmes), 3.2 (Progression, carte interactive et position), 3.3 (Pause, reprise, abandon, sauvegarde), 4.1 (Énigmes photo et géolocalisation), 4.2 (Énigmes mots et puzzle), 4.3 (Aide contextuelle et explications historiques), 4.4 (LORE et option de saut), 5.1 (Statut completion et historique), 5.2 (Badges, compétences, leaderboard), 6.1 (Première enquête gratuite, visibilité payant et prix), **7.1 (Accès dashboard admin)**, **7.2 (Création et édition enquêtes/énigmes – API backend)**  
 **Mode :** Standalone / Auto-discover  
 **Cible de couverture :** critical-paths  
 
@@ -26,7 +26,7 @@
 | `tests/api/investigations_test.rs` | Intégration HTTP | `--ignored` (serveur 8080) | 2 tests : listInvestigations retourne un tableau ; items ont les champs requis (dont priceAmount, priceCurrency – Story 6.1). |
 | `tests/api/enigmas_test.rs` | In-process GraphQL | `cargo test` | **Story 4.1** – 4 tests : validateEnigmaResponse (géoloc/photo). **Story 4.2** – 4 tests : validateEnigmaResponse (words/puzzle). **Story 4.3** – 3 tests : getEnigmaHints, getEnigmaExplanation, getEnigmaHints (ID inconnu). Auth Bearer requise. **Total : 11 tests.** (Story 4.4 LORE couverte par graphql.rs in-process.) |
 | `tests/api/gamification_test.rs` | In-process GraphQL | `cargo test` | **Story 5.2** – 4 tests : getUserBadges, getUserSkills, getUserPostcards, getLeaderboard (auth requise). |
-| `tests/api/admin_test.rs` | In-process GraphQL | `cargo test` | **Story 7.1** – 3 tests : me { id isAdmin } avec JWT admin → isAdmin true ; getAdminDashboard avec JWT admin → données ; getAdminDashboard avec JWT user → FORBIDDEN. |
+| `tests/api/admin_test.rs` | In-process GraphQL | `cargo test` | **Story 7.1** – 3 tests : me { id isAdmin } avec JWT admin → isAdmin true ; getAdminDashboard avec JWT admin → données ; getAdminDashboard avec JWT user → FORBIDDEN. **Story 7.2** – 10 tests : createInvestigation / updateInvestigation (admin → succès, user → FORBIDDEN) ; createEnigma / updateEnigma (admin → succès, user → FORBIDDEN) ; validateEnigmaHistoricalContent (admin → succès, user → FORBIDDEN). **Total admin_test : 13 tests.** |
 
 **Rust – Unitaires (exécutés par défaut)**
 
@@ -82,11 +82,11 @@
 | Widget Flutter | register, onboarding, investigation_list, detail, placeholder, **play** (3.1, 3.2, 3.3), **map_sheet** (3.2), **progress_repository** (3.3), price_chip, models, widget, **photo_enigma**, **geolocation_enigma** (4.1), **lore_screen** (4.4) | – | 55 | – | + **4.4** (LORE : écran, Sauter/Continuer, état vide, médias). |
 | In-process Rust | `enigmas_test.rs` | – | 11 | – | **Story 4.1** – validateEnigmaResponse (géoloc/photo). **Story 4.2** – validateEnigmaResponse (words/puzzle). **Story 4.3** – getEnigmaHints (nominal + ID inconnu), getEnigmaExplanation (nominal). Auth requise. |
 | In-process Rust | `gamification_test.rs` | – | 4 | – | **Story 5.2** – getUserBadges, getUserSkills, getUserPostcards, getLeaderboard (auth requise). |
-| In-process Rust | `admin_test.rs` | – | 3 | – | **Story 7.1** – me { id isAdmin } (admin JWT) ; getAdminDashboard (admin → données, user → FORBIDDEN). |
+| In-process Rust | `admin_test.rs` | – | 13 | – | **Story 7.1** – 3 tests : me, getAdminDashboard (admin/user). **Story 7.2** – 10 tests : create/update investigation, create/update enigma, validateEnigmaHistoricalContent (admin → succès, user → FORBIDDEN). |
 | Widget Flutter | **progression_screen**, **completed_investigation_repository** (5.1), **gamification_screen** (5.2) | – | 12+ | – | Story 5.1 : statut par enquête, enquêtes complétées, progression ; Story 5.2 : badges, compétences, cartes postales, leaderboard. |
 | Widget Flutter | **admin** (7.1) | – | 4 | – | dashboard_screen_test (2), admin_route_guard_test (2) – vue d’ensemble, 403, redirection non-admin, affichage admin. |
 
-- **Résumé :** 29 tests Rust exécutés par défaut (dont 3 admin_test, 11 énigmas, 4 gamification, unit/graphql), 6 tests `--ignored` (auth_test, investigations_test) ; 116 tests Flutter (dont 6.1 : détail/liste/prix ; 7.1 : dashboard admin).
+- **Résumé :** 41 tests Rust exécutés par défaut (13 unit/lib, 13 admin_test, 11 énigmas, 4 gamification), 6 tests `--ignored` (auth_test, investigations_test) ; 119 tests Flutter (dont 6.1 : détail/liste/prix ; 7.1 : dashboard admin).
 - **Doublons évités :** Pas d’E2E pour 1.2/2.1/2.2/3.x ; logique métier couverte en unitaire + API ; widget couvre UX critique.
 
 ---
@@ -156,10 +156,15 @@
    - ✅ **Flutter :** `dashboard_screen_test.dart` – 2 tests : vue d’ensemble avec données mockées (titres, métriques) ; accès refusé 403 (message + bouton Retour). `admin_route_guard_test.dart` – 2 tests : redirection vers home si non-admin ; affichage dashboard si admin. Accessibilité : Semantics sur métriques et bouton Retour (WCAG 2.1 Level A).
    - Pas de gap identifié pour 7.1.
 
-13. **E2E**
+13. **Story 7.2 (création et édition enquêtes/énigmes)**
+   - ✅ **Rust :** `tests/api/admin_test.rs` – 10 tests in-process pour 7.2 : createInvestigation (admin → succès avec id/titre/status, user → FORBIDDEN) ; updateInvestigation (admin → succès, user → FORBIDDEN) ; createEnigma (admin → succès avec id/orderIndex/type/titre, user → FORBIDDEN) ; updateEnigma (admin → succès, user → FORBIDDEN) ; validateEnigmaHistoricalContent (admin → historicalContentValidated true, user → FORBIDDEN).
+   - ⚠️ **Flutter :** UI admin création/édition (Task 4) et tests widget (Task 5.2) non encore implémentés ; à prévoir quand les écrans investigation_edit_screen / enigma_edit_screen seront en place.
+   - Pas de gap côté API ; gap côté UI et tests widget documenté.
+
+14. **E2E**
    - Aucun test E2E (Flutter `integration_test` ou scénario réel API + app). À prévoir si une story le demande (ex. parcours complet inscription → liste enquêtes).
 
-14. **CI**
+15. **CI**
    - Rust : `cargo test` exécute unitaires + test in-process GraphQL ; tests `#[ignore]` à lancer avec serveur sur 8080.
    - Flutter : `flutter test` à exécuter en CI ; environnement SDK à configurer.
 
@@ -273,6 +278,9 @@ flutter test
 - **Rust :** `tests/api/admin_test.rs` – 3 tests in-process : me_returns_is_admin_true_when_admin_jwt ; get_admin_dashboard_returns_data_when_admin_jwt ; get_admin_dashboard_returns_forbidden_when_user_jwt. Test unitaire `auth_service.rs` : register avec email seed admin → rôle Admin dans le JWT.
 - **Flutter :** `test/features/admin/screens/dashboard_screen_test.dart` – 2 tests : vue d’ensemble (données mockées), accès refusé 403. `test/features/admin/widgets/admin_route_guard_test.dart` – 2 tests : redirection si non-admin, affichage dashboard si admin. Accessibilité : Semantics sur métriques et bouton « Retour à l’accueil ».
 
+**2026-02-03 – Story 7.2 (création et édition enquêtes/énigmes – backend)**
+- **Rust :** `tests/api/admin_test.rs` – 10 tests in-process : create_investigation_succeeds_when_admin_jwt, create_investigation_returns_forbidden_when_user_jwt ; update_investigation_succeeds_when_admin_jwt, update_investigation_returns_forbidden_when_user_jwt ; create_enigma_succeeds_when_admin_jwt, create_enigma_returns_forbidden_when_user_jwt ; update_enigma_succeeds_when_admin_jwt, update_enigma_returns_forbidden_when_user_jwt ; validate_enigma_historical_content_succeeds_when_admin_jwt, validate_enigma_historical_content_returns_forbidden_when_user_jwt. Couverture FR62 (mutations enquêtes), FR63 (mutations énigmes), FR64 (validation contenu historique). Tests widget Flutter (formulaires admin) à ajouter lorsque Task 4 sera implémentée.
+
 ---
 
 ## Definition of Done (workflow testarch-automate)
@@ -295,6 +303,7 @@ flutter test
 - [x] **2026-02-03 testarch-automate** : Stories 5.1 et 5.2 documentées – gamification_test.rs (4 tests), gamification_screen_test.dart, progression_screen_test.dart, completed_investigation_repository_test.dart (8 TU) ; inventaire, plan de couverture et gaps à jour.
 - [x] **2026-02-03 testarch-automate** : Story 6.1 documentée – graphql.rs (listInvestigations + investigation(id) prix), investigations_test.rs (priceAmount/priceCurrency), investigation_test.dart (formattedPrice), investigation_list_screen_test.dart (prix liste), investigation_detail_screen_test.dart (Payant + Acheter) ; inventaire et résultats d'exécution à jour (112 Flutter, 26 Rust).
 - [x] **2026-02-03 testarch-automate** : Story 7.1 documentée – admin_test.rs (3 tests : me isAdmin, getAdminDashboard admin/user), auth_service.rs (test unitaire admin seed), dashboard_screen_test.dart (2 tests), admin_route_guard_test.dart (2 tests) ; inventaire, plan de couverture et résultats à jour (116 Flutter, 29 Rust).
+- [x] **2026-02-03 testarch-automate** : Story 7.2 (backend) documentée – admin_test.rs (13 tests au total : 3 pour 7.1 + 10 pour 7.2 : create/update investigation, create/update enigma, validateEnigmaHistoricalContent, avec JWT admin vs user) ; inventaire, gaps (UI Flutter à venir) et résultats d’exécution mis à jour.
 
 ---
 
@@ -373,9 +382,9 @@ flutter test
 
 ## Résultats d'exécution (2026-02-03)
 
-- **Rust** (`cargo test`) : 29 tests passés (dont 3 admin_test, 11 enigmas_test, 4 gamification_test, unit/graphql) ; auth_test (4) et investigations_test (2) ignorés (serveur 8080).
-- **Flutter** (`flutter test`) : 116 tests passés (dont Story 6.1 : détail/liste/prix ; Story 7.1 : dashboard admin). Des `ClientException` (tile.openstreetmap.org 400) peuvent apparaître en log sans faire échouer les tests.
+- **Rust** (`cargo test`) : 41 tests passés (13 unit/lib, 13 admin_test [3 pour 7.1 + 10 pour 7.2], 11 enigmas_test, 4 gamification_test) ; auth_test (4) et investigations_test (2) ignorés (serveur 8080).
+- **Flutter** (`flutter test`) : 119 tests passés (dont Story 6.1 : détail/liste/prix ; Story 7.1 : dashboard admin). Des `ClientException` (tile.openstreetmap.org 400) peuvent apparaître en log sans faire échouer les tests.
 
 ---
 
-*Workflow : `_bmad/bmm/workflows/testarch/automate` (testarch-automate). Dernière mise à jour : 2026-02-03 (Story 7.1 – inventaire et plan de couverture ; validation exécution Rust + Flutter).*
+*Workflow : `_bmad/bmm/workflows/testarch/automate` (testarch-automate). Dernière mise à jour : 2026-02-03 (Story 7.2 – couverture API backend documentée ; résultats Rust 41, Flutter 119).*
