@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:city_detectives/features/enigma/screens/enigma_explanation_screen.dart';
 import 'package:city_detectives/features/investigation/models/investigation.dart';
 import 'package:city_detectives/features/investigation/screens/investigation_detail_screen.dart';
 import 'package:city_detectives/features/investigation/screens/investigation_list_screen.dart';
@@ -64,6 +65,24 @@ class AppRouter {
             final id = state.pathParameters['id'] ?? '';
             return InvestigationPlayScreen(investigationId: id);
           },
+          routes: [
+            GoRoute(
+              path: 'explanation',
+              builder: (context, state) {
+                final enigmaId = state.extra as String?;
+                if (enigmaId == null || enigmaId.isEmpty) {
+                  return Scaffold(
+                    appBar: AppBar(title: const Text('Explications')),
+                    body: const Center(child: Text('Paramètre manquant.')),
+                  );
+                }
+                return EnigmaExplanationScreen(
+                  enigmaId: enigmaId,
+                  onContinue: () => context.pop(true),
+                );
+              },
+            ),
+          ],
         ),
         GoRoute(
           path: home,

@@ -7,6 +7,7 @@ import 'package:city_detectives/features/enigma/types/geolocation/geolocation_en
 import 'package:city_detectives/features/enigma/types/photo/photo_enigma_widget.dart';
 import 'package:city_detectives/features/enigma/types/puzzle/puzzle_enigma_widget.dart';
 import 'package:city_detectives/features/enigma/types/words/words_enigma_widget.dart';
+import 'package:city_detectives/features/enigma/widgets/enigma_help_button.dart';
 import 'package:city_detectives/features/investigation/models/enigma.dart';
 import 'package:city_detectives/features/investigation/models/investigation_progress.dart';
 import 'package:city_detectives/features/investigation/models/investigation_with_enigmas.dart';
@@ -257,31 +258,55 @@ class _InvestigationPlayScreenState
                 ),
                 _EnigmaStepper(current: safeIndex + 1, total: total),
                 Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: _EnigmaContent(
-                      enigma: currentEnigma!,
-                      onValidated: () {
-                        ref
-                            .read(
-                              completedEnigmaIdsProvider(
-                                investigationId,
-                              ).notifier,
-                            )
-                            .markCompleted(currentEnigma.id);
-                        if (safeIndex < total - 1) {
-                          ref
-                                  .read(
-                                    currentEnigmaIndexProvider(
-                                      investigationId,
-                                    ).notifier,
-                                  )
-                                  .state =
-                              safeIndex + 1;
-                        }
-                        _saveProgress(ref, investigationId);
-                      },
-                    ),
+                  child: Builder(
+                    builder: (context) {
+                      final enigma = currentEnigma!;
+                      return SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: EnigmaHelpButton(enigmaId: enigma.id),
+                            ),
+                            const SizedBox(height: 8),
+                            _EnigmaContent(
+                              enigma: enigma,
+                              onValidated: () async {
+                                // Story 4.3 : écran Explications via GoRouter puis mise à jour état.
+                                final enigmaId = enigma.id;
+                                final path =
+                                    '/investigations/$investigationId/start/explanation';
+                                final ok = await context.push<bool>(
+                                  path,
+                                  extra: enigmaId,
+                                );
+                                if (!context.mounted || ok != true) return;
+                                ref
+                                    .read(
+                                      completedEnigmaIdsProvider(
+                                        investigationId,
+                                      ).notifier,
+                                    )
+                                    .markCompleted(enigmaId);
+                                if (safeIndex < total - 1) {
+                                  ref
+                                          .read(
+                                            currentEnigmaIndexProvider(
+                                              investigationId,
+                                            ).notifier,
+                                          )
+                                          .state =
+                                      safeIndex + 1;
+                                }
+                                _saveProgress(ref, investigationId);
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 ),
                 _NavigationBar(
@@ -301,7 +326,7 @@ class _InvestigationPlayScreenState
                     }
                   },
                   onNext: () {
-                    if (safeIndex < total - 1) {
+                    if (safeIndex < total - 1 && currentEnigma != null) {
                       ref
                           .read(
                             completedEnigmaIdsProvider(

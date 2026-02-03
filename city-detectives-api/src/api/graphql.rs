@@ -1,4 +1,4 @@
-//! Schéma GraphQL (Story 1.2, 2.1, 4.1) – register, me, listInvestigations, validateEnigmaResponse.
+//! Schéma GraphQL (Story 1.2, 2.1, 4.1, 4.3) – register, me, listInvestigations, validateEnigmaResponse, getEnigmaHints, getEnigmaExplanation.
 
 use async_graphql::*;
 use axum::extract::State;
@@ -9,7 +9,9 @@ use serde::Deserialize;
 use std::sync::Arc;
 
 use crate::api::middleware::auth::{extract_bearer, BearerToken};
-use crate::models::enigma::{ValidateEnigmaPayload, ValidateEnigmaResult};
+use crate::models::enigma::{
+    EnigmaExplanation, EnigmaHints, ValidateEnigmaPayload, ValidateEnigmaResult,
+};
 use crate::models::user::RegisterInput;
 use crate::services::auth_service::AuthService;
 use crate::services::enigma_service::EnigmaService;
@@ -65,6 +67,42 @@ impl QueryRoot {
         let id = Uuid::parse_str(&id).map_err(|_| Error::new("ID enquête invalide"))?;
         let svc = ctx.data::<Arc<InvestigationService>>()?;
         Ok(svc.get_investigation_by_id_with_enigmas(id))
+    }
+
+    /// Indices progressifs par énigme (Story 4.3 – FR30). Requiert authentification.
+    async fn get_enigma_hints(
+        &self,
+        ctx: &Context<'_>,
+        enigma_id: String,
+    ) -> Result<EnigmaHints, Error> {
+        let _ = ctx.data::<Arc<AuthService>>()?;
+        let token = ctx.data::<BearerToken>().ok().and_then(|t| t.0.clone());
+        let token = token.as_deref().ok_or("Token manquant")?;
+        ctx.data::<Arc<AuthService>>()?
+            .validate_token(token)
+            .map_err(Error::from)?;
+
+        let enigma_svc = ctx.data::<Arc<EnigmaService>>()?;
+        let id = Uuid::parse_str(&enigma_id).map_err(|_| Error::new("ID énigme invalide"))?;
+        enigma_svc.get_enigma_hints(id).map_err(Error::from)
+    }
+
+    /// Explications historiques et éducatives par énigme (Story 4.3 – FR31, FR32). Requiert authentification.
+    async fn get_enigma_explanation(
+        &self,
+        ctx: &Context<'_>,
+        enigma_id: String,
+    ) -> Result<EnigmaExplanation, Error> {
+        let _ = ctx.data::<Arc<AuthService>>()?;
+        let token = ctx.data::<BearerToken>().ok().and_then(|t| t.0.clone());
+        let token = token.as_deref().ok_or("Token manquant")?;
+        ctx.data::<Arc<AuthService>>()?
+            .validate_token(token)
+            .map_err(Error::from)?;
+
+        let enigma_svc = ctx.data::<Arc<EnigmaService>>()?;
+        let id = Uuid::parse_str(&enigma_id).map_err(|_| Error::new("ID énigme invalide"))?;
+        enigma_svc.get_enigma_explanation(id).map_err(Error::from)
     }
 }
 

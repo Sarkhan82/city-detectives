@@ -3,7 +3,7 @@
 **Story ID:** 4.3  
 **Epic:** 4 – Énigmes & Content  
 **Story Key:** 4-3-aide-contextuelle-explications-historiques  
-**Status:** ready-for-dev  
+**Status:** done  
 **Depends on:** Story 4.1  
 **Parallelizable with:** —  
 **Lane:** B  
@@ -30,24 +30,24 @@ So that **je puisse avancer tout en apprenant**.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1** (AC1) – Aide contextuelle : indices progressifs
-  - [ ] 1.1 Sur chaque écran énigme (4.1, 4.2), ajouter un bouton « Aide » (ou icône) ; optionnel : proposer l'aide après une durée d'inactivité (ex. 2–3 min) (FR30).
-  - [ ] 1.2 Indices progressifs : niveau 1 = suggestion légère, niveau 2 = indice plus direct, niveau 3 = solution. L'utilisateur débloque le niveau suivant à chaque demande (suggestion → indice → solution) (FR30).
-  - [ ] 1.3 Backend : exposer les indices par énigme (ex. query `getEnigmaHints(enigmaId)` ou champs `hints` sur le type Enigma : `suggestion`, `hint`, `solution`). Données stockées en DB ou en dur selon contenu (FR30).
-  - [ ] 1.4 Flutter : afficher l'indice courant dans un panneau, modal ou zone dédiée ; bouton « Voir l'indice suivant » jusqu'à la solution (FR30).
-- [ ] **Task 2** (AC1) – Explications historiques et contenu éducatif après résolution
-  - [ ] 2.1 Après validation réussie d'une énigme (4.1, 4.2), afficher un écran ou panneau « Explications » : texte historique, contenu éducatif sur le lieu ou le thème de l'énigme (FR31, FR32, FR36–FR38).
-  - [ ] 2.2 Backend : exposer le contenu par énigme (ex. champs `historicalExplanation`, `educationalContent` sur le type Enigma, ou query `getEnigmaExplanation(enigmaId)`). Données en DB ou assets selon contenu (FR31, FR32).
-  - [ ] 2.3 Flutter : après le retour « validé » de la mutation de validation, afficher l'explication (écran dédié ou panneau) avec option « Continuer » vers l'énigme suivante (FR31, FR32).
-  - [ ] 2.4 Design : design system « carnet de détective » ; contenu lisible (contraste, accessibilité WCAG 2.1 Level A) ; photos/contexte historique des lieux si disponible (FR37).
-- [ ] **Task 3** (AC1) – Intégration écran enquête
-  - [ ] 3.1 Réutiliser les écrans énigme existants (4.1, 4.2) ; ajouter le bouton Aide et le flux indices sans casser la validation ni la navigation (FR30).
-  - [ ] 3.2 Insérer l'étape « Explications » entre validation réussie et passage à l'énigme suivante (ou fin d'enquête) ; pas de bypass obligatoire (l'utilisateur peut « Continuer » pour avancer) (FR31, FR32).
-- [ ] **Task 4** – Qualité et conformité
-  - [ ] 4.1 Backend : test d'intégration pour la query/champs indices et explications (ex. `tests/api/enigmas_test.rs`) – au moins un cas nominal (FR30, FR31).
-  - [ ] 4.2 Flutter : tests widget pour affichage bouton Aide, déroulement des indices (suggestion → indice → solution), et affichage explications après résolution ; mocker API (FR30, FR31).
-  - [ ] 4.3 `dart analyze`, `flutter test`, `cargo test`, `clippy` verts ; pas de régression sur 4.1, 4.2.
-  - [ ] 4.4 Accessibilité : labels pour bouton Aide et zones explications (WCAG 2.1 Level A).
+- [x] **Task 1** (AC1) – Aide contextuelle : indices progressifs
+  - [x] 1.1 Sur chaque écran énigme (4.1, 4.2), ajouter un bouton « Aide » (ou icône) ; optionnel : proposer l'aide après une durée d'inactivité (ex. 2–3 min) (FR30).
+  - [x] 1.2 Indices progressifs : niveau 1 = suggestion légère, niveau 2 = indice plus direct, niveau 3 = solution. L'utilisateur débloque le niveau suivant à chaque demande (suggestion → indice → solution) (FR30).
+  - [x] 1.3 Backend : exposer les indices par énigme (ex. query `getEnigmaHints(enigmaId)` ou champs `hints` sur le type Enigma : `suggestion`, `hint`, `solution`). Données stockées en DB ou en dur selon contenu (FR30).
+  - [x] 1.4 Flutter : afficher l'indice courant dans un panneau, modal ou zone dédiée ; bouton « Voir l'indice suivant » jusqu'à la solution (FR30).
+- [x] **Task 2** (AC1) – Explications historiques et contenu éducatif après résolution
+  - [x] 2.1 Après validation réussie d'une énigme (4.1, 4.2), afficher un écran ou panneau « Explications » : texte historique, contenu éducatif sur le lieu ou le thème de l'énigme (FR31, FR32, FR36–FR38).
+  - [x] 2.2 Backend : exposer le contenu par énigme (ex. champs `historicalExplanation`, `educationalContent` sur le type Enigma, ou query `getEnigmaExplanation(enigmaId)`). Données en DB ou assets selon contenu (FR31, FR32).
+  - [x] 2.3 Flutter : après le retour « validé » de la mutation de validation, afficher l'explication (écran dédié ou panneau) avec option « Continuer » vers l'énigme suivante (FR31, FR32).
+  - [x] 2.4 Design : design system « carnet de détective » ; contenu lisible (contraste, accessibilité WCAG 2.1 Level A) ; photos/contexte historique des lieux si disponible (FR37).
+- [x] **Task 3** (AC1) – Intégration écran enquête
+  - [x] 3.1 Réutiliser les écrans énigme existants (4.1, 4.2) ; ajouter le bouton Aide et le flux indices sans casser la validation ni la navigation (FR30).
+  - [x] 3.2 Insérer l'étape « Explications » entre validation réussie et passage à l'énigme suivante (ou fin d'enquête) ; pas de bypass obligatoire (l'utilisateur peut « Continuer » pour avancer) (FR31, FR32).
+- [x] **Task 4** – Qualité et conformité
+  - [x] 4.1 Backend : test d'intégration pour la query/champs indices et explications (ex. `tests/api/enigmas_test.rs`) – au moins un cas nominal (FR30, FR31).
+  - [x] 4.2 Flutter : tests widget pour affichage bouton Aide, déroulement des indices (suggestion → indice → solution), et affichage explications après résolution ; mocker API (FR30, FR31).
+  - [x] 4.3 `dart analyze`, `flutter test`, `cargo test`, `clippy` verts ; pas de régression sur 4.1, 4.2.
+  - [x] 4.4 Accessibilité : labels pour bouton Aide et zones explications (WCAG 2.1 Level A).
 
 ---
 
@@ -139,7 +139,33 @@ So that **je puisse avancer tout en apprenant**.
 
 ### Completion Notes List
 
+- Backend : types `EnigmaHints` et `EnigmaExplanation` ajoutés (models/enigma.rs). `EnigmaService` étendu avec champs hint_suggestion, hint_hint, hint_solution, historical_explanation, educational_content et méthodes `get_enigma_hints`, `get_enigma_explanation`. Queries GraphQL `getEnigmaHints(enigmaId)` et `getEnigmaExplanation(enigmaId)` (api/graphql.rs). Données mock par énigme pour les 6 énigmes des enquêtes 1 et 2.
+- Flutter : `EnigmaHelpButton` et `EnigmaHintsPanel` (indices progressifs en bottom sheet), `EnigmaExplanationScreen` (écran après validation). Repository : `getEnigmaHints`, `getEnigmaExplanation` + modèles `EnigmaHints`, `EnigmaExplanation`. Intégration dans `InvestigationPlayScreen` : bouton Aide à droite du contenu énigme ; après validation réussie, navigation vers écran Explications puis « Continuer » pour avancer.
+- Tests : `tests/api/enigmas_test.rs` (get_enigma_hints_returns_*, get_enigma_explanation_returns_*). Flutter : `enigma_help_button_test.dart`, `enigma_explanation_screen_test.dart` (API mockée). Quality gates : dart analyze, dart format, flutter test, cargo test, clippy verts. Labels accessibilité (Semantics) sur bouton Aide et zones explications (WCAG 2.1 Level A).
+
 ### File List
+
+- city-detectives-api/src/models/enigma.rs (modifié)
+- city-detectives-api/src/services/enigma_service.rs (modifié)
+- city-detectives-api/src/api/graphql.rs (modifié)
+- city-detectives-api/tests/api/enigmas_test.rs (modifié)
+- city_detectives/lib/features/enigma/repositories/enigma_validation_repository.dart (modifié)
+- city_detectives/lib/features/enigma/widgets/enigma_help_button.dart (nouveau)
+- city_detectives/lib/features/enigma/widgets/enigma_hints_panel.dart (nouveau)
+- city_detectives/lib/features/enigma/screens/enigma_explanation_screen.dart (nouveau)
+- city_detectives/lib/core/router/app_router.dart (modifié – code review : route GoRouter pour explications)
+- city_detectives/lib/features/investigation/screens/investigation_play_screen.dart (modifié)
+- city_detectives/test/features/enigma/widgets/enigma_help_button_test.dart (nouveau)
+- city_detectives/test/features/enigma/screens/enigma_explanation_screen_test.dart (nouveau)
+- _bmad-output/implementation-artifacts/sprint-status.yaml (modifié)
+- _bmad-output/implementation-artifacts/4-3-aide-contextuelle-explications-historiques.md (modifié)
+
+---
+
+## Change Log
+
+- 2026-02-03 : Implémentation complète Story 4.3 – Aide contextuelle (bouton Aide, indices progressifs, queries getEnigmaHints/getEnigmaExplanation), écran Explications après validation, intégration dans InvestigationPlayScreen, tests backend et Flutter, quality gates et accessibilité WCAG 2.1 Level A.
+- 2026-02-03 (code review) : Corrections MEDIUM – (1) Navigation écran Explications via GoRouter (route `/investigations/:id/start/explanation`, `context.push`/`pop(true)`), (2) test widget flux complet suggestion → indice → solution ajouté, (3) `dart format` exécuté et quality gate documentée dans Completion Notes.
 
 ---
 

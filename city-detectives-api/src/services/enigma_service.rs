@@ -1,6 +1,8 @@
-//! Service énigmes (Story 4.1, 4.2) – validation photo, géolocalisation, mots et puzzle.
+//! Service énigmes (Story 4.1, 4.2, 4.3) – validation photo, géolocalisation, mots et puzzle ; indices et explications.
 
-use crate::models::enigma::{Enigma, ValidateEnigmaPayload, ValidateEnigmaResult};
+use crate::models::enigma::{
+    Enigma, EnigmaExplanation, EnigmaHints, ValidateEnigmaPayload, ValidateEnigmaResult,
+};
 use crate::services::enigma::{puzzle, words};
 use geo::HaversineDistance;
 use std::collections::HashMap;
@@ -9,7 +11,7 @@ use uuid::Uuid;
 /// Namespace UUID pour générer des IDs d'énigmes déterministes (v5).
 const NAMESPACE_ENIGMA: Uuid = uuid::uuid!("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
 
-/// Définition interne d'une énigme (point cible, tolérance, type, réponses attendues mots/puzzle).
+/// Définition interne d'une énigme (point cible, tolérance, type, réponses attendues mots/puzzle, indices, explications).
 struct EnigmaDef {
     order_index: u32,
     enigma_type: String,
@@ -23,6 +25,13 @@ struct EnigmaDef {
     expected_text_answer: Option<String>,
     /// Code attendu pour type "puzzle".
     expected_code_answer: Option<String>,
+    /// Indices progressifs (Story 4.3 – FR30).
+    hint_suggestion: String,
+    hint_hint: String,
+    hint_solution: String,
+    /// Explications historiques et éducatives (Story 4.3 – FR31, FR32).
+    historical_explanation: String,
+    educational_content: String,
 }
 
 /// IDs d'enquêtes mock (alignés avec InvestigationService).
@@ -49,7 +58,7 @@ impl EnigmaService {
     pub fn new() -> Self {
         let mut definitions = HashMap::new();
 
-        // Enquête 1 : 3 énigmes (1 words, 2 géo, 3 photo) – Story 4.2 : type "words" pour ordre 1
+        // Enquête 1 : 3 énigmes (1 words, 2 géo, 3 photo) – Story 4.2 : type "words" pour ordre 1 ; Story 4.3 : indices et explications
         let inv1_base = "inv1";
         Self::insert_mock(
             &mut definitions,
@@ -63,6 +72,11 @@ impl EnigmaService {
             None,
             Some("paris".to_string()),
             None,
+            "Pensez à une ville française célèbre.",
+            "La ville commence par P et rime avec « mari ».",
+            "La réponse est : Paris.",
+            "Paris est la capitale de la France depuis le Xe siècle.",
+            "Paris concentre musées, monuments et culture ; le Louvre est le plus grand musée d'art au monde.",
         );
         Self::insert_mock(
             &mut definitions,
@@ -76,6 +90,11 @@ impl EnigmaService {
             None,
             None,
             None,
+            "Cherchez un lieu emblématique au centre de Paris.",
+            "La tour la plus connue de France, symbole de la capitale.",
+            "Vous devez vous rendre à la Tour Eiffel (Champ de Mars).",
+            "La Tour Eiffel a été construite pour l'Exposition universelle de 1889.",
+            "Gustave Eiffel a conçu la structure ; elle mesure 330 mètres et pèse environ 10 100 tonnes.",
         );
         Self::insert_mock(
             &mut definitions,
@@ -89,9 +108,14 @@ impl EnigmaService {
             Some("https://example.com/ref.jpg".to_string()),
             None,
             None,
+            "Prenez une photo du monument ou du détail indiqué sur la carte.",
+            "Assurez-vous que le monument est bien visible et centré.",
+            "Photographiez le lieu exact demandé pour valider l'énigme.",
+            "Ce lieu est un point de repère historique de Paris.",
+            "Les monuments parisiens sont protégés au titre des Monuments historiques.",
         );
 
-        // Enquête 2 : 3 énigmes (1 géo, 2 photo, 3 puzzle) – Story 4.2 : type "puzzle" pour ordre 3
+        // Enquête 2 : 3 énigmes (1 géo, 2 photo, 3 puzzle) – Story 4.2 : type "puzzle" pour ordre 3 ; Story 4.3 : indices et explications
         let inv2_base = "inv2";
         Self::insert_mock(
             &mut definitions,
@@ -105,6 +129,11 @@ impl EnigmaService {
             None,
             None,
             None,
+            "Utilisez la carte pour vous rapprocher du point indiqué.",
+            "Vérifiez que votre position GPS est activée et précise.",
+            "Atteignez le marqueur sur la carte pour valider.",
+            "Ce quartier est riche en histoire et en culture.",
+            "La géolocalisation permet de valider votre présence sur les lieux.",
         );
         Self::insert_mock(
             &mut definitions,
@@ -118,6 +147,11 @@ impl EnigmaService {
             None,
             None,
             None,
+            "Une photo du lieu ou de l'objet demandé suffit pour valider.",
+            "Cadrez bien le sujet avant de prendre la photo.",
+            "Envoyez la photo du bon lieu pour débloquer la suite.",
+            "Les lieux d'enquête sont choisis pour leur intérêt historique.",
+            "La photographie de lieux permet de garder une trace de votre enquête.",
         );
         Self::insert_mock(
             &mut definitions,
@@ -131,6 +165,11 @@ impl EnigmaService {
             None,
             None,
             Some("1234".to_string()),
+            "Le code est un nombre à quatre chiffres.",
+            "Pensez à un code PIN classique (chiffres seulement).",
+            "Le code attendu est : 1234.",
+            "Les codes à chiffres sont utilisés depuis des siècles pour sécuriser.",
+            "Les énigmes à code développent la logique et l'attention aux détails.",
         );
 
         Self { definitions }
@@ -149,6 +188,11 @@ impl EnigmaService {
         reference_photo_url: Option<String>,
         expected_text_answer: Option<String>,
         expected_code_answer: Option<String>,
+        hint_suggestion: &str,
+        hint_hint: &str,
+        hint_solution: &str,
+        historical_explanation: &str,
+        educational_content: &str,
     ) {
         let id = Self::enigma_id_for(investigation_id, order_index);
         defs.insert(
@@ -163,6 +207,11 @@ impl EnigmaService {
                 reference_photo_url,
                 expected_text_answer,
                 expected_code_answer,
+                hint_suggestion: hint_suggestion.to_string(),
+                hint_hint: hint_hint.to_string(),
+                hint_solution: hint_solution.to_string(),
+                historical_explanation: historical_explanation.to_string(),
+                educational_content: educational_content.to_string(),
             },
         );
     }
@@ -293,6 +342,31 @@ impl EnigmaService {
     ) -> Result<ValidateEnigmaResult, String> {
         let expected = def.expected_code_answer.as_deref().unwrap_or("");
         puzzle::validate(expected, payload.code_answer)
+    }
+
+    /// Indices progressifs par énigme (Story 4.3 – FR30). Lecture seule.
+    pub fn get_enigma_hints(&self, enigma_id: Uuid) -> Result<EnigmaHints, String> {
+        let def = self
+            .definitions
+            .get(&enigma_id)
+            .ok_or_else(|| "Énigme introuvable".to_string())?;
+        Ok(EnigmaHints {
+            suggestion: def.hint_suggestion.clone(),
+            hint: def.hint_hint.clone(),
+            solution: def.hint_solution.clone(),
+        })
+    }
+
+    /// Explications historiques et éducatives par énigme (Story 4.3 – FR31, FR32).
+    pub fn get_enigma_explanation(&self, enigma_id: Uuid) -> Result<EnigmaExplanation, String> {
+        let def = self
+            .definitions
+            .get(&enigma_id)
+            .ok_or_else(|| "Énigme introuvable".to_string())?;
+        Ok(EnigmaExplanation {
+            historical_explanation: def.historical_explanation.clone(),
+            educational_content: def.educational_content.clone(),
+        })
     }
 }
 

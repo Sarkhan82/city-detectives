@@ -373,3 +373,131 @@ async fn validate_puzzle_invalid_when_wrong_code() {
         "code incorrect ne doit pas être validé"
     );
 }
+
+// --- Story 4.3 : getEnigmaHints et getEnigmaExplanation (FR30, FR31) ---
+
+#[tokio::test]
+async fn get_enigma_hints_returns_suggestion_hint_solution() {
+    let schema = make_schema();
+    let token = get_test_token(&schema).await;
+    let enigma_id = words_enigma_id();
+    let request = Request::new(format!(
+        r#"
+        query {{
+            getEnigmaHints(enigmaId: "{}") {{
+                suggestion
+                hint
+                solution
+            }}
+        }}
+        "#,
+        enigma_id
+    ))
+    .data(BearerToken(Some(token)));
+    let res = schema.execute(request).await;
+    assert!(res.is_ok(), "errors: {:?}", res.errors);
+    let data = res.data.into_json().unwrap();
+    let hints = data
+        .get("getEnigmaHints")
+        .and_then(|v| v.as_object())
+        .expect("getEnigmaHints object");
+    assert!(
+        !hints
+            .get("suggestion")
+            .and_then(|v| v.as_str())
+            .unwrap()
+            .is_empty(),
+        "suggestion non vide"
+    );
+    assert!(
+        !hints
+            .get("hint")
+            .and_then(|v| v.as_str())
+            .unwrap()
+            .is_empty(),
+        "hint non vide"
+    );
+    assert!(
+        !hints
+            .get("solution")
+            .and_then(|v| v.as_str())
+            .unwrap()
+            .is_empty(),
+        "solution non vide"
+    );
+}
+
+#[tokio::test]
+async fn get_enigma_explanation_returns_historical_and_educational() {
+    let schema = make_schema();
+    let token = get_test_token(&schema).await;
+    let enigma_id = geo_enigma_id();
+    let request = Request::new(format!(
+        r#"
+        query {{
+            getEnigmaExplanation(enigmaId: "{}") {{
+                historicalExplanation
+                educationalContent
+            }}
+        }}
+        "#,
+        enigma_id
+    ))
+    .data(BearerToken(Some(token)));
+    let res = schema.execute(request).await;
+    assert!(res.is_ok(), "errors: {:?}", res.errors);
+    let data = res.data.into_json().unwrap();
+    let explanation = data
+        .get("getEnigmaExplanation")
+        .and_then(|v| v.as_object())
+        .expect("getEnigmaExplanation object");
+    assert!(
+        !explanation
+            .get("historicalExplanation")
+            .and_then(|v| v.as_str())
+            .unwrap()
+            .is_empty(),
+        "historicalExplanation non vide"
+    );
+    assert!(
+        !explanation
+            .get("educationalContent")
+            .and_then(|v| v.as_str())
+            .unwrap()
+            .is_empty(),
+        "educationalContent non vide"
+    );
+}
+
+#[tokio::test]
+async fn get_enigma_hints_returns_error_for_unknown_enigma() {
+    let schema = make_schema();
+    let token = get_test_token(&schema).await;
+    // UUID valide mais non présent dans le mock (pas d'énigme avec cet id)
+    let unknown_id = "00000000-0000-0000-0000-000000000001";
+    let request = Request::new(format!(
+        r#"
+        query {{
+            getEnigmaHints(enigmaId: "{}") {{
+                suggestion
+                hint
+                solution
+            }}
+        }}
+        "#,
+        unknown_id
+    ))
+    .data(BearerToken(Some(token)));
+    let res = schema.execute(request).await;
+    let errors = res.errors;
+    assert!(
+        !errors.is_empty(),
+        "getEnigmaHints(unknown id) doit retourner une erreur GraphQL"
+    );
+    let msg = errors.first().map(|e| e.message.as_str()).unwrap_or("");
+    assert!(
+        msg.contains("introuvable") || msg.contains("Énigme"),
+        "message attendu (énigme introuvable): {}",
+        msg
+    );
+}
