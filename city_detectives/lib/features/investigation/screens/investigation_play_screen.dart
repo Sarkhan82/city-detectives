@@ -12,6 +12,8 @@ import 'package:city_detectives/features/investigation/models/enigma.dart';
 import 'package:city_detectives/features/investigation/models/investigation_progress.dart';
 import 'package:city_detectives/features/investigation/models/investigation_with_enigmas.dart';
 import 'package:city_detectives/features/investigation/providers/investigation_play_provider.dart';
+import 'package:city_detectives/features/profile/providers/user_progress_provider.dart';
+import 'package:city_detectives/features/investigation/repositories/completed_investigation_repository.dart';
 import 'package:city_detectives/features/investigation/repositories/investigation_progress_repository.dart';
 import 'package:city_detectives/core/router/app_router.dart';
 import 'package:city_detectives/features/investigation/widgets/investigation_map_sheet.dart';
@@ -316,8 +318,26 @@ class _InvestigationPlayScreenState
                                           )
                                           .state =
                                       safeIndex + 1;
+                                } else {
+                                  // Story 5.1 (FR41) : dernière énigme validée → marquer enquête complétée.
+                                  final completedRepo = ref.read(
+                                    completedInvestigationRepositoryProvider,
+                                  );
+                                  await completedRepo.markCompleted(
+                                    investigationId,
+                                  );
+                                  final progressRepo = ref.read(
+                                    investigationProgressRepositoryProvider,
+                                  );
+                                  await progressRepo.deleteProgress(
+                                    investigationId,
+                                  );
+                                  ref.invalidate(userProgressDataProvider);
+                                  // Ne pas rappeler _saveProgress : on vient de supprimer la progression.
                                 }
-                                _saveProgress(ref, investigationId);
+                                if (safeIndex < total - 1) {
+                                  _saveProgress(ref, investigationId);
+                                }
                               },
                             ),
                           ],

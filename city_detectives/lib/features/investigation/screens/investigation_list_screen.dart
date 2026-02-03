@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:city_detectives/core/router/app_router.dart';
 import 'package:city_detectives/features/investigation/models/investigation.dart';
 import 'package:city_detectives/features/investigation/providers/investigation_list_provider.dart';
 import 'package:city_detectives/core/services/investigation_error_handler.dart';
@@ -23,8 +24,17 @@ class InvestigationListScreen extends ConsumerWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Enquêtes'),
-          actions: const [
-            Padding(
+          actions: [
+            Semantics(
+              label: 'Voir ma progression',
+              button: true,
+              child: IconButton(
+                icon: const Icon(Icons.bar_chart),
+                onPressed: () => context.push(AppRouter.progression),
+                tooltip: 'Ma progression',
+              ),
+            ),
+            const Padding(
               padding: EdgeInsets.only(right: 16),
               child: ConnectivityStatusIndicator(compact: true),
             ),
