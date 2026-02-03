@@ -198,7 +198,7 @@ class _LoreMediaSection extends StatelessWidget {
                   child: CachedNetworkImage(
                     imageUrl: url,
                     fit: BoxFit.cover,
-                    placeholder: (_, __) => Container(
+                    placeholder: (_, _) => Container(
                       color: Theme.of(
                         context,
                       ).colorScheme.surfaceContainerHighest,
@@ -209,7 +209,7 @@ class _LoreMediaSection extends StatelessWidget {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                     ),
-                    errorWidget: (_, __, ___) => Container(
+                    errorWidget: (_, _, _) => Container(
                       color: Theme.of(
                         context,
                       ).colorScheme.surfaceContainerHighest,

@@ -89,6 +89,27 @@ class _ProgressionContent extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       children: [
+        // Accès Gamification (Story 5.2 – FR42–FR45)
+        Semantics(
+          label:
+              'Ouvrir la section Gamification : badges, compétences, cartes postales et classement',
+          button: true,
+          child: Card(
+            margin: const EdgeInsets.only(bottom: 16),
+            child: ListTile(
+              leading: Icon(
+                Icons.emoji_events,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              title: const Text('Gamification'),
+              subtitle: const Text(
+                'Badges, compétences, cartes postales et classement',
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push(AppRouter.gamification),
+            ),
+          ),
+        ),
         // Progression globale (FR40) – design carnet de détective
         Semantics(
           label:

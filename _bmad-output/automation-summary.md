@@ -1,7 +1,7 @@
 # Résumé d'automatisation – City Detectives (Stories 1.2–4.4)
 
 **Date :** 2026-02-03  
-**Stories couvertes :** 1.2 (Création de compte), 2.1 (Parcourir et consulter les enquêtes), 2.2 (Sélection enquête, gratuit/payant), 3.1 (Démarrer enquête et navigation énigmes), 3.2 (Progression, carte interactive et position), 3.3 (Pause, reprise, abandon, sauvegarde), 4.1 (Énigmes photo et géolocalisation), 4.2 (Énigmes mots et puzzle), 4.3 (Aide contextuelle et explications historiques), **4.4 (LORE et option de saut)**  
+**Stories couvertes :** 1.2 (Création de compte), 2.1 (Parcourir et consulter les enquêtes), 2.2 (Sélection enquête, gratuit/payant), 3.1 (Démarrer enquête et navigation énigmes), 3.2 (Progression, carte interactive et position), 3.3 (Pause, reprise, abandon, sauvegarde), 4.1 (Énigmes photo et géolocalisation), 4.2 (Énigmes mots et puzzle), 4.3 (Aide contextuelle et explications historiques), 4.4 (LORE et option de saut), **5.1 (Statut completion et historique)**, **5.2 (Badges, compétences, leaderboard)**  
 **Mode :** Standalone / Auto-discover  
 **Cible de couverture :** critical-paths  
 
@@ -25,6 +25,7 @@
 | `tests/api/auth_test.rs` | Intégration HTTP | `--ignored` (serveur 8080) | 4 tests : register JWT, email dupliqué, email invalide, mot de passe court. |
 | `tests/api/investigations_test.rs` | Intégration HTTP | `--ignored` (serveur 8080) | 2 tests : listInvestigations retourne un tableau ; items ont les champs requis. |
 | `tests/api/enigmas_test.rs` | In-process GraphQL | `cargo test` | **Story 4.1** – 4 tests : validateEnigmaResponse (géoloc/photo). **Story 4.2** – 4 tests : validateEnigmaResponse (words/puzzle). **Story 4.3** – 3 tests : getEnigmaHints, getEnigmaExplanation, getEnigmaHints (ID inconnu). Auth Bearer requise. **Total : 11 tests.** (Story 4.4 LORE couverte par graphql.rs in-process.) |
+| `tests/api/gamification_test.rs` | In-process GraphQL | `cargo test` | **Story 5.2** – 4 tests : getUserBadges, getUserSkills, getUserPostcards, getLeaderboard (auth requise). |
 
 **Rust – Unitaires (exécutés par défaut)**
 
@@ -57,8 +58,11 @@
 | `features/enigma/widgets/enigma_help_button_test.dart` | **Story 4.3** – Bouton Aide : icône ; ouverture bottom sheet avec panneau indices ; flux complet suggestion → indice → solution (2 taps « Voir l'indice suivant », puis Solution + Fermer). 3 tests. |
 | `features/enigma/screens/enigma_explanation_screen_test.dart` | **Story 4.3** – Écran Explications : chargement puis contenu (Contexte historique, Pour en savoir plus) ; bouton Continuer appelle onContinue. 2 tests. |
 | `features/enigma/screens/lore_screen_test.dart` | **Story 4.4** – Écran LORE : chargement puis titre/texte/Sauter/Continuer ; Sauter et Continuer appellent onContinue ; état vide (getLoreContent null) ; section médias quand mediaUrls non vide (CachedNetworkImage). 5 tests. |
+| `features/profile/screens/progression_screen_test.dart` | **Story 5.1** – Écran Ma progression : titre, statut par enquête, enquêtes complétées, progression globale ; enquête complétée affichée ; tap enquête en cours → détail ; CompletedInvestigationRepository + InvestigationProgressRepository mockés. |
+| `features/profile/screens/gamification_screen_test.dart` | **Story 5.2** – Écran Gamification : titres sections (Badges, Compétences, Cartes postales, Classement), contenu mocké (badges, skills, postcards, leaderboard), scroll pour afficher toutes les sections. |
+| `features/investigation/repositories/completed_investigation_repository_test.dart` | **Story 5.1** – TU CompletedInvestigationRepository (forTest) : isCompleted, getCompletedOrderedByDate, markCompleted, overwrite, ordre plus récent en premier. 8 tests. |
 
-- **Total Flutter :** 94+ tests (dont Story 4.3 : help 3, explanation 2 ; Story 4.4 : lore_screen 5).
+- **Total Flutter :** 107 tests (dont Story 4.4 : lore_screen 5 ; Story 5.1 : progression_screen + completed_investigation_repository ; Story 5.2 : gamification_screen).
 - **Exécution :** `cd city_detectives && flutter test`.
 
 ---
@@ -74,8 +78,10 @@
 | Unit Rust | `auth_service.rs` | – | – | 2 | JWT / validation token |
 | Widget Flutter | register, onboarding, investigation_list, detail, placeholder, **play** (3.1, 3.2, 3.3), **map_sheet** (3.2), **progress_repository** (3.3), price_chip, models, widget, **photo_enigma**, **geolocation_enigma** (4.1), **lore_screen** (4.4) | – | 55 | – | + **4.4** (LORE : écran, Sauter/Continuer, état vide, médias). |
 | In-process Rust | `enigmas_test.rs` | – | 11 | – | **Story 4.1** – validateEnigmaResponse (géoloc/photo). **Story 4.2** – validateEnigmaResponse (words/puzzle). **Story 4.3** – getEnigmaHints (nominal + ID inconnu), getEnigmaExplanation (nominal). Auth requise. |
+| In-process Rust | `gamification_test.rs` | – | 4 | – | **Story 5.2** – getUserBadges, getUserSkills, getUserPostcards, getLeaderboard (auth requise). |
+| Widget Flutter | **progression_screen**, **completed_investigation_repository** (5.1), **gamification_screen** (5.2) | – | 12+ | – | Story 5.1 : statut par enquête, enquêtes complétées, progression ; Story 5.2 : badges, compétences, cartes postales, leaderboard. |
 
-- **Résumé :** 21 tests API/in-process Rust (7 unit + 11 énigmas + 3 LORE in-process), 94+ tests widget/unit Flutter (dont 4.3 : Aide 3, Explications 2 ; 4.4 : LORE 5).
+- **Résumé :** 25 tests Rust exécutés par défaut (10 unit/graphql + 11 énigmas + 4 gamification), 6 tests `--ignored` (auth_test, investigations_test) ; 107 tests Flutter (dont 5.1 : progression + completed_investigation_repository ; 5.2 : gamification_screen).
 - **Doublons évités :** Pas d’E2E pour 1.2/2.1/2.2/3.x ; logique métier couverte en unitaire + API ; widget couvre UX critique.
 
 ---
@@ -125,10 +131,20 @@
    - ✅ **Flutter :** `puzzle_enigma_widget_test.dart` – 3 tests : affichage titre/consigne/bouton ; soumission → résultat succès ; soumission → message erreur (repository mocké).
    - Pas de gap identifié pour 4.2.
 
-9. **E2E**
+9. **Story 5.1 (statut completion, historique)**
+   - ✅ **Flutter :** `progression_screen_test.dart` – écran Ma progression, statut par enquête, enquêtes complétées, progression globale ; tap enquête en cours.
+   - ✅ **Flutter :** `completed_investigation_repository_test.dart` – 8 TU CompletedInvestigationRepository (forTest) : isCompleted, getCompletedOrderedByDate, markCompleted, overwrite, ordre.
+   - Pas de tests API Rust pour 5.1 (données locales Hive / completed).
+
+10. **Story 5.2 (badges, compétences, leaderboard)**
+   - ✅ **Rust :** `tests/api/gamification_test.rs` – 4 tests in-process : getUserBadges, getUserSkills, getUserPostcards, getLeaderboard (register puis token).
+   - ✅ **Flutter :** `gamification_screen_test.dart` – titres sections, contenu mocké (badges, skills, postcards, leaderboard), scroll pour Cartes postales et Classement.
+   - Pas de gap identifié pour 5.2.
+
+11. **E2E**
    - Aucun test E2E (Flutter `integration_test` ou scénario réel API + app). À prévoir si une story le demande (ex. parcours complet inscription → liste enquêtes).
 
-10. **CI**
+12. **CI**
    - Rust : `cargo test` exécute unitaires + test in-process GraphQL ; tests `#[ignore]` à lancer avec serveur sur 8080.
    - Flutter : `flutter test` à exécuter en CI ; environnement SDK à configurer.
 
@@ -230,6 +246,10 @@ flutter test
 - **city-detectives-api/src/api/graphql.rs** (mod tests) : 3 tests in-process – `get_lore_content_returns_content_for_investigation_and_sequence`, `get_lore_content_returns_null_for_unknown_sequence_index`, `get_lore_sequence_indexes_returns_ordered_list`.
 - **city_detectives/test/features/enigma/screens/lore_screen_test.dart** : 5 tests widget – chargement puis titre/texte et boutons Sauter/Continuer ; Sauter et Continuer appellent onContinue ; état vide quand getLoreContent null ; section médias avec CachedNetworkImage quand mediaUrls non vide.
 
+**2026-02-03 – testarch-automate (expansion couverture 5.1 et 5.2)**
+- **Story 5.1** : inventaire et plan de couverture mis à jour – `progression_screen_test.dart`, `completed_investigation_repository_test.dart` (8 TU) ; gaps 5.1 documentés.
+- **Story 5.2** : inventaire et plan de couverture mis à jour – `city-detectives-api/tests/api/gamification_test.rs` (4 tests in-process), `gamification_screen_test.dart` ; gaps 5.2 documentés.
+
 ---
 
 ## Definition of Done (workflow testarch-automate)
@@ -249,6 +269,7 @@ flutter test
 - [x] **2026-02-03 testarch-automate** : Story 4.2 documentée – enigmas_test.rs (8 tests au total : +4 words/puzzle), words_enigma_widget_test.dart (3 tests), puzzle_enigma_widget_test.dart (3 tests) ; inventaire et gaps mis à jour.
 - [x] **2026-02-03 testarch-automate** : Story 4.3 documentée – enigmas_test.rs (11 tests : +3 getEnigmaHints/getEnigmaExplanation dont 1 cas erreur ID inconnu), enigma_help_button_test.dart (3 tests), enigma_explanation_screen_test.dart (2 tests) ; inventaire et plan de couverture mis à jour.
 - [x] **2026-02-03 testarch-automate** : Story 4.4 (LORE) documentée – graphql.rs (3 tests in-process : getLoreContent nominal + null, getLoreSequenceIndexes), lore_screen_test.dart (5 tests : contenu, Sauter/Continuer, état vide, médias) ; inventaire et plan de couverture à jour.
+- [x] **2026-02-03 testarch-automate** : Stories 5.1 et 5.2 documentées – gamification_test.rs (4 tests), gamification_screen_test.dart, progression_screen_test.dart, completed_investigation_repository_test.dart (8 TU) ; inventaire, plan de couverture et gaps à jour.
 
 ---
 
@@ -282,6 +303,11 @@ flutter test
 | `city-detectives-api/tests/api/enigmas_test.rs` | **Story 4.1 + 4.2 + 4.3** – Intégration validateEnigmaResponse (8 tests), getEnigmaHints/getEnigmaExplanation (3 tests dont 1 erreur ID inconnu). |
 | `city_detectives/test/features/enigma/widgets/enigma_help_button_test.dart` | **Story 4.3** – Bouton Aide + panneau indices (3 tests). |
 | `city_detectives/test/features/enigma/screens/enigma_explanation_screen_test.dart` | **Story 4.3** – Écran Explications (2 tests). |
+| `city_detectives/test/features/enigma/screens/lore_screen_test.dart` | **Story 4.4** – Écran LORE (5 tests). |
+| `city_detectives/test/features/profile/screens/progression_screen_test.dart` | **Story 5.1** – Écran Ma progression (statut, enquêtes complétées, progression). |
+| `city_detectives/test/features/profile/screens/gamification_screen_test.dart` | **Story 5.2** – Écran Gamification (badges, compétences, cartes postales, leaderboard). |
+| `city_detectives/test/features/investigation/repositories/completed_investigation_repository_test.dart` | **Story 5.1** – TU CompletedInvestigationRepository (8 tests). |
+| `city-detectives-api/tests/api/gamification_test.rs` | **Story 5.2** – getUserBadges, getUserSkills, getUserPostcards, getLeaderboard (4 tests). |
 | `city_detectives/integration_test/app_test.dart` | E2E welcome → register, retour. |
 
 ---
@@ -319,9 +345,9 @@ flutter test
 
 ## Résultats d'exécution (2026-02-03)
 
-- **Rust** (`cargo test`) : 21 tests passés (7 unit + 4 graphql in-process dont 3 LORE Story 4.4 + 11 enigmas_test) ; auth_test et investigations_test ignorés (serveur 8080).
-- **Flutter** (`flutter test`) : 94 tests passés (dont Story 4.3 : help 3, explanation 2 ; Story 4.4 : lore_screen 5). Des `ClientException` (tile.openstreetmap.org 400) peuvent apparaître en log sans faire échouer les tests.
+- **Rust** (`cargo test`) : 25 tests passés (10 unit/graphql + 11 enigmas_test + 4 gamification_test) ; auth_test (4) et investigations_test (2) ignorés (serveur 8080).
+- **Flutter** (`flutter test`) : 107 tests passés (dont Story 5.1 : progression_screen + completed_investigation_repository ; Story 5.2 : gamification_screen). Des `ClientException` (tile.openstreetmap.org 400) peuvent apparaître en log sans faire échouer les tests.
 
 ---
 
-*Workflow : `_bmad/bmm/workflows/testarch/automate` (testarch-automate). Dernière mise à jour : 2026-02-03 (Story 4.4 – LORE et option de saut ; tests Rust getLoreContent/getLoreSequenceIndexes, Flutter lore_screen 5 tests).*
+*Workflow : `_bmad/bmm/workflows/testarch/automate` (testarch-automate). Dernière mise à jour : 2026-02-03 (Stories 5.1 et 5.2 – inventaire et plan de couverture ; Rust gamification_test 4 tests, Flutter progression_screen, gamification_screen, completed_investigation_repository 8 TU).*

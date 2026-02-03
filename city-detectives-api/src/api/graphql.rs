@@ -12,9 +12,11 @@ use crate::api::middleware::auth::{extract_bearer, BearerToken};
 use crate::models::enigma::{
     EnigmaExplanation, EnigmaHints, LoreContent, ValidateEnigmaPayload, ValidateEnigmaResult,
 };
+use crate::models::gamification::{LeaderboardEntry, UserBadge, UserPostcard, UserSkill};
 use crate::models::user::RegisterInput;
 use crate::services::auth_service::AuthService;
 use crate::services::enigma_service::EnigmaService;
+use crate::services::gamification_service::GamificationService;
 use crate::services::investigation_service::InvestigationService;
 use crate::services::lore_service::LoreService;
 use uuid::Uuid;
@@ -26,12 +28,14 @@ pub fn create_schema(
     investigation_service: Arc<InvestigationService>,
     enigma_service: Arc<EnigmaService>,
     lore_service: Arc<LoreService>,
+    gamification_service: Arc<GamificationService>,
 ) -> AppSchema {
     Schema::build(QueryRoot, MutationRoot, EmptySubscription)
         .data(auth_service)
         .data(investigation_service)
         .data(enigma_service)
         .data(lore_service)
+        .data(gamification_service)
         .finish()
 }
 
@@ -133,6 +137,53 @@ impl QueryRoot {
             Uuid::parse_str(&investigation_id).map_err(|_| Error::new("ID enquête invalide"))?;
         Ok(lore_svc.get_lore_sequence_indexes(id))
     }
+
+    /// Badges débloqués par l'utilisateur courant (Story 5.2 – FR42). Requiert authentification.
+    async fn get_user_badges(&self, ctx: &Context<'_>) -> Result<Vec<UserBadge>, Error> {
+        let auth = ctx.data::<Arc<AuthService>>()?;
+        let token = ctx.data::<BearerToken>().ok().and_then(|t| t.0.clone());
+        let token = token.as_deref().ok_or("Token manquant")?;
+        let user_id = auth.validate_token(token).map_err(Error::from)?;
+        let gamification_svc = ctx.data::<Arc<GamificationService>>()?;
+        Ok(gamification_svc.get_user_badges(user_id))
+    }
+
+    /// Compétences détective par utilisateur courant (Story 5.2 – FR43). Requiert authentification.
+    async fn get_user_skills(&self, ctx: &Context<'_>) -> Result<Vec<UserSkill>, Error> {
+        let auth = ctx.data::<Arc<AuthService>>()?;
+        let token = ctx.data::<BearerToken>().ok().and_then(|t| t.0.clone());
+        let token = token.as_deref().ok_or("Token manquant")?;
+        let user_id = auth.validate_token(token).map_err(Error::from)?;
+        let gamification_svc = ctx.data::<Arc<GamificationService>>()?;
+        Ok(gamification_svc.get_user_skills(user_id))
+    }
+
+    /// Cartes postales virtuelles par utilisateur courant (Story 5.2 – FR44). Requiert authentification.
+    async fn get_user_postcards(&self, ctx: &Context<'_>) -> Result<Vec<UserPostcard>, Error> {
+        let auth = ctx.data::<Arc<AuthService>>()?;
+        let token = ctx.data::<BearerToken>().ok().and_then(|t| t.0.clone());
+        let token = token.as_deref().ok_or("Token manquant")?;
+        let user_id = auth.validate_token(token).map_err(Error::from)?;
+        let gamification_svc = ctx.data::<Arc<GamificationService>>()?;
+        Ok(gamification_svc.get_user_postcards(user_id))
+    }
+
+    /// Leaderboard global ou par enquête (Story 5.2 – FR45). Requiert authentification.
+    async fn get_leaderboard(
+        &self,
+        ctx: &Context<'_>,
+        investigation_id: Option<String>,
+    ) -> Result<Vec<LeaderboardEntry>, Error> {
+        let auth = ctx.data::<Arc<AuthService>>()?;
+        let token = ctx.data::<BearerToken>().ok().and_then(|t| t.0.clone());
+        let token = token.as_deref().ok_or("Token manquant")?;
+        let user_id = auth.validate_token(token).map_err(Error::from)?;
+        let inv_id = investigation_id
+            .as_ref()
+            .and_then(|s| Uuid::parse_str(s).ok());
+        let gamification_svc = ctx.data::<Arc<GamificationService>>()?;
+        Ok(gamification_svc.get_leaderboard(user_id, inv_id))
+    }
 }
 
 pub struct MutationRoot;
@@ -206,6 +257,7 @@ mod tests {
     use super::*;
     use crate::services::auth_service::AuthService;
     use crate::services::enigma_service::EnigmaService;
+    use crate::services::gamification_service::GamificationService;
     use crate::services::investigation_service::InvestigationService;
     use crate::services::lore_service::LoreService;
 
@@ -216,7 +268,8 @@ mod tests {
         let enigma_svc = Arc::new(EnigmaService::new());
         let inv_svc = Arc::new(InvestigationService::new(enigma_svc.clone()));
         let lore_svc = Arc::new(LoreService::new());
-        let schema = create_schema(auth, inv_svc, enigma_svc, lore_svc);
+        let gamification_svc = Arc::new(GamificationService::new());
+        let schema = create_schema(auth, inv_svc, enigma_svc, lore_svc, gamification_svc);
         let request = async_graphql::Request::new(
             r#"query { listInvestigations { id titre description durationEstimate difficulte isFree } }"#,
         );
@@ -244,7 +297,8 @@ mod tests {
         let enigma_svc = Arc::new(EnigmaService::new());
         let inv_svc = Arc::new(InvestigationService::new(enigma_svc.clone()));
         let lore_svc = Arc::new(LoreService::new());
-        let schema = create_schema(auth, inv_svc, enigma_svc, lore_svc);
+        let gamification_svc = Arc::new(GamificationService::new());
+        let schema = create_schema(auth, inv_svc, enigma_svc, lore_svc, gamification_svc);
         let id = "11111111-1111-1111-1111-111111111111";
         let request = async_graphql::Request::new(format!(
             r#"query {{ investigation(id: "{}") {{ investigation {{ id titre }} enigmas {{ id orderIndex type titre }} }} }}"#,
@@ -282,7 +336,8 @@ mod tests {
         let enigma_svc = Arc::new(EnigmaService::new());
         let inv_svc = Arc::new(InvestigationService::new(enigma_svc.clone()));
         let lore_svc = Arc::new(LoreService::new());
-        let schema = create_schema(auth, inv_svc, enigma_svc, lore_svc);
+        let gamification_svc = Arc::new(GamificationService::new());
+        let schema = create_schema(auth, inv_svc, enigma_svc, lore_svc, gamification_svc);
         let id = "11111111-1111-1111-1111-111111111111";
         let request = async_graphql::Request::new(format!(
             r#"query {{ getLoreContent(investigationId: "{}", sequenceIndex: 0) {{ sequenceIndex title contentText mediaUrls }} }}"#,
@@ -323,7 +378,8 @@ mod tests {
         let enigma_svc = Arc::new(EnigmaService::new());
         let inv_svc = Arc::new(InvestigationService::new(enigma_svc.clone()));
         let lore_svc = Arc::new(LoreService::new());
-        let schema = create_schema(auth, inv_svc, enigma_svc, lore_svc);
+        let gamification_svc = Arc::new(GamificationService::new());
+        let schema = create_schema(auth, inv_svc, enigma_svc, lore_svc, gamification_svc);
         let id = "11111111-1111-1111-1111-111111111111";
         let request = async_graphql::Request::new(format!(
             r#"query {{ getLoreContent(investigationId: "{}", sequenceIndex: 99) {{ sequenceIndex title }} }}"#,
@@ -346,7 +402,8 @@ mod tests {
         let enigma_svc = Arc::new(EnigmaService::new());
         let inv_svc = Arc::new(InvestigationService::new(enigma_svc.clone()));
         let lore_svc = Arc::new(LoreService::new());
-        let schema = create_schema(auth, inv_svc, enigma_svc, lore_svc);
+        let gamification_svc = Arc::new(GamificationService::new());
+        let schema = create_schema(auth, inv_svc, enigma_svc, lore_svc, gamification_svc);
         let id = "11111111-1111-1111-1111-111111111111";
         let request = async_graphql::Request::new(format!(
             r#"query {{ getLoreSequenceIndexes(investigationId: "{}") }}"#,
