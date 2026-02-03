@@ -3,7 +3,7 @@
 **Story ID:** 5.1  
 **Epic:** 5 – Progression & Gamification  
 **Story Key:** 5-1-statut-completion-historique  
-**Status:** ready-for-dev  
+**Status:** done  
 **Depends on:** Story 4.1  
 **Parallelizable with:** Story 6.1, Story 8.1, Story 9.1  
 **Lane:** B  
@@ -30,26 +30,34 @@ So that **je sache où j'en suis**.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1** (AC1) – Statut de complétion par enquête
-  - [ ] 1.1 Afficher pour chaque enquête un statut clair : non démarrée / en cours / complétée (FR39). Données : progression locale (Hive, 3.3) et/ou backend (si sync progression existante).
-  - [ ] 1.2 Backend : exposer la progression par utilisateur et par enquête (ex. query `getUserProgress(userId)` ou `getUserInvestigationsStatus(userId)` : liste enquêtes avec statut, pourcentage ou énigmes complétées). Si pas encore d'API : s'appuyer sur Hive côté Flutter et afficher les enquêtes « en cours » + complétées à partir des données locales (FR39).
-  - [ ] 1.3 Flutter : écran « Profil » ou « Progression » (route ex. `/profile` ou `/progression`) ; liste ou grille des enquêtes avec indicateur de statut (non démarrée, en cours, complétée) (FR39).
-- [ ] **Task 2** (AC1) – Progression globale
-  - [ ] 2.1 Afficher une progression globale : ex. nombre d'enquêtes complétées / total, ou pourcentage, ou résumé (FR40).
-  - [ ] 2.2 Données : agrégation des statuts par enquête (local Hive + optionnel backend). Calcul côté Flutter si pas d'API dédiée (FR40).
-  - [ ] 2.3 Design : design system « carnet de détective » ; indicateur visuel clair (barre, chiffres, etc.) (FR40).
-- [ ] **Task 3** (AC1) – Historique des enquêtes complétées
-  - [ ] 3.1 Afficher l'historique des enquêtes complétées : liste ordonnée (ex. par date de complétion) avec titre, date, éventuellement durée (FR41).
-  - [ ] 3.2 Données : marquer « complétée » quand l'utilisateur a validé la dernière énigme d'une enquête (4.1, 4.2) ; persister en local (Hive) et optionnellement en backend (FR41).
-  - [ ] 3.3 Flutter : section « Historique » ou « Enquêtes complétées » sur l'écran profil/progression ; liste scrollable (FR41).
-- [ ] **Task 4** (AC1) – Navigation et entrée
-  - [ ] 4.1 Route GoRouter pour l'écran profil/progression (ex. `/profile`, `/progression`) ; accès depuis le menu principal, la barre de navigation ou l'écran liste des enquêtes (FR39, FR40, FR41).
-  - [ ] 4.2 Réutiliser le router et la structure existants (2.1, 2.2, 3.1) ; pas de régression sur la navigation vers les enquêtes (FR39).
-- [ ] **Task 5** – Qualité et conformité
-  - [ ] 5.1 Backend : test d'intégration pour la query progression/utilisateur si ajoutée (ex. `tests/api/user_progress_test.rs` ou équivalent) – au moins un cas nominal (FR39, FR40, FR41).
-  - [ ] 5.2 Flutter : tests widget pour l'écran profil/progression (présence statut par enquête, progression globale, historique) ; mocker données locales ou API (FR39, FR40, FR41).
-  - [ ] 5.3 `dart analyze`, `flutter test`, `cargo test`, `clippy` verts ; pas de régression sur 4.1–4.4, 3.3.
-  - [ ] 5.4 Accessibilité : labels pour statuts, progression, historique (WCAG 2.1 Level A).
+- [x] **Task 1** (AC1) – Statut de complétion par enquête
+  - [x] 1.1 Afficher pour chaque enquête un statut clair : non démarrée / en cours / complétée (FR39). Données : progression locale (Hive, 3.3) et/ou backend (si sync progression existante).
+  - [x] 1.2 Backend : exposer la progression par utilisateur et par enquête (ex. query `getUserProgress(userId)` ou `getUserInvestigationsStatus(userId)` : liste enquêtes avec statut, pourcentage ou énigmes complétées). Si pas encore d'API : s'appuyer sur Hive côté Flutter et afficher les enquêtes « en cours » + complétées à partir des données locales (FR39).
+  - [x] 1.3 Flutter : écran « Profil » ou « Progression » (route ex. `/profile` ou `/progression`) ; liste ou grille des enquêtes avec indicateur de statut (non démarrée, en cours, complétée) (FR39).
+- [x] **Task 2** (AC1) – Progression globale
+  - [x] 2.1 Afficher une progression globale : ex. nombre d'enquêtes complétées / total, ou pourcentage, ou résumé (FR40).
+  - [x] 2.2 Données : agrégation des statuts par enquête (local Hive + optionnel backend). Calcul côté Flutter si pas d'API dédiée (FR40).
+  - [x] 2.3 Design : design system « carnet de détective » ; indicateur visuel clair (barre, chiffres, etc.) (FR40).
+- [x] **Task 3** (AC1) – Historique des enquêtes complétées
+  - [x] 3.1 Afficher l'historique des enquêtes complétées : liste ordonnée (ex. par date de complétion) avec titre, date, éventuellement durée (FR41).
+  - [x] 3.2 Données : marquer « complétée » quand l'utilisateur a validé la dernière énigme d'une enquête (4.1, 4.2) ; persister en local (Hive) et optionnellement en backend (FR41).
+  - [x] 3.3 Flutter : section « Historique » ou « Enquêtes complétées » sur l'écran profil/progression ; liste scrollable (FR41).
+- [x] **Task 4** (AC1) – Navigation et entrée
+  - [x] 4.1 Route GoRouter pour l'écran profil/progression (ex. `/profile`, `/progression`) ; accès depuis le menu principal, la barre de navigation ou l'écran liste des enquêtes (FR39, FR40, FR41).
+  - [x] 4.2 Réutiliser le router et la structure existants (2.1, 2.2, 3.1) ; pas de régression sur la navigation vers les enquêtes (FR39).
+- [x] **Task 5** – Qualité et conformité
+  - [x] 5.1 Backend : test d'intégration pour la query progression/utilisateur si ajoutée (ex. `tests/api/user_progress_test.rs` ou équivalent) – au moins un cas nominal (FR39, FR40, FR41).
+  - [x] 5.2 Flutter : tests widget pour l'écran profil/progression (présence statut par enquête, progression globale, historique) ; mocker données locales ou API (FR39, FR40, FR41).
+  - [x] 5.3 `dart analyze`, `flutter test`, `cargo test`, `clippy` verts ; pas de régression sur 4.1–4.4, 3.3.
+  - [x] 5.4 Accessibilité : labels pour statuts, progression, historique (WCAG 2.1 Level A).
+
+- [x] **Review Follow-ups (AI)**
+  - [x] [AI-Review][MEDIUM] Utiliser constantes/helpers AppRouter pour les routes dans progression_screen (au lieu de chaînes en dur) [progression_screen.dart:241, 307]
+  - [x] [AI-Review][MEDIUM] Ajouter accès à l'écran Progression depuis le menu principal ou la barre de navigation (Task 4.1 partielle)
+  - [x] [AI-Review][MEDIUM] Compléter File List avec investigation_progress.g.dart si le fichier est versionné
+  - [ ] [AI-Review][LOW] Optionnel FR41 : afficher la durée d'enquête dans l'historique (reporté MVP)
+  - [x] [AI-Review][LOW] Documenter ou corriger la branche forTest du repository (completed_investigation_repository.dart L36–39)
+  - [x] [AI-Review][LOW] Ajouter Semantics au bouton « Réessayer » sur l'écran Progression (état erreur)
 
 ---
 
@@ -140,7 +148,53 @@ So that **je sache où j'en suis**.
 
 ### Completion Notes List
 
+- Implémentation 100 % côté Flutter/Hive (pas d’API backend pour 5.1, conforme aux Dev Notes). Modèle `CompletedInvestigation` (Hive typeId 1) et repository pour persister les enquêtes complétées. Marquage « complétée » dans `investigation_play_screen.dart` lorsque la dernière énigme est validée ; suppression de la progression « en cours » pour cette enquête. Écran `ProgressionScreen` avec statut par enquête (non démarrée / en cours / complétée), barre de progression globale (X / Y enquêtes), et historique ordonné par date. Route `/progression` et accès depuis la liste des enquêtes (icône « Ma progression »). Tests unitaires repository + tests widget écran progression ; Semantics pour accessibilité WCAG 2.1 Level A.
+- **Code review 2026-02-03 :** Corrigé bug critique (ne plus appeler _saveProgress après complétion pour éviter enquête à la fois complétée et en cours). Corrigé invalidation de userProgressDataProvider après complétion pour rafraîchir l’écran Progression.
+
+- **Review follow-ups 2026-02-03 :** AppRouter.investigationDetailPath/StartPath ; accès « Ma progression » depuis l'écran home ; File List complétée ; commentaire forTest ; Semantics bouton Réessayer. FR41 durée laissé optionnel.
+- **Code review 2e passage 2026-02-03 :** Navigation Historique→détail corrigée (passage de `extra: investigation` dans _HistoryTile) ; context.mounted ajouté sur les onTap de l'écran home.
+
 ### File List
+
+- city_detectives/lib/features/investigation/models/completed_investigation.dart
+- city_detectives/lib/features/investigation/models/completed_investigation.g.dart
+- city_detectives/lib/features/investigation/models/investigation_progress.g.dart (régénéré build_runner)
+- city_detectives/lib/features/investigation/repositories/completed_investigation_repository.dart
+- city_detectives/lib/features/investigation/screens/investigation_play_screen.dart
+- city_detectives/lib/main.dart
+- city_detectives/lib/features/profile/providers/user_progress_provider.dart
+- city_detectives/lib/features/profile/screens/progression_screen.dart
+- city_detectives/lib/core/router/app_router.dart
+- city_detectives/lib/features/investigation/screens/investigation_list_screen.dart
+- city_detectives/test/features/investigation/repositories/completed_investigation_repository_test.dart
+- city_detectives/test/features/profile/screens/progression_screen_test.dart
+
+### Change Log
+
+- 2026-02-03 : Story 5.1 implémentée – statut par enquête, progression globale, historique complétées, écran Progression, route /progression, tests et accessibilité.
+- 2026-02-03 : Code review (adversarial) – 1 critique et 1 élevé corrigés (_saveProgress après complétion, invalidation userProgressDataProvider). 3 moyen et 3 faible reportés en Review Follow-ups.
+- 2026-02-03 : Review follow-ups traités (routes AppRouter, accès home, File List, forTest, Semantics). Statut repassé en review.
+- 2026-02-03 : Code review 2e passage – HIGH navigation Historique→détail (extra) et MEDIUM context.mounted (home) corrigés. Outcome Approve. Statut → done.
+
+---
+
+## Senior Developer Review (AI)
+
+**Outcome:** Approve (après 2e passage)  
+**Date:** 2026-02-03  
+**Action Items:** 6 traités ; 2e passage : 1 HIGH + 1 MEDIUM corrigés.
+
+### Résumé
+
+- **CRITICAL (corrigé)** : Ré-enregistrement de la progression après complétion → enquête à la fois « complétée » et « en cours ». Corrigé en n’appelant plus `_saveProgress` lorsque la dernière énigme est validée.
+- **HIGH (corrigé)** : Données de progression obsolètes sur l’écran Progression après complétion. Corrigé par `ref.invalidate(userProgressDataProvider)` après marquage complété.
+- **MEDIUM** : Routes en dur dans progression_screen ; accès progression uniquement depuis la liste (Task 4.1 partielle) ; File List incomplète (investigation_progress.g.dart).
+- **LOW** : Durée non affichée (FR41 optionnel) ; branche forTest du repository ; Semantics du bouton Réessayer → traités sauf durée (reporté MVP).
+- **2e passage** : HIGH navigation Historique→détail (extra) + MEDIUM context.mounted (home) corrigés. Story validée → done.
+
+### Action Items (détails)
+
+Voir section **Review Follow-ups (AI)** dans Tasks/Subtasks. Rapport détaillé : `implementation-artifacts/code-review-5-1-statut-completion-historique.md`.
 
 ---
 
