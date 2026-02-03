@@ -3,7 +3,7 @@
 **Story ID:** 5.2  
 **Epic:** 5 – Progression & Gamification  
 **Story Key:** 5-2-badges-competences-leaderboard  
-**Status:** ready-for-dev  
+**Status:** review  
 **Depends on:** Story 5.1  
 **Parallelizable with:** Story 6.2, Story 8.2, Story 9.2  
 **Lane:** B  
@@ -30,30 +30,38 @@ So that **je sois motivé à progresser**.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1** (AC1) – Badges et accomplissements
-  - [ ] 1.1 Afficher les badges débloqués par l'utilisateur (ex. « Première enquête », « 5 énigmes résolues », « Ville explorée ») (FR42).
-  - [ ] 1.2 Backend : exposer les badges par utilisateur (ex. query `getUserBadges(userId)` ou champs sur `UserProgress` : liste de badge_ids ou équivalent). Données : définition des badges (critères, icône, libellé) ; déblocage basé sur la progression (enquêtes complétées, énigmes résolues, etc.) (FR42).
-  - [ ] 1.3 Flutter : section « Badges » ou « Accomplissements » sur l'écran profil/gamification (5.1) ; grille ou liste des badges (débloqués visibles, non débloqués en grisé ou cachés selon UX) (FR42).
-- [ ] **Task 2** (AC1) – Progression de compétences détective
-  - [ ] 2.1 Afficher la progression des compétences détective (ex. niveaux, barres de progression par compétence : exploration, résolution, rapidité, etc.) (FR43).
-  - [ ] 2.2 Backend : exposer les compétences par utilisateur (ex. query `getUserSkills(userId)` ou champs sur `UserProgress` : niveau, XP ou équivalent). Règles de progression dérivées de la progression (énigmes résolues, enquêtes complétées) (FR43).
-  - [ ] 2.3 Flutter : section « Compétences » sur l'écran gamification ; indicateurs visuels (barres, niveaux) (FR43).
-- [ ] **Task 3** (AC1) – Cartes postales virtuelles
-  - [ ] 3.1 Afficher les cartes postales virtuelles collectées (lieux découverts pendant les enquêtes) (FR44).
-  - [ ] 3.2 Backend : exposer les cartes postales par utilisateur (ex. query `getUserPostcards(userId)` ou champs sur `UserProgress` : liste de lieux/énigmes « découverts »). Données : image, lieu, date de déblocage (FR44).
-  - [ ] 3.3 Flutter : section « Cartes postales » sur l'écran gamification ; galerie ou grille (débloquées avec image, non débloquées placeholder) (FR44).
-- [ ] **Task 4** (AC1) – Leaderboard
-  - [ ] 4.1 Afficher le classement leaderboard (ex. par enquête, global : score ou temps ou nombre d'énigmes) (FR45).
-  - [ ] 4.2 Backend : exposer le leaderboard (ex. query `getLeaderboard(investigationId?)` ou `getGlobalLeaderboard()` : liste utilisateurs avec score/rang). Données : agrégation des scores ou métriques (complétions, temps, etc.) (FR45).
-  - [ ] 4.3 Flutter : section « Leaderboard » sur l'écran gamification ; liste ou tableau (rang, pseudo ou userId, score) ; position de l'utilisateur mise en évidence (FR45).
-- [ ] **Task 5** (AC1) – Section gamification et navigation
-  - [ ] 5.1 Créer une section « Gamification » ou « Accomplissements » accessible depuis le profil/progression (5.1) : onglet, sous-écran ou route ex. `/profile/gamification` (FR42–FR45).
-  - [ ] 5.2 Regrouper badges, compétences, cartes postales et leaderboard sur cet écran ; design system « carnet de détective » ; accessibilité WCAG 2.1 Level A (FR42–FR45).
-- [ ] **Task 6** – Qualité et conformité
-  - [ ] 6.1 Backend : test d'intégration pour les queries badges, compétences, cartes postales, leaderboard si implémentées (ex. `tests/api/gamification_test.rs` ou équivalent) – au moins un cas nominal (FR42–FR45).
-  - [ ] 6.2 Flutter : tests widget pour l'écran gamification (présence sections badges, compétences, cartes postales, leaderboard) ; mocker API (FR42–FR45).
-  - [ ] 6.3 `dart analyze`, `flutter test`, `cargo test`, `clippy` verts ; pas de régression sur 5.1.
-  - [ ] 6.4 Accessibilité : labels pour badges, compétences, cartes postales, leaderboard (WCAG 2.1 Level A).
+- [x] **Task 1** (AC1) – Badges et accomplissements
+  - [x] 1.1 Afficher les badges débloqués par l'utilisateur (ex. « Première enquête », « 5 énigmes résolues », « Ville explorée ») (FR42).
+  - [x] 1.2 Backend : exposer les badges par utilisateur (ex. query `getUserBadges(userId)` ou champs sur `UserProgress` : liste de badge_ids ou équivalent). Données : définition des badges (critères, icône, libellé) ; déblocage basé sur la progression (enquêtes complétées, énigmes résolues, etc.) (FR42).
+  - [x] 1.3 Flutter : section « Badges » ou « Accomplissements » sur l'écran profil/gamification (5.1) ; grille ou liste des badges (débloqués visibles, non débloqués en grisé ou cachés selon UX) (FR42).
+- [x] **Task 2** (AC1) – Progression de compétences détective
+  - [x] 2.1 Afficher la progression des compétences détective (ex. niveaux, barres de progression par compétence : exploration, résolution, rapidité, etc.) (FR43).
+  - [x] 2.2 Backend : exposer les compétences par utilisateur (ex. query `getUserSkills(userId)` ou champs sur `UserProgress` : niveau, XP ou équivalent). Règles de progression dérivées de la progression (énigmes résolues, enquêtes complétées) (FR43).
+  - [x] 2.3 Flutter : section « Compétences » sur l'écran gamification ; indicateurs visuels (barres, niveaux) (FR43).
+- [x] **Task 3** (AC1) – Cartes postales virtuelles
+  - [x] 3.1 Afficher les cartes postales virtuelles collectées (lieux découverts pendant les enquêtes) (FR44).
+  - [x] 3.2 Backend : exposer les cartes postales par utilisateur (ex. query `getUserPostcards(userId)` ou champs sur `UserProgress` : liste de lieux/énigmes « découverts »). Données : image, lieu, date de déblocage (FR44).
+  - [x] 3.3 Flutter : section « Cartes postales » sur l'écran gamification ; galerie ou grille (débloquées avec image, non débloquées placeholder) (FR44).
+- [x] **Task 4** (AC1) – Leaderboard
+  - [x] 4.1 Afficher le classement leaderboard (ex. par enquête, global : score ou temps ou nombre d'énigmes) (FR45).
+  - [x] 4.2 Backend : exposer le leaderboard (ex. query `getLeaderboard(investigationId?)` ou `getGlobalLeaderboard()` : liste utilisateurs avec score/rang). Données : agrégation des scores ou métriques (complétions, temps, etc.) (FR45).
+  - [x] 4.3 Flutter : section « Leaderboard » sur l'écran gamification ; liste ou tableau (rang, pseudo ou userId, score) ; position de l'utilisateur mise en évidence (FR45).
+- [x] **Task 5** (AC1) – Section gamification et navigation
+  - [x] 5.1 Créer une section « Gamification » ou « Accomplissements » accessible depuis le profil/progression (5.1) : onglet, sous-écran ou route ex. `/profile/gamification` (FR42–FR45).
+  - [x] 5.2 Regrouper badges, compétences, cartes postales et leaderboard sur cet écran ; design system « carnet de détective » ; accessibilité WCAG 2.1 Level A (FR42–FR45).
+- [x] **Task 6** – Qualité et conformité
+  - [x] 6.1 Backend : test d'intégration pour les queries badges, compétences, cartes postales, leaderboard si implémentées (ex. `tests/api/gamification_test.rs` ou équivalent) – au moins un cas nominal (FR42–FR45).
+  - [x] 6.2 Flutter : tests widget pour l'écran gamification (présence sections badges, compétences, cartes postales, leaderboard) ; mocker API (FR42–FR45).
+  - [x] 6.3 `dart analyze`, `flutter test`, `cargo test`, `clippy` verts ; pas de régression sur 5.1.
+  - [x] 6.4 Accessibilité : labels pour badges, compétences, cartes postales, leaderboard (WCAG 2.1 Level A).
+
+  - **Review Follow-ups (AI)** (code review 2026-02-03 – corrigés automatiquement)
+  - [x] [AI-Review][HIGH] Mettre en évidence la position de l'utilisateur dans le leaderboard (Task 4.3 / FR45) [gamification_screen.dart : _LeaderboardSection]
+  - [x] [AI-Review][MEDIUM] Tests widget : assertions pour sections « Cartes postales » et « Classement » [gamification_screen_test.dart]
+  - [x] [AI-Review][MEDIUM] Gestion d'erreur : message + Réessayer pour Compétences, Cartes postales, Leaderboard [gamification_screen.dart]
+  - [x] [AI-Review][LOW] Supprimer ou utiliser le type `Badge` (code mort) [gamification.rs]
+  - [x] [AI-Review][LOW] IDs mock postcards fixes (Uuid::new_v4 → constantes) [gamification_service.rs]
+  - [x] [AI-Review][LOW] Semantics par ligne leaderboard pour accessibilité [gamification_screen.dart]
 
 ---
 
@@ -144,7 +152,76 @@ So that **je sois motivé à progresser**.
 
 ### Completion Notes List
 
+- Implémentation complète Story 5.2 (FR42–FR45). Backend : GamificationService avec données mock pour getUserBadges, getUserSkills, getUserPostcards, getLeaderboard. GraphQL : queries protégées (token). Flutter : écran Gamification (badges en grille, compétences avec barres de progression, cartes postales en grille, leaderboard en liste), route /profile/gamification, lien depuis écran progression. Tests : gamification_test.rs (4 tests), gamification_screen_test.dart (sections + accessibilité). Accessibilité : Semantics/labels sur toutes les sections.
+
 ### File List
+
+- city-detectives-api/src/models/gamification.rs (new)
+- city-detectives-api/src/models/mod.rs (modified)
+- city-detectives-api/src/services/gamification_service.rs (new)
+- city-detectives-api/src/services/mod.rs (modified)
+- city-detectives-api/src/api/graphql.rs (modified)
+- city-detectives-api/src/main.rs (modified)
+- city-detectives-api/src/lib.rs (modified)
+- city-detectives-api/tests/api/gamification_test.rs (new)
+- city-detectives-api/tests/api/enigmas_test.rs (modified)
+- city-detectives-api/Cargo.toml (modified)
+- city_detectives/lib/features/profile/models/user_badge.dart (new)
+- city_detectives/lib/features/profile/models/user_skill.dart (new)
+- city_detectives/lib/features/profile/models/user_postcard.dart (new)
+- city_detectives/lib/features/profile/models/leaderboard_entry.dart (new)
+- city_detectives/lib/features/profile/repositories/gamification_repository.dart (new)
+- city_detectives/lib/features/profile/providers/badges_provider.dart (new)
+- city_detectives/lib/features/profile/screens/gamification_screen.dart (new)
+- city_detectives/lib/features/profile/screens/progression_screen.dart (modified)
+- city_detectives/lib/core/router/app_router.dart (modified)
+- city_detectives/test/features/profile/screens/gamification_screen_test.dart (new)
+- _bmad-output/implementation-artifacts/sprint-status.yaml (modified)
+- _bmad-output/implementation-artifacts/5-2-badges-competences-leaderboard.md (modified)
+
+_(Corrections code review : gamification_screen.dart, gamification_screen_test.dart, gamification.rs, gamification_service.rs modifiés.)_
+
+### Change Log
+
+- 2026-02-03 : Implémentation Story 5.2 – badges, compétences, cartes postales, leaderboard (backend + Flutter), tests, accessibilité.
+- 2026-02-03 : Corrections code review – mise en évidence leaderboard (Vous), gestion erreur sections, tests Cartes postales/Classement, suppression type Badge, IDs mock postcards fixes.
+
+---
+
+## Senior Developer Review (AI)
+
+**Date :** 2026-02-03  
+**Reviewer :** Senior Developer (adversarial code review)  
+**Outcome :** Changes Requested
+
+### Résumé
+
+Revue adverse effectuée sur la story 5-2-badges-competences-leaderboard. **6 problèmes identifiés** (1 HIGH, 3 MEDIUM, 2 LOW). Les critères d’acceptation sont globalement couverts, mais la tâche 4.3 (mise en évidence de la position utilisateur dans le leaderboard) n’est pas implémentée, et les tests / gestion d’erreur sont incomplets.
+
+### Git vs File List
+
+- Fichiers modifiés/nouveaux (git) : cohérents avec le File List de la story.
+- Aucun fichier source 5.2 manquant dans le File List.
+
+### Action Items
+
+- [ ] **[HIGH] [Task 4.3 / FR45]** Mettre en évidence la position de l’utilisateur dans le leaderboard (sous-task 4.3). Actuellement la liste affiche rang, pseudo, score mais aucune mise en évidence visuelle de la ligne du joueur courant (fond, bordure ou champ `isCurrentUser` + style). Backend mock met "Vous" en displayName pour le rang 3 ; l’UI doit au minimum styliser cette ligne (ex. `ListTile` avec `tileColor` ou `shape` distinct). [gamification_screen.dart : _LeaderboardSection]
+- [ ] **[MEDIUM] [Task 6.2]** Tests widget : ajouter des assertions pour les sections « Cartes postales » et « Classement » (ou faire défiler puis vérifier) pour satisfaire « présence sections badges, compétences, cartes postales, leaderboard ». Actuellement le test ne vérifie que Badges et Compétences. [gamification_screen_test.dart]
+- [ ] **[MEDIUM]** Gestion d’erreur : en erreur API, les sections Compétences, Cartes postales et Leaderboard utilisent `SizedBox.shrink()` sans message ni bouton Réessayer. Aligner sur la section Badges (message + bouton Réessayer) ou au minimum afficher un message court. [gamification_screen.dart]
+- [ ] **[LOW]** Supprimer ou utiliser le type `Badge` dans `models/gamification.rs` (actuellement défini mais jamais utilisé). [city-detectives-api/src/models/gamification.rs]
+- [ ] **[LOW]** IDs mock des cartes postales : `get_user_postcards` utilise `Uuid::new_v4()` à chaque appel, les IDs changent à chaque requête. Pour un mock déterministe, utiliser des IDs fixes. [gamification_service.rs]
+- [ ] **[LOW]** Accessibilité leaderboard : ajouter un `Semantics` (ou `MergeSemantics`) par ligne du classement avec un label explicite (ex. « Rang 1, Détective A, 1250 points ») pour les lecteurs d’écran. [gamification_screen.dart : _LeaderboardSection]
+
+### Décision
+
+**Changes Requested** – Corriger les points HIGH et MEDIUM avant de repasser en review ou de marquer la story done.
+
+### Corrections appliquées (2026-02-03)
+
+- **HIGH** : _LeaderboardSection – mise en évidence de la ligne « Vous » (tileColor, shape, title en gras) ; Semantics par ligne (« Rang X, Nom, Y points, c’est vous »).
+- **MEDIUM** : Tests widget – scroll + assertions sur « Cartes postales », « Place du centre », « Classement ».
+- **MEDIUM** : _SectionError ajouté ; Compétences, Cartes postales, Leaderboard affichent message + bouton Réessayer en erreur.
+- **LOW** : Type `Badge` supprimé (gamification.rs). IDs mock postcards fixes (constantes). Semantics leaderboard déjà inclus dans le correctif HIGH.
 
 ---
 

@@ -10,6 +10,7 @@ import 'package:city_detectives/features/investigation/screens/investigation_pla
 import 'package:city_detectives/features/onboarding/screens/onboarding_screen.dart';
 import 'package:city_detectives/features/onboarding/screens/register_screen.dart';
 import 'package:city_detectives/features/onboarding/screens/welcome_screen.dart';
+import 'package:city_detectives/features/profile/screens/gamification_screen.dart';
 import 'package:city_detectives/features/profile/screens/progression_screen.dart';
 
 /// Routes (Story 1.2 + 1.3 + 2.1 + 2.2 + 5.1) – welcome, register, onboarding, investigations, détail, start, progression, home.
@@ -31,6 +32,9 @@ class AppRouter {
 
   /// Écran Profil / Progression (Story 5.1, FR39, FR40, FR41).
   static const String progression = '/progression';
+
+  /// Écran Gamification (Story 5.2 – badges, compétences, cartes postales, leaderboard).
+  static const String gamification = '/profile/gamification';
 
   static const String home = '/home';
 
@@ -123,6 +127,10 @@ class AppRouter {
         GoRoute(
           path: progression,
           builder: (context, _) => const ProgressionScreen(),
+        ),
+        GoRoute(
+          path: gamification,
+          builder: (context, _) => const GamificationScreen(),
         ),
         GoRoute(
           path: home,
