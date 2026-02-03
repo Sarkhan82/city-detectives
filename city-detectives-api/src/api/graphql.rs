@@ -10,12 +10,13 @@ use std::sync::Arc;
 
 use crate::api::middleware::auth::{extract_bearer, BearerToken};
 use crate::models::enigma::{
-    EnigmaExplanation, EnigmaHints, ValidateEnigmaPayload, ValidateEnigmaResult,
+    EnigmaExplanation, EnigmaHints, LoreContent, ValidateEnigmaPayload, ValidateEnigmaResult,
 };
 use crate::models::user::RegisterInput;
 use crate::services::auth_service::AuthService;
 use crate::services::enigma_service::EnigmaService;
 use crate::services::investigation_service::InvestigationService;
+use crate::services::lore_service::LoreService;
 use uuid::Uuid;
 
 pub type AppSchema = Schema<QueryRoot, MutationRoot, EmptySubscription>;
@@ -24,11 +25,13 @@ pub fn create_schema(
     auth_service: Arc<AuthService>,
     investigation_service: Arc<InvestigationService>,
     enigma_service: Arc<EnigmaService>,
+    lore_service: Arc<LoreService>,
 ) -> AppSchema {
     Schema::build(QueryRoot, MutationRoot, EmptySubscription)
         .data(auth_service)
         .data(investigation_service)
         .data(enigma_service)
+        .data(lore_service)
         .finish()
 }
 
@@ -104,6 +107,32 @@ impl QueryRoot {
         let id = Uuid::parse_str(&enigma_id).map_err(|_| Error::new("ID énigme invalide"))?;
         enigma_svc.get_enigma_explanation(id).map_err(Error::from)
     }
+
+    /// Contenu LORE par enquête et index de séquence (Story 4.4 – FR34, FR37). Lecture seule.
+    /// sequence_index 0 = intro, 1+ = séquences entre énigmes.
+    async fn get_lore_content(
+        &self,
+        ctx: &Context<'_>,
+        investigation_id: String,
+        sequence_index: i32,
+    ) -> Result<Option<LoreContent>, Error> {
+        let lore_svc = ctx.data::<Arc<LoreService>>()?;
+        let id =
+            Uuid::parse_str(&investigation_id).map_err(|_| Error::new("ID enquête invalide"))?;
+        Ok(lore_svc.get_lore_content(id, sequence_index))
+    }
+
+    /// Index des séquences LORE définies pour une enquête (ordre d'affichage). Story 4.4 – code review.
+    async fn get_lore_sequence_indexes(
+        &self,
+        ctx: &Context<'_>,
+        investigation_id: String,
+    ) -> Result<Vec<i32>, Error> {
+        let lore_svc = ctx.data::<Arc<LoreService>>()?;
+        let id =
+            Uuid::parse_str(&investigation_id).map_err(|_| Error::new("ID enquête invalide"))?;
+        Ok(lore_svc.get_lore_sequence_indexes(id))
+    }
 }
 
 pub struct MutationRoot;
@@ -178,6 +207,7 @@ mod tests {
     use crate::services::auth_service::AuthService;
     use crate::services::enigma_service::EnigmaService;
     use crate::services::investigation_service::InvestigationService;
+    use crate::services::lore_service::LoreService;
 
     /// Test listInvestigations sans serveur HTTP – exécutable en CI.
     #[tokio::test]
@@ -185,7 +215,8 @@ mod tests {
         let auth = Arc::new(AuthService::default());
         let enigma_svc = Arc::new(EnigmaService::new());
         let inv_svc = Arc::new(InvestigationService::new(enigma_svc.clone()));
-        let schema = create_schema(auth, inv_svc, enigma_svc);
+        let lore_svc = Arc::new(LoreService::new());
+        let schema = create_schema(auth, inv_svc, enigma_svc, lore_svc);
         let request = async_graphql::Request::new(
             r#"query { listInvestigations { id titre description durationEstimate difficulte isFree } }"#,
         );
@@ -212,7 +243,8 @@ mod tests {
         let auth = Arc::new(AuthService::default());
         let enigma_svc = Arc::new(EnigmaService::new());
         let inv_svc = Arc::new(InvestigationService::new(enigma_svc.clone()));
-        let schema = create_schema(auth, inv_svc, enigma_svc);
+        let lore_svc = Arc::new(LoreService::new());
+        let schema = create_schema(auth, inv_svc, enigma_svc, lore_svc);
         let id = "11111111-1111-1111-1111-111111111111";
         let request = async_graphql::Request::new(format!(
             r#"query {{ investigation(id: "{}") {{ investigation {{ id titre }} enigmas {{ id orderIndex type titre }} }} }}"#,
@@ -241,5 +273,80 @@ mod tests {
         assert!(first.get("orderIndex").is_some());
         assert!(first.get("type").is_some());
         assert!(first.get("titre").is_some());
+    }
+
+    /// Test getLoreContent (Story 4.4 – FR34, FR37) – cas nominal.
+    #[tokio::test]
+    async fn get_lore_content_returns_content_for_investigation_and_sequence() {
+        let auth = Arc::new(AuthService::default());
+        let enigma_svc = Arc::new(EnigmaService::new());
+        let inv_svc = Arc::new(InvestigationService::new(enigma_svc.clone()));
+        let lore_svc = Arc::new(LoreService::new());
+        let schema = create_schema(auth, inv_svc, enigma_svc, lore_svc);
+        let id = "11111111-1111-1111-1111-111111111111";
+        let request = async_graphql::Request::new(format!(
+            r#"query {{ getLoreContent(investigationId: "{}", sequenceIndex: 0) {{ sequenceIndex title contentText mediaUrls }} }}"#,
+            id
+        ));
+        let res = schema.execute(request).await;
+        assert!(res.is_ok(), "errors: {:?}", res.errors);
+        let data = res.data.into_json().unwrap();
+        let lore = data
+            .get("getLoreContent")
+            .and_then(|v| v.as_object())
+            .expect("getLoreContent object");
+        assert_eq!(lore.get("sequenceIndex").and_then(|v| v.as_i64()).unwrap(), 0);
+        assert!(!lore.get("title").and_then(|v| v.as_str()).unwrap().is_empty());
+        assert!(!lore.get("contentText").and_then(|v| v.as_str()).unwrap().is_empty());
+        let urls = lore.get("mediaUrls").and_then(|v| v.as_array()).expect("mediaUrls array");
+        assert!(!urls.is_empty());
+    }
+
+    /// Test getLoreContent retourne null quand pas de contenu à cet index (code review).
+    #[tokio::test]
+    async fn get_lore_content_returns_null_for_unknown_sequence_index() {
+        let auth = Arc::new(AuthService::default());
+        let enigma_svc = Arc::new(EnigmaService::new());
+        let inv_svc = Arc::new(InvestigationService::new(enigma_svc.clone()));
+        let lore_svc = Arc::new(LoreService::new());
+        let schema = create_schema(auth, inv_svc, enigma_svc, lore_svc);
+        let id = "11111111-1111-1111-1111-111111111111";
+        let request = async_graphql::Request::new(format!(
+            r#"query {{ getLoreContent(investigationId: "{}", sequenceIndex: 99) {{ sequenceIndex title }} }}"#,
+            id
+        ));
+        let res = schema.execute(request).await;
+        assert!(res.is_ok(), "errors: {:?}", res.errors);
+        let data = res.data.into_json().unwrap();
+        let lore = data.get("getLoreContent");
+        assert!(
+            lore == Some(&serde_json::Value::Null),
+            "getLoreContent(sequenceIndex 99) doit retourner null"
+        );
+    }
+
+    /// Test getLoreSequenceIndexes (code review – API exposée).
+    #[tokio::test]
+    async fn get_lore_sequence_indexes_returns_ordered_list() {
+        let auth = Arc::new(AuthService::default());
+        let enigma_svc = Arc::new(EnigmaService::new());
+        let inv_svc = Arc::new(InvestigationService::new(enigma_svc.clone()));
+        let lore_svc = Arc::new(LoreService::new());
+        let schema = create_schema(auth, inv_svc, enigma_svc, lore_svc);
+        let id = "11111111-1111-1111-1111-111111111111";
+        let request = async_graphql::Request::new(format!(
+            r#"query {{ getLoreSequenceIndexes(investigationId: "{}") }}"#,
+            id
+        ));
+        let res = schema.execute(request).await;
+        assert!(res.is_ok(), "errors: {:?}", res.errors);
+        let data = res.data.into_json().unwrap();
+        let indexes = data
+            .get("getLoreSequenceIndexes")
+            .and_then(|v| v.as_array())
+            .expect("getLoreSequenceIndexes array");
+        assert!(!indexes.is_empty());
+        assert_eq!(indexes[0].as_i64(), Some(0));
+        assert_eq!(indexes[1].as_i64(), Some(1));
     }
 }

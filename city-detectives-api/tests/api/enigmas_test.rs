@@ -8,13 +8,15 @@ use city_detectives_api::api::middleware::auth::BearerToken;
 use city_detectives_api::services::auth_service::AuthService;
 use city_detectives_api::services::enigma_service::EnigmaService;
 use city_detectives_api::services::investigation_service::InvestigationService;
+use city_detectives_api::services::lore_service::LoreService;
 use std::sync::Arc;
 
 fn make_schema() -> city_detectives_api::api::graphql::AppSchema {
     let auth = Arc::new(AuthService::default());
     let enigma_svc = Arc::new(EnigmaService::new());
     let inv_svc = Arc::new(InvestigationService::new(enigma_svc.clone()));
-    create_schema(auth, inv_svc, enigma_svc)
+    let lore_svc = Arc::new(LoreService::new());
+    create_schema(auth, inv_svc, enigma_svc, lore_svc)
 }
 
 /// Enregistre un utilisateur de test et retourne le JWT pour les requêtes protégées.

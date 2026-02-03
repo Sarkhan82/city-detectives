@@ -8,6 +8,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use city_detectives_api::{
     api, auth_service, create_schema, AuthService, EnigmaService, InvestigationService,
+    LoreService,
 };
 
 #[tokio::main]
@@ -25,7 +26,13 @@ async fn main() {
     let auth_service = Arc::new(AuthService::new(jwt_secret));
     let enigma_service = Arc::new(EnigmaService::new());
     let investigation_service = Arc::new(InvestigationService::new(enigma_service.clone()));
-    let schema = create_schema(auth_service, investigation_service, enigma_service);
+    let lore_service = Arc::new(LoreService::new());
+    let schema = create_schema(
+        auth_service,
+        investigation_service,
+        enigma_service,
+        lore_service,
+    );
 
     let app = Router::new()
         .route("/graphql", post(api::graphql::graphql_handler))

@@ -46,6 +46,8 @@ class InvestigationPlayScreen extends ConsumerStatefulWidget {
 class _InvestigationPlayScreenState
     extends ConsumerState<InvestigationPlayScreen> {
   bool _progressRestored = false;
+  /// Story 4.4 : index de séquences LORE déjà affichés (0 = intro, 1+ = entre énigmes).
+  final Set<int> _shownLoreSequenceIndexes = {};
 
   @override
   Widget build(BuildContext context) {
@@ -180,6 +182,20 @@ class _InvestigationPlayScreenState
     // Clamp index to avoid crash if state is stale (e.g. hot reload, fewer enigmas after refresh).
     final safeIndex = hasEnigmas ? (currentIndex.clamp(0, total - 1)) : 0;
     final currentEnigma = hasEnigmas ? enigmas[safeIndex] : null;
+
+    // Story 4.4 (Task 1.1, 4.1) : séquence LORE à l’intro (0) et entre énigmes (1, 2, …), une fois par index.
+    // Ne pas push si pas de GoRouter (ex. tests widget sans router).
+    if (hasEnigmas && !_shownLoreSequenceIndexes.contains(safeIndex)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        if (GoRouter.maybeOf(context) == null) return;
+        setState(() => _shownLoreSequenceIndexes.add(safeIndex));
+        await context.push<bool>(
+          '/investigations/$investigationId/start/lore',
+          extra: safeIndex,
+        );
+      });
+    }
     final completedIds = ref.watch(completedEnigmaIdsProvider(investigationId));
     final completedCount = enigmas
         .where((e) => completedIds.contains(e.id))

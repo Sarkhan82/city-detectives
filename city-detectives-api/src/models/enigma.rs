@@ -144,3 +144,22 @@ pub struct EnigmaExplanation {
     #[graphql(name = "educationalContent")]
     pub educational_content: String,
 }
+
+// --- Story 4.4 : LORE (FR34, FR37) – séquences narratives par enquête ---
+
+/// Contenu LORE d'une séquence (intro, entre énigmes, etc.). Exposé en GraphQL, lecture seule.
+#[derive(Debug, Clone, Serialize, Deserialize, SimpleObject)]
+#[graphql(name = "LoreContent")]
+pub struct LoreContent {
+    /// Index de la séquence dans l'enquête (0 = intro, 1+ = entre énigmes).
+    #[graphql(name = "sequenceIndex")]
+    pub sequence_index: i32,
+    /// Titre de la séquence narrative.
+    pub title: String,
+    /// Texte narratif (contexte historique, récit).
+    #[graphql(name = "contentText")]
+    pub content_text: String,
+    /// URLs des médias (photos, images) pour contexte des lieux (FR37).
+    #[graphql(name = "mediaUrls")]
+    pub media_urls: Vec<String>,
+}
