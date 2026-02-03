@@ -1,7 +1,7 @@
-# Résumé d'automatisation – City Detectives (Stories 1.2–4.4)
+# Résumé d'automatisation – City Detectives (Stories 1.2–6.1)
 
 **Date :** 2026-02-03  
-**Stories couvertes :** 1.2 (Création de compte), 2.1 (Parcourir et consulter les enquêtes), 2.2 (Sélection enquête, gratuit/payant), 3.1 (Démarrer enquête et navigation énigmes), 3.2 (Progression, carte interactive et position), 3.3 (Pause, reprise, abandon, sauvegarde), 4.1 (Énigmes photo et géolocalisation), 4.2 (Énigmes mots et puzzle), 4.3 (Aide contextuelle et explications historiques), 4.4 (LORE et option de saut), **5.1 (Statut completion et historique)**, **5.2 (Badges, compétences, leaderboard)**  
+**Stories couvertes :** 1.2 (Création de compte), 2.1 (Parcourir et consulter les enquêtes), 2.2 (Sélection enquête, gratuit/payant), 3.1 (Démarrer enquête et navigation énigmes), 3.2 (Progression, carte interactive et position), 3.3 (Pause, reprise, abandon, sauvegarde), 4.1 (Énigmes photo et géolocalisation), 4.2 (Énigmes mots et puzzle), 4.3 (Aide contextuelle et explications historiques), 4.4 (LORE et option de saut), 5.1 (Statut completion et historique), 5.2 (Badges, compétences, leaderboard), **6.1 (Première enquête gratuite, visibilité payant et prix)**  
 **Mode :** Standalone / Auto-discover  
 **Cible de couverture :** critical-paths  
 
@@ -21,9 +21,9 @@
 
 | Fichier | Type | Exécution | Description |
 |---------|------|-----------|-------------|
-| `src/api/graphql.rs` (mod tests) | In-process | `cargo test` | `list_investigations_in_process_returns_array` (2.1) ; `investigation_by_id_returns_investigation_with_enigmas` (3.1) ; **Story 4.4** – `get_lore_content_returns_content_for_investigation_and_sequence`, `get_lore_content_returns_null_for_unknown_sequence_index`, `get_lore_sequence_indexes_returns_ordered_list`. |
+| `src/api/graphql.rs` (mod tests) | In-process | `cargo test` | `list_investigations_in_process_returns_array` (2.1) ; `investigation_by_id_returns_investigation_with_enigmas` (3.1) ; **Story 4.4** – getLoreContent / getLoreSequenceIndexes ; **Story 6.1** – listInvestigations avec priceAmount/priceCurrency (gratuit null, payant 299/EUR), `investigation_by_id_returns_price_fields_for_paid`. |
 | `tests/api/auth_test.rs` | Intégration HTTP | `--ignored` (serveur 8080) | 4 tests : register JWT, email dupliqué, email invalide, mot de passe court. |
-| `tests/api/investigations_test.rs` | Intégration HTTP | `--ignored` (serveur 8080) | 2 tests : listInvestigations retourne un tableau ; items ont les champs requis. |
+| `tests/api/investigations_test.rs` | Intégration HTTP | `--ignored` (serveur 8080) | 2 tests : listInvestigations retourne un tableau ; items ont les champs requis (dont priceAmount, priceCurrency – Story 6.1). |
 | `tests/api/enigmas_test.rs` | In-process GraphQL | `cargo test` | **Story 4.1** – 4 tests : validateEnigmaResponse (géoloc/photo). **Story 4.2** – 4 tests : validateEnigmaResponse (words/puzzle). **Story 4.3** – 3 tests : getEnigmaHints, getEnigmaExplanation, getEnigmaHints (ID inconnu). Auth Bearer requise. **Total : 11 tests.** (Story 4.4 LORE couverte par graphql.rs in-process.) |
 | `tests/api/gamification_test.rs` | In-process GraphQL | `cargo test` | **Story 5.2** – 4 tests : getUserBadges, getUserSkills, getUserPostcards, getLeaderboard (auth requise). |
 
@@ -40,14 +40,14 @@
 |---------|------------|
 | `register_screen_test.dart` | Formulaire, erreur mots de passe différents, isolation avec router. |
 | `onboarding_screen_test.dart` | Écran 1 (première enquête + CTA), écran 2 (LORE), navigation. |
-| `features/investigation/investigation_list_screen_test.dart` | Liste (durée, difficulté, description, gratuit), état vide, message d’erreur. **Story 3.3** – section « Enquêtes en cours » quand progression sauvegardée, tap → reprise. |
-| `features/investigation/screens/investigation_detail_screen_test.dart` | Détail enquête : titre, description, chip Gratuit/Payant, CTA Démarrer (Story 2.2). |
+| `features/investigation/investigation_list_screen_test.dart` | Liste (durée, difficulté, description, gratuit), état vide, message d’erreur. **Story 3.3** – section « Enquêtes en cours » quand progression sauvegardée, tap → reprise. **Story 6.1** – affichage prix pour enquête payante (FR47, FR49). |
+| `features/investigation/screens/investigation_detail_screen_test.dart` | Détail enquête : titre, description, chip Gratuit/Payant, CTA Démarrer (2.2). **Story 6.1** – Payant + prix (4,99 €) + bouton Acheter + « Démarrer (après achat) ». |
 | `features/investigation/screens/investigation_start_placeholder_screen_test.dart` | Placeholder démarrage : id enquête, message Story 3.1, bouton Retour (Story 2.2). |
 | `features/investigation/screens/investigation_play_screen_test.dart` | **Story 3.1** – Écran enquête en cours : première énigme + stepper, Suivant/Précédent, loading, état erreur. **Story 3.2** – indicateur progression, bouton carte. **Story 3.3** – restauration progression (index énigme sauvegardé). 9 tests. |
 | `features/investigation/widgets/investigation_map_sheet_test.dart` | **Story 3.2** – Carte : titre « Carte » + FlutterMap ; message si localisation indisponible ; marqueur position si disponible (mock GeolocationService). 3 tests. |
 | `features/investigation/repositories/investigation_progress_repository_test.dart` | **Story 3.3** – TU InvestigationProgressRepository (forTest) : getInProgressIds vide/null, saveProgress + getProgress, getInProgressInvestigationIds après save, overwrite, deleteProgress. 6 tests. |
 | `shared/widgets/price_chip_test.dart` | Widget PriceChip : Gratuit / Payant selon isFree (Story 2.2). |
-| `features/investigation/models/investigation_test.dart` | TU `Investigation.fromJson` (défensif, isFree, durationEstimate, **centerLat/centerLng**). |
+| `features/investigation/models/investigation_test.dart` | TU `Investigation.fromJson` (défensif, isFree, durationEstimate, centerLat/centerLng). **Story 6.1** – priceAmount, priceCurrency, formattedPrice (2,99 € ; null si gratuit ; padding centimes 2,00 €). |
 | `widget_test.dart` | App build, WelcomeScreen. |
 | `features/onboarding/screens/welcome_screen_test.dart` | **Story 1.1/1.3** – WelcomeScreen : titre + Continuer ; tap → register ; Semantics ; **token + onboarding non fait → redirect onboarding** ; **token + onboarding fait → redirect home**. 5 tests. |
 | `features/onboarding/providers/onboarding_provider_test.dart` | **Story 1.3** – TU OnboardingNotifier avec stockage injecté (FakeOnboardingStorage) : build() false si clé absente / "false", true si "true" ; markCompleted() écrit et met à jour state ; invalidation puis re-read. 5 tests. |
@@ -62,7 +62,7 @@
 | `features/profile/screens/gamification_screen_test.dart` | **Story 5.2** – Écran Gamification : titres sections (Badges, Compétences, Cartes postales, Classement), contenu mocké (badges, skills, postcards, leaderboard), scroll pour afficher toutes les sections. |
 | `features/investigation/repositories/completed_investigation_repository_test.dart` | **Story 5.1** – TU CompletedInvestigationRepository (forTest) : isCompleted, getCompletedOrderedByDate, markCompleted, overwrite, ordre plus récent en premier. 8 tests. |
 
-- **Total Flutter :** 107 tests (dont Story 4.4 : lore_screen 5 ; Story 5.1 : progression_screen + completed_investigation_repository ; Story 5.2 : gamification_screen).
+- **Total Flutter :** 112 tests (dont Story 6.1 : détail/liste/prix, modèle formattedPrice).
 - **Exécution :** `cd city_detectives && flutter test`.
 
 ---
@@ -81,7 +81,7 @@
 | In-process Rust | `gamification_test.rs` | – | 4 | – | **Story 5.2** – getUserBadges, getUserSkills, getUserPostcards, getLeaderboard (auth requise). |
 | Widget Flutter | **progression_screen**, **completed_investigation_repository** (5.1), **gamification_screen** (5.2) | – | 12+ | – | Story 5.1 : statut par enquête, enquêtes complétées, progression ; Story 5.2 : badges, compétences, cartes postales, leaderboard. |
 
-- **Résumé :** 25 tests Rust exécutés par défaut (10 unit/graphql + 11 énigmas + 4 gamification), 6 tests `--ignored` (auth_test, investigations_test) ; 107 tests Flutter (dont 5.1 : progression + completed_investigation_repository ; 5.2 : gamification_screen).
+- **Résumé :** 26 tests Rust exécutés par défaut (11 unit/graphql dont 6.1 prix + 11 énigmas + 4 gamification), 6 tests `--ignored` (auth_test, investigations_test) ; 112 tests Flutter (dont 6.1 : détail/liste/prix).
 - **Doublons évités :** Pas d’E2E pour 1.2/2.1/2.2/3.x ; logique métier couverte en unitaire + API ; widget couvre UX critique.
 
 ---
@@ -141,10 +141,15 @@
    - ✅ **Flutter :** `gamification_screen_test.dart` – titres sections, contenu mocké (badges, skills, postcards, leaderboard), scroll pour Cartes postales et Classement.
    - Pas de gap identifié pour 5.2.
 
-11. **E2E**
+11. **Story 6.1 (première enquête gratuite, visibilité payant, prix)**
+   - ✅ **Rust :** `graphql.rs` – listInvestigations avec priceAmount/priceCurrency (gratuit null, payant 299/EUR) ; `investigation_by_id_returns_price_fields_for_paid`. `investigations_test.rs` (HTTP) – champs priceAmount, priceCurrency dans la query et assertions.
+   - ✅ **Flutter :** `investigation_test.dart` – priceAmount, priceCurrency, formattedPrice ; `investigation_list_screen_test.dart` – prix pour enquête payante ; `investigation_detail_screen_test.dart` – Payant + prix + Acheter + « Démarrer (après achat) ».
+   - Pas de gap identifié pour 6.1.
+
+12. **E2E**
    - Aucun test E2E (Flutter `integration_test` ou scénario réel API + app). À prévoir si une story le demande (ex. parcours complet inscription → liste enquêtes).
 
-12. **CI**
+13. **CI**
    - Rust : `cargo test` exécute unitaires + test in-process GraphQL ; tests `#[ignore]` à lancer avec serveur sur 8080.
    - Flutter : `flutter test` à exécuter en CI ; environnement SDK à configurer.
 
@@ -250,6 +255,10 @@ flutter test
 - **Story 5.1** : inventaire et plan de couverture mis à jour – `progression_screen_test.dart`, `completed_investigation_repository_test.dart` (8 TU) ; gaps 5.1 documentés.
 - **Story 5.2** : inventaire et plan de couverture mis à jour – `city-detectives-api/tests/api/gamification_test.rs` (4 tests in-process), `gamification_screen_test.dart` ; gaps 5.2 documentés.
 
+**Story 6.1 (première enquête gratuite, visibilité payant, prix)**
+- **Rust :** `graphql.rs` – tests in-process listInvestigations (priceAmount/priceCurrency gratuit null, payant 299/EUR), `investigation_by_id_returns_price_fields_for_paid` ; `investigations_test.rs` – query et assertions priceAmount, priceCurrency.
+- **Flutter :** `investigation_test.dart` – priceAmount, priceCurrency, formattedPrice (null si gratuit, padding 2,00 €) ; `investigation_list_screen_test.dart` – prix pour enquête payante (FR47, FR49) ; `investigation_detail_screen_test.dart` – Payant + 4,99 € + Acheter + « Démarrer (après achat) ».
+
 ---
 
 ## Definition of Done (workflow testarch-automate)
@@ -270,6 +279,7 @@ flutter test
 - [x] **2026-02-03 testarch-automate** : Story 4.3 documentée – enigmas_test.rs (11 tests : +3 getEnigmaHints/getEnigmaExplanation dont 1 cas erreur ID inconnu), enigma_help_button_test.dart (3 tests), enigma_explanation_screen_test.dart (2 tests) ; inventaire et plan de couverture mis à jour.
 - [x] **2026-02-03 testarch-automate** : Story 4.4 (LORE) documentée – graphql.rs (3 tests in-process : getLoreContent nominal + null, getLoreSequenceIndexes), lore_screen_test.dart (5 tests : contenu, Sauter/Continuer, état vide, médias) ; inventaire et plan de couverture à jour.
 - [x] **2026-02-03 testarch-automate** : Stories 5.1 et 5.2 documentées – gamification_test.rs (4 tests), gamification_screen_test.dart, progression_screen_test.dart, completed_investigation_repository_test.dart (8 TU) ; inventaire, plan de couverture et gaps à jour.
+- [x] **2026-02-03 testarch-automate** : Story 6.1 documentée – graphql.rs (listInvestigations + investigation(id) prix), investigations_test.rs (priceAmount/priceCurrency), investigation_test.dart (formattedPrice), investigation_list_screen_test.dart (prix liste), investigation_detail_screen_test.dart (Payant + Acheter) ; inventaire et résultats d'exécution à jour (112 Flutter, 26 Rust).
 
 ---
 
@@ -345,9 +355,9 @@ flutter test
 
 ## Résultats d'exécution (2026-02-03)
 
-- **Rust** (`cargo test`) : 25 tests passés (10 unit/graphql + 11 enigmas_test + 4 gamification_test) ; auth_test (4) et investigations_test (2) ignorés (serveur 8080).
-- **Flutter** (`flutter test`) : 107 tests passés (dont Story 5.1 : progression_screen + completed_investigation_repository ; Story 5.2 : gamification_screen). Des `ClientException` (tile.openstreetmap.org 400) peuvent apparaître en log sans faire échouer les tests.
+- **Rust** (`cargo test`) : 26 tests passés (11 unit/graphql dont 6.1 prix + 11 enigmas_test + 4 gamification_test) ; auth_test (4) et investigations_test (2) ignorés (serveur 8080).
+- **Flutter** (`flutter test`) : 112 tests passés (dont Story 6.1 : détail/liste/prix). Des `ClientException` (tile.openstreetmap.org 400) peuvent apparaître en log sans faire échouer les tests.
 
 ---
 
-*Workflow : `_bmad/bmm/workflows/testarch/automate` (testarch-automate). Dernière mise à jour : 2026-02-03 (Stories 5.1 et 5.2 – inventaire et plan de couverture ; Rust gamification_test 4 tests, Flutter progression_screen, gamification_screen, completed_investigation_repository 8 TU).*
+*Workflow : `_bmad/bmm/workflows/testarch/automate` (testarch-automate). Dernière mise à jour : 2026-02-03 (Story 6.1 – inventaire et plan de couverture ; validation exécution Rust + Flutter).*

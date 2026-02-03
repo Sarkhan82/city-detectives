@@ -67,11 +67,11 @@ development_status:
 
   epic-5: in-progress
   5-1-statut-completion-historique: done
-  5-2-badges-competences-leaderboard: review
+  5-2-badges-competences-leaderboard: done
   epic-5-retrospective: optional
 
   epic-6: in-progress
-  6-1-premiere-enquete-gratuite-visibilite-payant: ready-for-dev
+  6-1-premiere-enquete-gratuite-visibilite-payant: done
   6-2-achat-simulation-paiement: ready-for-dev
   epic-6-retrospective: optional
 

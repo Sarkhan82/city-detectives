@@ -19,6 +19,7 @@ impl InvestigationService {
         Self { enigma_service }
     }
 
+    /// Mock : première enquête = première gratuite (FR46) ; les autres payantes avec prix (FR47, FR49).
     fn mock_investigations(&self) -> Vec<Investigation> {
         vec![
             Investigation::from_parts(
@@ -28,6 +29,8 @@ impl InvestigationService {
                 45,
                 "facile".to_string(),
                 true,
+                None,
+                None,
             ),
             Investigation::from_parts(
                 MOCK_INV_2,
@@ -36,6 +39,8 @@ impl InvestigationService {
                 90,
                 "moyen".to_string(),
                 false,
+                Some(299u32),
+                Some("EUR".to_string()),
             ),
         ]
     }

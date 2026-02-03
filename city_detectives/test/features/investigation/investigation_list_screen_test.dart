@@ -126,6 +126,50 @@ void main() {
   );
 
   testWidgets(
+    'InvestigationListScreen shows price for paid investigation (Story 6.1 FR47, FR49)',
+    (WidgetTester tester) async {
+      final mockList = [
+        const Investigation(
+          id: 'id-paid',
+          titre: 'Enquête premium',
+          description: 'Enquête payante.',
+          durationEstimate: 60,
+          difficulte: 'moyen',
+          isFree: false,
+          priceAmount: 299,
+          priceCurrency: 'EUR',
+        ),
+      ];
+      final router = GoRouter(
+        initialLocation: AppRouter.investigations,
+        routes: [
+          GoRoute(
+            path: AppRouter.investigations,
+            builder: (context, state) => const InvestigationListScreen(),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            investigationListProvider.overrideWith(
+              () => FakeInvestigationListNotifier(mockList),
+            ),
+            investigationProgressRepositoryProvider.overrideWith(
+              (_) => InvestigationProgressRepository.forTest(),
+            ),
+          ],
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('2,99 €'), findsOneWidget);
+      expect(find.text('Payant'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'InvestigationListScreen tap on item navigates to detail (Story 2.2)',
     (WidgetTester tester) async {
       final mockList = [

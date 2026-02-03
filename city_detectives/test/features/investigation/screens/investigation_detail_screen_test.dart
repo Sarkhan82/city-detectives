@@ -33,7 +33,7 @@ void main() {
   );
 
   testWidgets(
-    'InvestigationDetailScreen shows Payant chip when isFree is false',
+    'InvestigationDetailScreen shows Payant chip and Acheter when isFree is false (Story 6.1)',
     (WidgetTester tester) async {
       const inv = Investigation(
         id: 'id-paid',
@@ -42,6 +42,8 @@ void main() {
         durationEstimate: 60,
         difficulte: 'moyen',
         isFree: false,
+        priceAmount: 499,
+        priceCurrency: 'EUR',
       );
 
       await tester.pumpWidget(
@@ -49,8 +51,10 @@ void main() {
       );
 
       expect(find.text('Payant'), findsOneWidget);
+      expect(find.text('4,99 €'), findsOneWidget);
       expect(find.text('Gratuit'), findsNothing);
-      expect(find.text('Démarrer l\'enquête'), findsOneWidget);
+      expect(find.textContaining('Acheter'), findsOneWidget);
+      expect(find.text('Démarrer l\'enquête (après achat)'), findsOneWidget);
     },
   );
 }

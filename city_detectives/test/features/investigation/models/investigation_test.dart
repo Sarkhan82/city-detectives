@@ -133,5 +133,60 @@ void main() {
       expect(inv.description, '99');
       expect(inv.difficulte, 'moyen');
     });
+
+    test(
+      'parse priceAmount and priceCurrency for paid investigation (Story 6.1 FR47, FR49)',
+      () {
+        final json = {
+          'id': 'uuid-paid',
+          'titre': 'Enquête payante',
+          'description': 'Desc',
+          'durationEstimate': 60,
+          'difficulte': 'moyen',
+          'isFree': false,
+          'priceAmount': 299,
+          'priceCurrency': 'EUR',
+        };
+        final inv = Investigation.fromJson(json);
+        expect(inv.isFree, false);
+        expect(inv.priceAmount, 299);
+        expect(inv.priceCurrency, 'EUR');
+        expect(inv.formattedPrice, '2,99 €');
+      },
+    );
+
+    test('formattedPrice is null when isFree or price missing', () {
+      expect(Investigation.fromJson({'isFree': true}).formattedPrice, isNull);
+      expect(
+        Investigation.fromJson({
+          'isFree': false,
+          'priceAmount': 299,
+          'priceCurrency': null,
+        }).formattedPrice,
+        isNull,
+      );
+      expect(
+        Investigation.fromJson({
+          'isFree': false,
+          'priceAmount': null,
+          'priceCurrency': 'EUR',
+        }).formattedPrice,
+        isNull,
+      );
+    });
+
+    test('formattedPrice pads cents with zero (e.g. 2,00 €)', () {
+      final inv = Investigation.fromJson({
+        'id': 'x',
+        'titre': 'x',
+        'description': 'x',
+        'durationEstimate': 0,
+        'difficulte': 'x',
+        'isFree': false,
+        'priceAmount': 200,
+        'priceCurrency': 'EUR',
+      });
+      expect(inv.formattedPrice, '2,00 €');
+    });
   });
 }

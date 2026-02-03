@@ -1,5 +1,11 @@
-//! Tests d'intégration API investigations (Story 2.1) – query listInvestigations.
-//! Lancer avec: cargo test --test investigations_test -- --ignored --nocapture (serveur sur 8080)
+//! Tests d'intégration API investigations (Story 2.1, 6.1) – query listInvestigations (HTTP).
+//!
+//! Ces tests requièrent un serveur tournant sur localhost:8080. Lancer avec:
+//! `cargo test --test investigations_test -- --ignored --nocapture`
+//!
+//! **CI :** La même couverture (listInvestigations avec isFree, priceAmount, priceCurrency) est
+//! assurée par les tests in-process dans `src/api/graphql.rs` (list_investigations_in_process_returns_array),
+//! exécutés en CI sans serveur HTTP.
 
 use reqwest::Client;
 use serde_json::json;
@@ -15,6 +21,8 @@ const LIST_INVESTIGATIONS_QUERY: &str = r#"
       durationEstimate
       difficulte
       isFree
+      priceAmount
+      priceCurrency
     }
   }
 "#;
@@ -79,6 +87,14 @@ async fn test_list_investigations_items_have_required_fields() {
         assert!(
             item.get("isFree").is_some(),
             "chaque item doit avoir isFree"
+        );
+        assert!(
+            item.get("priceAmount").is_some(),
+            "chaque item doit avoir priceAmount (null si gratuit)"
+        );
+        assert!(
+            item.get("priceCurrency").is_some(),
+            "chaque item doit avoir priceCurrency (null si gratuit)"
         );
     }
 }

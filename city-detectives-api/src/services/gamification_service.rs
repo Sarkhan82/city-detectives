@@ -89,22 +89,24 @@ impl GamificationService {
         ]
     }
 
-    /// Leaderboard global (FR45). Pour V1.0 : mock. investigation_id optionnel pour filtre par enquête.
+    /// Leaderboard global (FR45). Pour V1.0 : mock (IDs fixes pour déterministe). investigation_id optionnel pour filtre par enquête.
     pub fn get_leaderboard(
         &self,
         _user_id: Uuid,
         _investigation_id: Option<Uuid>,
     ) -> Vec<LeaderboardEntry> {
+        const USER_1_ID: &str = "b0000001-0000-0000-0000-000000000001";
+        const USER_2_ID: &str = "b0000002-0000-0000-0000-000000000002";
         vec![
             LeaderboardEntry {
                 rank: 1,
-                user_id: Uuid::new_v4().to_string(),
+                user_id: USER_1_ID.to_string(),
                 score: 1250,
                 display_name: Some("Détective A".to_string()),
             },
             LeaderboardEntry {
                 rank: 2,
-                user_id: Uuid::new_v4().to_string(),
+                user_id: USER_2_ID.to_string(),
                 score: 980,
                 display_name: Some("Explorateur B".to_string()),
             },

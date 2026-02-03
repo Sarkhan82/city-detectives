@@ -1,4 +1,4 @@
-//! Modèle Investigation (Story 2.1, 3.1) – catalogue enquêtes ; InvestigationWithEnigmas pour query par id.
+//! Modèle Investigation (Story 2.1, 3.1, 6.1) – catalogue enquêtes ; prix et première gratuite (FR46, FR47, FR49).
 
 use async_graphql::*;
 use serde::{Deserialize, Serialize};
@@ -18,8 +18,15 @@ pub struct Investigation {
     pub duration_estimate: u32,
     /// Niveau de difficulté (ex. "facile", "moyen", "difficile").
     pub difficulte: String,
+    /// Première enquête gratuite si true ; sinon payante avec priceAmount/priceCurrency (FR46, FR47).
     #[graphql(name = "isFree")]
     pub is_free: bool,
+    /// Prix en centimes (ex. 299 = 2,99 €) ; null si is_free (FR47, FR49). u32 pour éviter montants négatifs.
+    #[graphql(name = "priceAmount")]
+    pub price_amount: Option<u32>,
+    /// Code devise (ex. "EUR") ; null si is_free.
+    #[graphql(name = "priceCurrency")]
+    pub price_currency: Option<String>,
     /// Centre latitude pour la carte (Story 3.2, optionnel).
     #[graphql(name = "centerLat")]
     pub center_lat: Option<f64>,
@@ -30,6 +37,8 @@ pub struct Investigation {
 
 impl Investigation {
     /// Construit une Investigation depuis des champs (id en Uuid, converti en string pour l'API).
+    /// Pour les enquêtes payantes : price_amount en centimes, price_currency ex. "EUR" (FR47, FR49).
+    #[allow(clippy::too_many_arguments)]
     pub fn from_parts(
         id: Uuid,
         titre: String,
@@ -37,6 +46,8 @@ impl Investigation {
         duration_estimate: u32,
         difficulte: String,
         is_free: bool,
+        price_amount: Option<u32>,
+        price_currency: Option<String>,
     ) -> Self {
         Self {
             id: id.to_string(),
@@ -45,6 +56,8 @@ impl Investigation {
             duration_estimate,
             difficulte,
             is_free,
+            price_amount,
+            price_currency,
             center_lat: None,
             center_lng: None,
         }

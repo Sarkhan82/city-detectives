@@ -1,4 +1,4 @@
-//! Schéma GraphQL (Story 1.2, 2.1, 4.1, 4.3) – register, me, listInvestigations, validateEnigmaResponse, getEnigmaHints, getEnigmaExplanation.
+//! Schéma GraphQL (Story 1.2, 2.1, 4.1, 4.3, 6.1) – register, me, listInvestigations (+ prix), investigation(id), validateEnigmaResponse, getEnigmaHints, getEnigmaExplanation.
 
 use async_graphql::*;
 use axum::extract::State;
@@ -271,7 +271,7 @@ mod tests {
         let gamification_svc = Arc::new(GamificationService::new());
         let schema = create_schema(auth, inv_svc, enigma_svc, lore_svc, gamification_svc);
         let request = async_graphql::Request::new(
-            r#"query { listInvestigations { id titre description durationEstimate difficulte isFree } }"#,
+            r#"query { listInvestigations { id titre description durationEstimate difficulte isFree priceAmount priceCurrency } }"#,
         );
         let res = schema.execute(request).await;
         assert!(res.is_ok(), "errors: {:?}", res.errors);
@@ -288,6 +288,66 @@ mod tests {
         assert!(first.get("durationEstimate").is_some());
         assert!(first.get("difficulte").is_some());
         assert!(first.get("isFree").is_some());
+        assert_eq!(
+            first.get("isFree").and_then(|v| v.as_bool()),
+            Some(true),
+            "première enquête = première gratuite (FR46)"
+        );
+        assert!(
+            first.get("priceAmount").is_none_or(|v| v.is_null()),
+            "gratuite : priceAmount null"
+        );
+        assert!(
+            first.get("priceCurrency").is_none_or(|v| v.is_null()),
+            "gratuite : priceCurrency null"
+        );
+        if list.len() >= 2 {
+            let second = &list[1];
+            assert_eq!(second.get("isFree").and_then(|v| v.as_bool()), Some(false));
+            assert_eq!(
+                second.get("priceAmount").and_then(|v| v.as_u64()),
+                Some(299),
+                "payante : prix 2,99 € (FR47, FR49)"
+            );
+            assert_eq!(
+                second.get("priceCurrency").and_then(|v| v.as_str()),
+                Some("EUR")
+            );
+        }
+    }
+
+    /// Test investigation(id) retourne isFree, priceAmount, priceCurrency (Story 6.1 – écran détail).
+    #[tokio::test]
+    async fn investigation_by_id_returns_price_fields_for_paid() {
+        let auth = Arc::new(AuthService::default());
+        let enigma_svc = Arc::new(EnigmaService::new());
+        let inv_svc = Arc::new(InvestigationService::new(enigma_svc.clone()));
+        let lore_svc = Arc::new(LoreService::new());
+        let gamification_svc = Arc::new(GamificationService::new());
+        let schema = create_schema(auth, inv_svc, enigma_svc, lore_svc, gamification_svc);
+        let id_paid = "22222222-2222-2222-2222-222222222222";
+        let request = async_graphql::Request::new(format!(
+            r#"query {{ investigation(id: "{}") {{ investigation {{ id titre isFree priceAmount priceCurrency }} enigmas {{ id }} }} }}"#,
+            id_paid
+        ));
+        let res = schema.execute(request).await;
+        assert!(res.is_ok(), "errors: {:?}", res.errors);
+        let data = res.data.into_json().unwrap();
+        let root = data
+            .get("investigation")
+            .and_then(|v| v.as_object())
+            .expect("investigation");
+        let inv = root
+            .get("investigation")
+            .and_then(|v| v.as_object())
+            .expect("investigation.investigation");
+        assert_eq!(inv.get("id").and_then(|v| v.as_str()).unwrap(), id_paid);
+        assert_eq!(inv.get("isFree").and_then(|v| v.as_bool()), Some(false));
+        assert_eq!(inv.get("priceAmount").and_then(|v| v.as_u64()), Some(299));
+        assert_eq!(
+            inv.get("priceCurrency").and_then(|v| v.as_str()),
+            Some("EUR")
+        );
     }
 
     /// Test investigation(id) avec liste énigmes ordonnée (Story 3.1) – exécutable en CI.
