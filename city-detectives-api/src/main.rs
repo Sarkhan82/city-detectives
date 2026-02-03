@@ -1,19 +1,14 @@
-//! City Detectives API – point d'entrée (Story 1.2 – auth JWT).
-//! Lance le serveur Axum avec route GraphQL (mutation register).
+//! City Detectives API – point d'entrée binaire (Story 1.2 – auth JWT).
+//! Utilise la bibliothèque city_detectives_api.
 
 use axum::{routing::post, Router};
 use std::sync::Arc;
 use tower_http::cors::{Any, CorsLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-mod api;
-mod db;
-mod models;
-mod services;
-
-use api::graphql::create_schema;
-use services::auth_service::{self, AuthService};
-use services::investigation_service::InvestigationService;
+use city_detectives_api::{
+    api, auth_service, create_schema, AuthService, EnigmaService, InvestigationService,
+};
 
 #[tokio::main]
 async fn main() {
@@ -28,8 +23,9 @@ async fn main() {
         .map(|s| s.into_bytes())
         .unwrap_or_else(|_| auth_service::default_jwt_secret());
     let auth_service = Arc::new(AuthService::new(jwt_secret));
-    let investigation_service = Arc::new(InvestigationService::new());
-    let schema = create_schema(auth_service, investigation_service);
+    let enigma_service = Arc::new(EnigmaService::new());
+    let investigation_service = Arc::new(InvestigationService::new(enigma_service.clone()));
+    let schema = create_schema(auth_service, investigation_service, enigma_service);
 
     let app = Router::new()
         .route("/graphql", post(api::graphql::graphql_handler))

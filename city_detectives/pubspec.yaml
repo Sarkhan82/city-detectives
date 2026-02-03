@@ -43,6 +43,9 @@ dependencies:
   # Story 3.2 – progression, carte, position
   geolocator: ^13.0.2
 
+  # Story 4.1 – énigmes photo (prise photo, fallback galerie FR33)
+  image_picker: ^1.1.2
+
   # Story 3.4 – permissions (GPS, caméra, stockage)
   permission_handler: ^11.3.1
   # Story 3.4 – statut connexion (FR82)

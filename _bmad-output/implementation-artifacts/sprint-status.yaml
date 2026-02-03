@@ -59,14 +59,14 @@ development_status:
   epic-3-retrospective: optional
 
   epic-4: in-progress
-  4-1-enigmes-photo-geolocalisation: ready-for-dev
+  4-1-enigmes-photo-geolocalisation: done
   4-2-enigmes-mots-puzzle: ready-for-dev
   4-3-aide-contextuelle-explications-historiques: ready-for-dev
-  4-4-lore-option-saut: backlog
+  4-4-lore-option-saut: ready-for-dev
   epic-4-retrospective: optional
 
-  epic-5: backlog
-  5-1-statut-completion-historique: backlog
+  epic-5: in-progress
+  5-1-statut-completion-historique: ready-for-dev
   5-2-badges-competences-leaderboard: backlog
   epic-5-retrospective: optional
 
