@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:city_detectives/core/services/investigation_error_handler.dart';
 import 'package:city_detectives/features/enigma/types/geolocation/geolocation_enigma_widget.dart';
 import 'package:city_detectives/features/enigma/types/photo/photo_enigma_widget.dart';
+import 'package:city_detectives/features/enigma/types/puzzle/puzzle_enigma_widget.dart';
+import 'package:city_detectives/features/enigma/types/words/words_enigma_widget.dart';
 import 'package:city_detectives/features/investigation/models/enigma.dart';
 import 'package:city_detectives/features/investigation/models/investigation_progress.dart';
 import 'package:city_detectives/features/investigation/models/investigation_with_enigmas.dart';
@@ -444,6 +446,10 @@ class _EnigmaContent extends StatelessWidget {
           enigma: enigma,
           onValidated: onValidated,
         );
+      case 'words':
+        return WordsEnigmaWidget(enigma: enigma, onValidated: onValidated);
+      case 'puzzle':
+        return PuzzleEnigmaWidget(enigma: enigma, onValidated: onValidated);
       default:
         return _EnigmaCard(enigma: enigma);
     }

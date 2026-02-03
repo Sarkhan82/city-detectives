@@ -1,6 +1,7 @@
-//! Service énigmes (Story 4.1) – validation photo et géolocalisation ; IDs déterministes pour cohérence avec investigations.
+//! Service énigmes (Story 4.1, 4.2) – validation photo, géolocalisation, mots et puzzle.
 
 use crate::models::enigma::{Enigma, ValidateEnigmaPayload, ValidateEnigmaResult};
+use crate::services::enigma::{puzzle, words};
 use geo::HaversineDistance;
 use std::collections::HashMap;
 use uuid::Uuid;
@@ -8,7 +9,7 @@ use uuid::Uuid;
 /// Namespace UUID pour générer des IDs d'énigmes déterministes (v5).
 const NAMESPACE_ENIGMA: Uuid = uuid::uuid!("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
 
-/// Définition interne d'une énigme (point cible, tolérance, type).
+/// Définition interne d'une énigme (point cible, tolérance, type, réponses attendues mots/puzzle).
 struct EnigmaDef {
     order_index: u32,
     enigma_type: String,
@@ -18,6 +19,10 @@ struct EnigmaDef {
     tolerance_meters: Option<f64>,
     #[allow(dead_code)] // Réservé pour comparaison photo en V1+
     reference_photo_url: Option<String>,
+    /// Réponse attendue pour type "words" (comparaison normalisée).
+    expected_text_answer: Option<String>,
+    /// Code attendu pour type "puzzle".
+    expected_code_answer: Option<String>,
 }
 
 /// IDs d'enquêtes mock (alignés avec InvestigationService).
@@ -44,17 +49,19 @@ impl EnigmaService {
     pub fn new() -> Self {
         let mut definitions = HashMap::new();
 
-        // Enquête 1 : 3 énigmes (1 text, 2 géo, 3 photo)
+        // Enquête 1 : 3 énigmes (1 words, 2 géo, 3 photo) – Story 4.2 : type "words" pour ordre 1
         let inv1_base = "inv1";
         Self::insert_mock(
             &mut definitions,
             MOCK_INV_1,
             1,
-            "text",
+            "words",
             &format!("Énigme 1 – {}", inv1_base),
             None,
             None,
             None,
+            None,
+            Some("paris".to_string()),
             None,
         );
         Self::insert_mock(
@@ -67,6 +74,8 @@ impl EnigmaService {
             Some(2.3522),
             Some(DEFAULT_GEO_TOLERANCE_M),
             None,
+            None,
+            None,
         );
         Self::insert_mock(
             &mut definitions,
@@ -78,9 +87,11 @@ impl EnigmaService {
             None,
             None,
             Some("https://example.com/ref.jpg".to_string()),
+            None,
+            None,
         );
 
-        // Enquête 2 : 3 énigmes (1 géo, 2 photo, 3 text)
+        // Enquête 2 : 3 énigmes (1 géo, 2 photo, 3 puzzle) – Story 4.2 : type "puzzle" pour ordre 3
         let inv2_base = "inv2";
         Self::insert_mock(
             &mut definitions,
@@ -91,6 +102,8 @@ impl EnigmaService {
             Some(48.8606),
             Some(2.3376),
             Some(DEFAULT_GEO_TOLERANCE_M),
+            None,
+            None,
             None,
         );
         Self::insert_mock(
@@ -103,17 +116,21 @@ impl EnigmaService {
             None,
             None,
             None,
+            None,
+            None,
         );
         Self::insert_mock(
             &mut definitions,
             MOCK_INV_2,
             3,
-            "text",
+            "puzzle",
             &format!("Énigme 3 – {}", inv2_base),
             None,
             None,
             None,
             None,
+            None,
+            Some("1234".to_string()),
         );
 
         Self { definitions }
@@ -130,6 +147,8 @@ impl EnigmaService {
         target_lng: Option<f64>,
         tolerance_meters: Option<f64>,
         reference_photo_url: Option<String>,
+        expected_text_answer: Option<String>,
+        expected_code_answer: Option<String>,
     ) {
         let id = Self::enigma_id_for(investigation_id, order_index);
         defs.insert(
@@ -142,6 +161,8 @@ impl EnigmaService {
                 target_lng,
                 tolerance_meters,
                 reference_photo_url,
+                expected_text_answer,
+                expected_code_answer,
             },
         );
     }
@@ -177,6 +198,8 @@ impl EnigmaService {
         match def.enigma_type.as_str() {
             "geolocation" => self.validate_geolocation(def, payload),
             "photo" => self.validate_photo(def, payload),
+            "words" => self.validate_words(def, payload),
+            "puzzle" => self.validate_puzzle(def, payload),
             _ => Ok(ValidateEnigmaResult {
                 validated: false,
                 message: "Type d'énigme non supporté pour la validation".to_string(),
@@ -252,6 +275,30 @@ impl EnigmaService {
                     .to_string(),
             })
         }
+    }
+
+    fn validate_words(
+        &self,
+        def: &EnigmaDef,
+        payload: ValidateEnigmaPayload,
+    ) -> Result<ValidateEnigmaResult, String> {
+        let expected = def
+            .expected_text_answer
+            .as_deref()
+            .unwrap_or("");
+        words::validate(expected, payload.text_answer)
+    }
+
+    fn validate_puzzle(
+        &self,
+        def: &EnigmaDef,
+        payload: ValidateEnigmaPayload,
+    ) -> Result<ValidateEnigmaResult, String> {
+        let expected = def
+            .expected_code_answer
+            .as_deref()
+            .unwrap_or("");
+        puzzle::validate(expected, payload.code_answer)
     }
 }
 

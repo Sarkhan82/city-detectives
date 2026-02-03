@@ -64,7 +64,31 @@ pub struct PhotoEnigma {
     pub reference_photo_url: Option<String>,
 }
 
-/// Payload pour validation : coordonnées utilisateur (géolocalisation) ou photo (URL/base64).
+/// Énigme mots : consigne et question (réponse non exposée en API) – Story 4.2, FR25.
+#[allow(dead_code)]
+#[derive(Debug, Clone, Serialize, Deserialize, SimpleObject)]
+pub struct WordsEnigma {
+    pub id: String,
+    #[graphql(name = "orderIndex")]
+    pub order_index: u32,
+    pub titre: String,
+    /// Consigne ou question affichée à l'utilisateur.
+    pub consigne: String,
+}
+
+/// Énigme puzzle : consigne (code/règle non exposée en API) – Story 4.2, FR26.
+#[allow(dead_code)]
+#[derive(Debug, Clone, Serialize, Deserialize, SimpleObject)]
+pub struct PuzzleEnigma {
+    pub id: String,
+    #[graphql(name = "orderIndex")]
+    pub order_index: u32,
+    pub titre: String,
+    /// Consigne affichée à l'utilisateur.
+    pub consigne: String,
+}
+
+/// Payload pour validation : coordonnées (géolocalisation), photo (URL/base64), ou texte/code (mots, puzzle).
 #[derive(Debug, Clone, Deserialize, InputObject)]
 #[graphql(name = "ValidateEnigmaPayload")]
 pub struct ValidateEnigmaPayload {
@@ -80,6 +104,12 @@ pub struct ValidateEnigmaPayload {
     /// Pour énigme photo : base64 de la photo (alternatif).
     #[graphql(name = "photoBase64")]
     pub photo_base64: Option<String>,
+    /// Pour énigme mots : réponse texte (FR25, FR28).
+    #[graphql(name = "textAnswer")]
+    pub text_answer: Option<String>,
+    /// Pour énigme puzzle : code ou réponse logique (FR26, FR29).
+    #[graphql(name = "codeAnswer")]
+    pub code_answer: Option<String>,
 }
 
 /// Résultat de la validation d'une énigme (FR28, FR29).
