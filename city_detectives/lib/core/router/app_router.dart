@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:city_detectives/core/screens/home_screen.dart';
+import 'package:city_detectives/features/admin/widgets/admin_route_guard.dart';
 import 'package:city_detectives/features/enigma/screens/enigma_explanation_screen.dart';
 import 'package:city_detectives/features/enigma/screens/lore_screen.dart';
 import 'package:city_detectives/features/investigation/models/investigation.dart';
@@ -39,6 +41,9 @@ class AppRouter {
 
   /// Écran Gamification (Story 5.2 – badges, compétences, cartes postales, leaderboard).
   static const String gamification = '/profile/gamification';
+
+  /// Dashboard admin (Story 7.1 – FR61). Accès réservé aux admins.
+  static const String adminDashboard = '/admin';
 
   static const String home = '/home';
 
@@ -153,40 +158,10 @@ class AppRouter {
           builder: (context, _) => const GamificationScreen(),
         ),
         GoRoute(
-          path: home,
-          builder: (context, _) => Scaffold(
-            appBar: AppBar(title: const Text('City Detectives')),
-            body: ListView(
-              padding: const EdgeInsets.all(24),
-              children: [
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.only(bottom: 24),
-                    child: Text('Bienvenue – vous êtes connecté.'),
-                  ),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.bar_chart),
-                  title: const Text('Ma progression'),
-                  subtitle: const Text('Statut des enquêtes et historique'),
-                  onTap: () {
-                    if (!context.mounted) return;
-                    GoRouter.of(context).push(AppRouter.progression);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.search),
-                  title: const Text('Enquêtes'),
-                  subtitle: const Text('Parcourir et démarrer les enquêtes'),
-                  onTap: () {
-                    if (!context.mounted) return;
-                    GoRouter.of(context).go(AppRouter.investigations);
-                  },
-                ),
-              ],
-            ),
-          ),
+          path: adminDashboard,
+          builder: (context, _) => const AdminRouteGuard(),
         ),
+        GoRoute(path: home, builder: (context, _) => const HomeScreen()),
       ],
     );
   }

@@ -76,9 +76,9 @@ development_status:
   epic-6-retrospective: optional
 
   epic-7: in-progress
-  7-1-acces-dashboard-admin: ready-for-dev
+  7-1-acces-dashboard-admin: done
   7-2-creation-edition-enquetes-enigmes: ready-for-dev
-  7-3-previsualisation-publication-rollback: backlog
+  7-3-previsualisation-publication-rollback: ready-for-dev
   7-4-monitoring-analytics: backlog
   epic-7-retrospective: optional
 

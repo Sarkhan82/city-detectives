@@ -43,3 +43,8 @@ path = "tests/api/enigmas_test.rs"
 [[test]]
 name = "gamification_test"
 path = "tests/api/gamification_test.rs"
+
+# Binaire de test d'intégration API (tests/api/admin_test.rs) – Story 7.1
+[[test]]
+name = "admin_test"
+path = "tests/api/admin_test.rs"
