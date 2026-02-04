@@ -121,17 +121,19 @@ class _EnigmaEditScreenState extends ConsumerState<EnigmaEditScreen> {
         adminInvestigationWithEnigmasProvider(widget.investigationId),
       );
       ref.invalidate(adminDashboardProvider);
-      ScaffoldMessenger.of(context).showSnackBar(
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      messenger?.showSnackBar(
         SnackBar(
           content: Text(
             _existing == null ? 'Énigme créée.' : 'Énigme mise à jour.',
           ),
         ),
       );
-      Navigator.of(context).pop(true);
+      Navigator.maybeOf(context)?.pop(true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      messenger?.showSnackBar(
         SnackBar(
           content: Text('Impossible d’enregistrer l’énigme. ${e.toString()}'),
         ),
@@ -217,16 +219,15 @@ class _EnigmaEditScreenState extends ConsumerState<EnigmaEditScreen> {
                 value: _historicalValidated,
                 onChanged: (value) async {
                   final newValue = value ?? false;
+                  final repo = ref.read(adminEnigmaRepositoryProvider);
                   if (_existing != null && newValue && !_historicalValidated) {
-                    // Utilise explicitement la mutation validateEnigmaHistoricalContent.
                     try {
-                      final repo = ref.read(adminEnigmaRepositoryProvider);
                       await repo.validateHistoricalContent(_existing!.id);
                       if (!mounted) return;
-                      setState(() {
-                        _historicalValidated = true;
-                      });
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      setState(() => _historicalValidated = true);
+                      if (!mounted) return;
+                      final messenger = ScaffoldMessenger.maybeOf(context);
+                      messenger?.showSnackBar(
                         const SnackBar(
                           content: Text(
                             'Contenu historique marqué comme validé.',
@@ -235,7 +236,8 @@ class _EnigmaEditScreenState extends ConsumerState<EnigmaEditScreen> {
                       );
                     } catch (e) {
                       if (!mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      final messenger = ScaffoldMessenger.maybeOf(context);
+                      messenger?.showSnackBar(
                         SnackBar(
                           content: Text(
                             'Impossible de valider le contenu historique. ${e.toString()}',
@@ -243,10 +245,38 @@ class _EnigmaEditScreenState extends ConsumerState<EnigmaEditScreen> {
                         ),
                       );
                     }
+                  } else if (_existing != null &&
+                      !newValue &&
+                      _historicalValidated) {
+                    try {
+                      await repo.updateEnigma(
+                        _existing!.id,
+                        historicalContentValidated: false,
+                      );
+                      if (!mounted) return;
+                      setState(() => _historicalValidated = false);
+                      if (!mounted) return;
+                      final messenger = ScaffoldMessenger.maybeOf(context);
+                      messenger?.showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Contenu historique marqué comme non validé.',
+                          ),
+                        ),
+                      );
+                    } catch (e) {
+                      if (!mounted) return;
+                      final messenger = ScaffoldMessenger.maybeOf(context);
+                      messenger?.showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Impossible de mettre à jour. ${e.toString()}',
+                          ),
+                        ),
+                      );
+                    }
                   } else {
-                    setState(() {
-                      _historicalValidated = newValue;
-                    });
+                    setState(() => _historicalValidated = newValue);
                   }
                 },
               ),

@@ -40,7 +40,7 @@ void main() {
         routes: [
           GoRoute(
             path: AppRouter.adminInvestigationListPath(),
-            builder: (_, __) => const AdminInvestigationListScreen(),
+            builder: (_, _) => const AdminInvestigationListScreen(),
           ),
         ],
       );
@@ -72,7 +72,7 @@ void main() {
       routes: [
         GoRoute(
           path: AppRouter.adminInvestigationListPath(),
-          builder: (_, __) => const AdminInvestigationListScreen(),
+          builder: (_, _) => const AdminInvestigationListScreen(),
         ),
       ],
     );

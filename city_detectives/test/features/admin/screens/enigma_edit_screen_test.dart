@@ -113,6 +113,31 @@ void main() {
 
     expect(fakeRepo.createCalled, isTrue);
   });
+
+  testWidgets('EnigmaEditScreen (edit) calls updateEnigma on save', (
+    WidgetTester tester,
+  ) async {
+    final fakeRepo = _FakeAdminEnigmaRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [adminEnigmaRepositoryProvider.overrideWithValue(fakeRepo)],
+        child: const MaterialApp(
+          home: EnigmaEditScreen(
+            investigationId: 'inv-1',
+            enigma: existingEnigma,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('Enregistrer'));
+    await tester.tap(find.text('Enregistrer'));
+    await tester.pumpAndSettle();
+
+    expect(fakeRepo.updateCalled, isTrue);
+  });
 }
 
 final GraphQLClient _fakeGraphQLClient = GraphQLClient(
@@ -124,6 +149,7 @@ class _FakeAdminEnigmaRepository extends AdminEnigmaRepository {
   _FakeAdminEnigmaRepository() : super(_fakeGraphQLClient);
 
   bool createCalled = false;
+  bool updateCalled = false;
 
   @override
   Future<Enigma> createEnigma({
@@ -150,6 +176,45 @@ class _FakeAdminEnigmaRepository extends AdminEnigmaRepository {
       type: type,
       titre: titre,
       investigationId: investigationId,
+      consigne: consigne,
+      targetLat: targetLat,
+      targetLng: targetLng,
+      toleranceMeters: toleranceMeters,
+      referencePhotoUrl: referencePhotoUrl,
+      hintSuggestion: hintSuggestion,
+      hintHint: hintHint,
+      hintSolution: hintSolution,
+      historicalExplanation: historicalExplanation,
+      educationalContent: educationalContent,
+      historicalContentValidated: historicalContentValidated,
+    );
+  }
+
+  @override
+  Future<Enigma> updateEnigma(
+    String id, {
+    int? orderIndex,
+    String? type,
+    String? titre,
+    String? consigne,
+    double? targetLat,
+    double? targetLng,
+    double? toleranceMeters,
+    String? referencePhotoUrl,
+    String? hintSuggestion,
+    String? hintHint,
+    String? hintSolution,
+    String? historicalExplanation,
+    String? educationalContent,
+    bool? historicalContentValidated,
+  }) async {
+    updateCalled = true;
+    return Enigma(
+      id: id,
+      orderIndex: orderIndex ?? 1,
+      type: type ?? 'words',
+      titre: titre ?? '',
+      investigationId: null,
       consigne: consigne,
       targetLat: targetLat,
       targetLng: targetLng,

@@ -57,22 +57,20 @@ class InvestigationPreviewScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              ...enigmas
-                  .map(
-                    (e) => Card(
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          child: Text(
-                            '${e.orderIndex + 1}',
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ),
-                        title: Text(e.titre),
-                        subtitle: Text('Type: ${e.type}'),
+              ...enigmas.map(
+                (e) => Card(
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      child: Text(
+                        '${e.orderIndex + 1}',
+                        style: const TextStyle(fontSize: 14),
                       ),
                     ),
-                  )
-                  .toList(),
+                    title: Text(e.titre),
+                    subtitle: Text('Type: ${e.type}'),
+                  ),
+                ),
+              ),
             ],
           );
         },

@@ -415,7 +415,11 @@ impl EnigmaService {
             reference_photo_url: input.reference_photo_url,
             expected_text_answer: input.expected_text_answer,
             expected_code_answer: input.expected_code_answer,
-            hint_suggestion: input.hint_suggestion.unwrap_or_default(),
+            hint_suggestion: input
+                .hint_suggestion
+                .clone()
+                .or_else(|| input.consigne.clone())
+                .unwrap_or_default(),
             hint_hint: input.hint_hint.unwrap_or_default(),
             hint_solution: input.hint_solution.unwrap_or_default(),
             historical_explanation: input.historical_explanation.unwrap_or_default(),

@@ -87,21 +87,20 @@ class AdminEnigmaRepository {
       'orderIndex': orderIndex,
       'type': type,
       'titre': titre,
-      if (consigne != null && consigne.isNotEmpty) 'consigne': consigne,
+      if (consigne?.isNotEmpty ?? false) 'consigne': consigne!,
       if (targetLat != null) 'targetLat': targetLat,
       if (targetLng != null) 'targetLng': targetLng,
       if (toleranceMeters != null) 'toleranceMeters': toleranceMeters,
-      if (referencePhotoUrl != null && referencePhotoUrl.isNotEmpty)
-        'referencePhotoUrl': referencePhotoUrl,
-      if (hintSuggestion != null && hintSuggestion.isNotEmpty)
-        'hintSuggestion': hintSuggestion,
-      if (hintHint != null && hintHint.isNotEmpty) 'hintHint': hintHint,
-      if (hintSolution != null && hintSolution.isNotEmpty)
-        'hintSolution': hintSolution,
-      if (historicalExplanation != null && historicalExplanation.isNotEmpty)
-        'historicalExplanation': historicalExplanation,
-      if (educationalContent != null && educationalContent.isNotEmpty)
-        'educationalContent': educationalContent,
+      if (referencePhotoUrl?.isNotEmpty ?? false)
+        'referencePhotoUrl': referencePhotoUrl!,
+      if (hintSuggestion?.isNotEmpty ?? false)
+        'hintSuggestion': hintSuggestion!,
+      if (hintHint?.isNotEmpty ?? false) 'hintHint': hintHint!,
+      if (hintSolution?.isNotEmpty ?? false) 'hintSolution': hintSolution!,
+      if (historicalExplanation?.isNotEmpty ?? false)
+        'historicalExplanation': historicalExplanation!,
+      if (educationalContent?.isNotEmpty ?? false)
+        'educationalContent': educationalContent!,
       if (historicalContentValidated != null)
         'historicalContentValidated': historicalContentValidated,
     };
@@ -146,23 +145,22 @@ class AdminEnigmaRepository {
   }) async {
     final input = <String, dynamic>{
       if (orderIndex != null) 'orderIndex': orderIndex,
-      if (type != null && type.isNotEmpty) 'type': type,
-      if (titre != null && titre.isNotEmpty) 'titre': titre,
+      if (type?.isNotEmpty ?? false) 'type': type!,
+      if (titre?.isNotEmpty ?? false) 'titre': titre!,
       if (targetLat != null) 'targetLat': targetLat,
       if (targetLng != null) 'targetLng': targetLng,
       if (toleranceMeters != null) 'toleranceMeters': toleranceMeters,
-      if (referencePhotoUrl != null && referencePhotoUrl.isNotEmpty)
-        'referencePhotoUrl': referencePhotoUrl,
-      if (consigne != null && consigne.isNotEmpty) 'consigne': consigne,
-      if (hintSuggestion != null && hintSuggestion.isNotEmpty)
-        'hintSuggestion': hintSuggestion,
-      if (hintHint != null && hintHint.isNotEmpty) 'hintHint': hintHint,
-      if (hintSolution != null && hintSolution.isNotEmpty)
-        'hintSolution': hintSolution,
-      if (historicalExplanation != null && historicalExplanation.isNotEmpty)
-        'historicalExplanation': historicalExplanation,
-      if (educationalContent != null && educationalContent.isNotEmpty)
-        'educationalContent': educationalContent,
+      if (referencePhotoUrl?.isNotEmpty ?? false)
+        'referencePhotoUrl': referencePhotoUrl!,
+      if (consigne?.isNotEmpty ?? false) 'consigne': consigne!,
+      if (hintSuggestion?.isNotEmpty ?? false)
+        'hintSuggestion': hintSuggestion!,
+      if (hintHint?.isNotEmpty ?? false) 'hintHint': hintHint!,
+      if (hintSolution?.isNotEmpty ?? false) 'hintSolution': hintSolution!,
+      if (historicalExplanation?.isNotEmpty ?? false)
+        'historicalExplanation': historicalExplanation!,
+      if (educationalContent?.isNotEmpty ?? false)
+        'educationalContent': educationalContent!,
       if (historicalContentValidated != null)
         'historicalContentValidated': historicalContentValidated,
     };
