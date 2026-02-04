@@ -6,6 +6,7 @@ use async_graphql::Request;
 use city_detectives_api::api::graphql::create_schema;
 use city_detectives_api::api::middleware::auth::BearerToken;
 use city_detectives_api::services::admin_service::AdminService;
+use city_detectives_api::services::analytics_service::AnalyticsService;
 use city_detectives_api::services::auth_service::AuthService;
 use city_detectives_api::services::enigma_service::EnigmaService;
 use city_detectives_api::services::gamification_service::GamificationService;
@@ -22,6 +23,7 @@ fn make_schema() -> city_detectives_api::api::graphql::AppSchema {
     let gamification_svc = Arc::new(GamificationService::new());
     let payment_svc = Arc::new(PaymentService::new());
     let admin_svc = Arc::new(AdminService::new(inv_svc.clone(), enigma_svc.clone()));
+    let analytics_svc = Arc::new(AnalyticsService::new(inv_svc.clone()));
     create_schema(
         auth,
         inv_svc,
@@ -30,6 +32,7 @@ fn make_schema() -> city_detectives_api::api::graphql::AppSchema {
         gamification_svc,
         payment_svc,
         admin_svc,
+        analytics_svc,
     )
 }
 
@@ -114,6 +117,180 @@ async fn get_admin_dashboard_returns_data_when_admin_jwt() {
             .and_then(|v| v.as_u64())
             .is_some(),
         "investigationCount must be a number"
+    );
+}
+
+#[tokio::test]
+async fn get_technical_metrics_returns_data_when_admin_jwt() {
+    let schema = make_schema();
+    let token = get_admin_token(&schema).await;
+    let request = Request::new(
+        r#"query { getTechnicalMetrics { healthStatus apiLatencyAvgMs errorRate crashCount } }"#,
+    )
+    .data(BearerToken(Some(token)));
+
+    let res = schema.execute(request).await;
+    assert!(
+        res.is_ok(),
+        "getTechnicalMetrics must succeed for admin: {:?}",
+        res.errors
+    );
+    let data = res.data.into_json().unwrap();
+    let metrics = data
+        .get("getTechnicalMetrics")
+        .and_then(|v| v.as_object())
+        .expect("getTechnicalMetrics object");
+    assert_eq!(
+        metrics.get("healthStatus").and_then(|v| v.as_str()),
+        Some("ok"),
+        "healthStatus must be ok"
+    );
+    assert_eq!(
+        metrics.get("crashCount").and_then(|v| v.as_u64()),
+        Some(0),
+        "crashCount"
+    );
+}
+
+#[tokio::test]
+async fn get_technical_metrics_returns_forbidden_when_user_jwt() {
+    let schema = make_schema();
+    let token = get_user_token(&schema).await;
+    let request = Request::new(r#"query { getTechnicalMetrics { healthStatus crashCount } }"#)
+        .data(BearerToken(Some(token)));
+
+    let res = schema.execute(request).await;
+    assert!(!res.is_ok(), "getTechnicalMetrics must fail for non-admin");
+    let errors = res.errors;
+    assert!(!errors.is_empty(), "must return at least one error");
+    let code = errors.first().and_then(|e| {
+        e.extensions
+            .as_ref()
+            .and_then(|ext| ext.get("code"))
+            .and_then(|v| match v {
+                async_graphql::Value::String(s) => Some(s.as_str()),
+                _ => None,
+            })
+    });
+    assert_eq!(
+        code,
+        Some("FORBIDDEN"),
+        "getTechnicalMetrics must return FORBIDDEN for non-admin"
+    );
+}
+
+#[tokio::test]
+async fn get_user_analytics_returns_data_when_admin_jwt() {
+    let schema = make_schema();
+    let token = get_admin_token(&schema).await;
+    let request =
+        Request::new(r#"query { getUserAnalytics { activeUserCount totalCompletions } }"#)
+            .data(BearerToken(Some(token)));
+
+    let res = schema.execute(request).await;
+    assert!(
+        res.is_ok(),
+        "getUserAnalytics must succeed for admin: {:?}",
+        res.errors
+    );
+    let data = res.data.into_json().unwrap();
+    let analytics = data
+        .get("getUserAnalytics")
+        .and_then(|v| v.as_object())
+        .expect("getUserAnalytics object");
+    assert!(analytics.get("activeUserCount").is_some());
+    assert!(analytics.get("totalCompletions").is_some());
+}
+
+#[tokio::test]
+async fn get_user_analytics_returns_forbidden_when_user_jwt() {
+    let schema = make_schema();
+    let token = get_user_token(&schema).await;
+    let request =
+        Request::new(r#"query { getUserAnalytics { activeUserCount totalCompletions } }"#)
+            .data(BearerToken(Some(token)));
+
+    let res = schema.execute(request).await;
+    assert!(!res.is_ok(), "getUserAnalytics must fail for non-admin");
+}
+
+#[tokio::test]
+async fn get_completion_rates_returns_data_when_admin_jwt() {
+    let schema = make_schema();
+    let token = get_admin_token(&schema).await;
+    let request = Request::new(
+        r#"query { getCompletionRates { investigationId startedCount completedCount completionRate } }"#,
+    )
+    .data(BearerToken(Some(token)));
+
+    let res = schema.execute(request).await;
+    assert!(
+        res.is_ok(),
+        "getCompletionRates must succeed for admin: {:?}",
+        res.errors
+    );
+    let data = res.data.into_json().unwrap();
+    let rates = data
+        .get("getCompletionRates")
+        .and_then(|v| v.as_array())
+        .expect("getCompletionRates array");
+    assert!(
+        !rates.is_empty(),
+        "mock investigations => at least one entry"
+    );
+}
+
+#[tokio::test]
+async fn get_completion_rates_returns_forbidden_when_user_jwt() {
+    let schema = make_schema();
+    let token = get_user_token(&schema).await;
+    let request = Request::new(
+        r#"query { getCompletionRates { investigationId startedCount completedCount } }"#,
+    )
+    .data(BearerToken(Some(token)));
+
+    let res = schema.execute(request).await;
+    assert!(!res.is_ok(), "getCompletionRates must fail for non-admin");
+}
+
+#[tokio::test]
+async fn get_user_journey_analytics_returns_data_when_admin_jwt() {
+    let schema = make_schema();
+    let token = get_admin_token(&schema).await;
+    let request =
+        Request::new(r#"query { getUserJourneyAnalytics { funnelSteps { label userCount } } }"#)
+            .data(BearerToken(Some(token)));
+
+    let res = schema.execute(request).await;
+    assert!(
+        res.is_ok(),
+        "getUserJourneyAnalytics must succeed for admin: {:?}",
+        res.errors
+    );
+    let data = res.data.into_json().unwrap();
+    let journey = data
+        .get("getUserJourneyAnalytics")
+        .and_then(|v| v.as_object())
+        .expect("getUserJourneyAnalytics object");
+    let steps = journey
+        .get("funnelSteps")
+        .and_then(|v| v.as_array())
+        .expect("funnelSteps array");
+    assert!(steps.len() >= 2, "funnel has at least 2 steps");
+}
+
+#[tokio::test]
+async fn get_user_journey_analytics_returns_forbidden_when_user_jwt() {
+    let schema = make_schema();
+    let token = get_user_token(&schema).await;
+    let request =
+        Request::new(r#"query { getUserJourneyAnalytics { funnelSteps { label userCount } } }"#)
+            .data(BearerToken(Some(token)));
+
+    let res = schema.execute(request).await;
+    assert!(
+        !res.is_ok(),
+        "getUserJourneyAnalytics must fail for non-admin"
     );
 }
 

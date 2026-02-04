@@ -7,7 +7,7 @@ use tower_http::cors::{Any, CorsLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use city_detectives_api::{
-    api, auth_service, create_schema, AdminService, AuthService, EnigmaService,
+    api, auth_service, create_schema, AdminService, AnalyticsService, AuthService, EnigmaService,
     GamificationService, InvestigationService, LoreService, PaymentService,
 };
 
@@ -33,6 +33,7 @@ async fn main() {
         investigation_service.clone(),
         enigma_service.clone(),
     ));
+    let analytics_service = Arc::new(AnalyticsService::new(investigation_service.clone()));
     let schema = create_schema(
         auth_service,
         investigation_service,
@@ -41,6 +42,7 @@ async fn main() {
         gamification_service,
         payment_service,
         admin_service,
+        analytics_service,
     );
 
     let app = Router::new()

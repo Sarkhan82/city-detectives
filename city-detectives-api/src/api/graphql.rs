@@ -8,6 +8,7 @@ use axum::Json;
 use serde::Deserialize;
 use std::sync::Arc;
 
+use crate::api::metrics;
 use crate::api::middleware::auth::{extract_bearer, BearerToken};
 use crate::models::enigma::{CreateEnigmaInput, UpdateEnigmaInput};
 use crate::models::enigma::{
@@ -16,7 +17,10 @@ use crate::models::enigma::{
 use crate::models::gamification::{LeaderboardEntry, UserBadge, UserPostcard, UserSkill};
 use crate::models::investigation::{CreateInvestigationInput, UpdateInvestigationInput};
 use crate::models::user::{RegisterInput, Role};
-use crate::services::admin_service::{AdminService, DashboardOverview};
+use crate::services::admin_service::{AdminService, DashboardOverview, TechnicalMetrics};
+use crate::services::analytics_service::{
+    AnalyticsService, CompletionRateEntry, UserAnalytics, UserJourneyAnalytics,
+};
 use crate::services::auth_service::AuthService;
 use crate::services::enigma_service::EnigmaService;
 use crate::services::gamification_service::GamificationService;
@@ -27,6 +31,7 @@ use uuid::Uuid;
 
 pub type AppSchema = Schema<QueryRoot, MutationRoot, EmptySubscription>;
 
+#[allow(clippy::too_many_arguments)]
 pub fn create_schema(
     auth_service: Arc<AuthService>,
     investigation_service: Arc<InvestigationService>,
@@ -35,6 +40,7 @@ pub fn create_schema(
     gamification_service: Arc<GamificationService>,
     payment_service: Arc<PaymentService>,
     admin_service: Arc<AdminService>,
+    analytics_service: Arc<AnalyticsService>,
 ) -> AppSchema {
     Schema::build(QueryRoot, MutationRoot, EmptySubscription)
         .data(auth_service)
@@ -44,6 +50,7 @@ pub fn create_schema(
         .data(gamification_service)
         .data(payment_service)
         .data(admin_service)
+        .data(analytics_service)
         .finish()
 }
 
@@ -108,6 +115,40 @@ impl QueryRoot {
         let _admin_id = require_admin(ctx)?;
         let admin_svc = ctx.data::<Arc<AdminService>>()?;
         Ok(admin_svc.get_dashboard_overview().await)
+    }
+
+    /// Métriques techniques (perfs, santé, crashs) – admin uniquement (Story 7.4 – FR68).
+    async fn get_technical_metrics(&self, ctx: &Context<'_>) -> Result<TechnicalMetrics, Error> {
+        let _admin_id = require_admin(ctx)?;
+        let admin_svc = ctx.data::<Arc<AdminService>>()?;
+        Ok(admin_svc.get_technical_metrics())
+    }
+
+    /// Analytics utilisateurs (actifs, complétions) – admin uniquement (Story 7.4 – FR69, FR70).
+    async fn get_user_analytics(&self, ctx: &Context<'_>) -> Result<UserAnalytics, Error> {
+        let _admin_id = require_admin(ctx)?;
+        let analytics_svc = ctx.data::<Arc<AnalyticsService>>()?;
+        Ok(analytics_svc.get_user_analytics().await)
+    }
+
+    /// Taux de complétion par enquête – admin uniquement (Story 7.4 – FR70).
+    async fn get_completion_rates(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Vec<CompletionRateEntry>, Error> {
+        let _admin_id = require_admin(ctx)?;
+        let analytics_svc = ctx.data::<Arc<AnalyticsService>>()?;
+        Ok(analytics_svc.get_completion_rates().await)
+    }
+
+    /// Parcours utilisateur (funnel) – admin uniquement (Story 7.4 – FR71).
+    async fn get_user_journey_analytics(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<UserJourneyAnalytics, Error> {
+        let _admin_id = require_admin(ctx)?;
+        let analytics_svc = ctx.data::<Arc<AnalyticsService>>()?;
+        Ok(analytics_svc.get_user_journey_analytics().await)
     }
 
     /// Liste des enquêtes disponibles (Story 2.1). Les non-admins ne voient que les enquêtes publiées (Story 7.3 – FR66).
@@ -398,6 +439,64 @@ impl MutationRoot {
         Ok(true)
     }
 
+    /// Enregistre « enquête démarrée » pour analytics (Story 7.4 – FR70). Requiert authentification.
+    async fn record_investigation_started(
+        &self,
+        ctx: &Context<'_>,
+        investigation_id: String,
+    ) -> Result<bool, Error> {
+        let auth = ctx.data::<Arc<AuthService>>()?;
+        let token = ctx.data::<BearerToken>().ok().and_then(|t| t.0.clone());
+        let token = token
+            .as_deref()
+            .ok_or_else(|| Error::new("Authentification requise"))?;
+        let user_id = auth.validate_token(token).map_err(Error::from)?;
+        let inv_id =
+            Uuid::parse_str(&investigation_id).map_err(|_| Error::new("ID enquête invalide"))?;
+        let inv_svc = ctx.data::<Arc<InvestigationService>>()?;
+        if inv_svc
+            .get_investigation_by_id_with_enigmas(inv_id)
+            .await
+            .is_none()
+        {
+            return Err(Error::new("Enquête introuvable"));
+        }
+        let analytics_svc = ctx.data::<Arc<AnalyticsService>>()?;
+        analytics_svc
+            .record_investigation_started(user_id, inv_id)
+            .await;
+        Ok(true)
+    }
+
+    /// Enregistre « enquête complétée » pour analytics (Story 7.4 – FR70). Requiert authentification.
+    async fn record_investigation_completed(
+        &self,
+        ctx: &Context<'_>,
+        investigation_id: String,
+    ) -> Result<bool, Error> {
+        let auth = ctx.data::<Arc<AuthService>>()?;
+        let token = ctx.data::<BearerToken>().ok().and_then(|t| t.0.clone());
+        let token = token
+            .as_deref()
+            .ok_or_else(|| Error::new("Authentification requise"))?;
+        let user_id = auth.validate_token(token).map_err(Error::from)?;
+        let inv_id =
+            Uuid::parse_str(&investigation_id).map_err(|_| Error::new("ID enquête invalide"))?;
+        let inv_svc = ctx.data::<Arc<InvestigationService>>()?;
+        if inv_svc
+            .get_investigation_by_id_with_enigmas(inv_id)
+            .await
+            .is_none()
+        {
+            return Err(Error::new("Enquête introuvable"));
+        }
+        let analytics_svc = ctx.data::<Arc<AnalyticsService>>()?;
+        analytics_svc
+            .record_investigation_completed(user_id, inv_id)
+            .await;
+        Ok(true)
+    }
+
     /// Crée une enquête (admin, Story 7.2 – FR62). Réservé aux admins.
     async fn create_investigation(
         &self,
@@ -499,6 +598,7 @@ pub async fn graphql_handler(
     headers: axum::http::HeaderMap,
     Json(req): Json<GraphQLRequest>,
 ) -> impl IntoResponse {
+    let start = std::time::Instant::now();
     let bearer = extract_bearer(&headers);
     let gql_request = async_graphql::Request::new(req.query)
         .variables(Variables::from_json(
@@ -506,9 +606,12 @@ pub async fn graphql_handler(
         ))
         .data(bearer);
     let res = schema.execute(gql_request).await;
+    let elapsed_ms = start.elapsed().as_millis() as u64;
     let status = if res.is_ok() {
+        metrics::record_request(elapsed_ms, false);
         StatusCode::OK
     } else {
+        metrics::record_request(elapsed_ms, true);
         StatusCode::BAD_REQUEST
     };
     (status, Json(serde_json::to_value(res).unwrap()))
@@ -517,6 +620,7 @@ pub async fn graphql_handler(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::services::analytics_service::AnalyticsService;
     use crate::services::auth_service::AuthService;
     use crate::services::enigma_service::EnigmaService;
     use crate::services::gamification_service::GamificationService;
@@ -532,6 +636,7 @@ mod tests {
         let lore_svc = Arc::new(LoreService::new());
         let gamification_svc = Arc::new(GamificationService::new());
         let admin_svc = Arc::new(AdminService::new(inv_svc.clone(), enigma_svc.clone()));
+        let analytics_svc = Arc::new(AnalyticsService::new(inv_svc.clone()));
         let schema = create_schema(
             auth,
             inv_svc,
@@ -540,6 +645,7 @@ mod tests {
             gamification_svc,
             Arc::new(PaymentService::new()),
             admin_svc,
+            analytics_svc,
         );
         let request = async_graphql::Request::new(
             r#"query { listInvestigations { id titre description durationEstimate difficulte isFree priceAmount priceCurrency } }"#,
@@ -596,6 +702,7 @@ mod tests {
         let lore_svc = Arc::new(LoreService::new());
         let gamification_svc = Arc::new(GamificationService::new());
         let admin_svc = Arc::new(AdminService::new(inv_svc.clone(), enigma_svc.clone()));
+        let analytics_svc = Arc::new(AnalyticsService::new(inv_svc.clone()));
         let schema = create_schema(
             auth,
             inv_svc,
@@ -604,6 +711,7 @@ mod tests {
             gamification_svc,
             Arc::new(PaymentService::new()),
             admin_svc,
+            analytics_svc,
         );
         let id_paid = "22222222-2222-2222-2222-222222222222";
         let request = async_graphql::Request::new(format!(
@@ -639,6 +747,7 @@ mod tests {
         let lore_svc = Arc::new(LoreService::new());
         let gamification_svc = Arc::new(GamificationService::new());
         let admin_svc = Arc::new(AdminService::new(inv_svc.clone(), enigma_svc.clone()));
+        let analytics_svc = Arc::new(AnalyticsService::new(inv_svc.clone()));
         let schema = create_schema(
             auth,
             inv_svc,
@@ -647,6 +756,7 @@ mod tests {
             gamification_svc,
             Arc::new(PaymentService::new()),
             admin_svc,
+            analytics_svc,
         );
         let id = "11111111-1111-1111-1111-111111111111";
         let request = async_graphql::Request::new(format!(
@@ -687,6 +797,7 @@ mod tests {
         let lore_svc = Arc::new(LoreService::new());
         let gamification_svc = Arc::new(GamificationService::new());
         let admin_svc = Arc::new(AdminService::new(inv_svc.clone(), enigma_svc.clone()));
+        let analytics_svc = Arc::new(AnalyticsService::new(inv_svc.clone()));
         let schema = create_schema(
             auth,
             inv_svc,
@@ -695,6 +806,7 @@ mod tests {
             gamification_svc,
             Arc::new(PaymentService::new()),
             admin_svc,
+            analytics_svc,
         );
         let id = "11111111-1111-1111-1111-111111111111";
         let request = async_graphql::Request::new(format!(
@@ -738,6 +850,7 @@ mod tests {
         let lore_svc = Arc::new(LoreService::new());
         let gamification_svc = Arc::new(GamificationService::new());
         let admin_svc = Arc::new(AdminService::new(inv_svc.clone(), enigma_svc.clone()));
+        let analytics_svc = Arc::new(AnalyticsService::new(inv_svc.clone()));
         let schema = create_schema(
             auth,
             inv_svc,
@@ -746,6 +859,7 @@ mod tests {
             gamification_svc,
             Arc::new(PaymentService::new()),
             admin_svc,
+            analytics_svc,
         );
         let id = "11111111-1111-1111-1111-111111111111";
         let request = async_graphql::Request::new(format!(
@@ -771,6 +885,7 @@ mod tests {
         let lore_svc = Arc::new(LoreService::new());
         let gamification_svc = Arc::new(GamificationService::new());
         let admin_svc = Arc::new(AdminService::new(inv_svc.clone(), enigma_svc.clone()));
+        let analytics_svc = Arc::new(AnalyticsService::new(inv_svc.clone()));
         let schema = create_schema(
             auth,
             inv_svc,
@@ -779,6 +894,7 @@ mod tests {
             gamification_svc,
             Arc::new(PaymentService::new()),
             admin_svc,
+            analytics_svc,
         );
         let id = "11111111-1111-1111-1111-111111111111";
         let request = async_graphql::Request::new(format!(
@@ -809,6 +925,7 @@ mod tests {
         let gamification_svc = Arc::new(GamificationService::new());
         let payment_svc = Arc::new(PaymentService::new());
         let admin_svc = Arc::new(AdminService::new(inv_svc.clone(), enigma_svc.clone()));
+        let analytics_svc = Arc::new(AnalyticsService::new(inv_svc.clone()));
         let schema = create_schema(
             auth.clone(),
             inv_svc,
@@ -817,6 +934,7 @@ mod tests {
             gamification_svc,
             payment_svc,
             admin_svc,
+            analytics_svc,
         );
 
         let register_req = async_graphql::Request::new(
