@@ -429,11 +429,15 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      final verticalScrollable = find.byWidgetPredicate(
+        (w) => w is Scrollable && w.axisDirection == AxisDirection.down,
+      );
       await tester.scrollUntilVisible(
         find.text('Parcours utilisateur'),
         500,
-        scrollable: find.byType(Scrollable),
+        scrollable: verticalScrollable,
       );
+      await tester.pumpAndSettle();
       expect(find.text('Impossible de charger le parcours.'), findsOneWidget);
     },
   );

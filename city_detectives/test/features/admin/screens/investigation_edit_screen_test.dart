@@ -7,6 +7,7 @@ import 'package:city_detectives/features/investigation/models/investigation.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:graphql_flutter/graphql_flutter.dart';
 
 void main() {
   const existing = Investigation(
@@ -22,8 +23,14 @@ void main() {
   testWidgets('InvestigationEditScreen (create) shows basic form fields', (
     WidgetTester tester,
   ) async {
+    final fakeRepo = _FakeAdminInvestigationRepository();
     await tester.pumpWidget(
-      const ProviderScope(child: MaterialApp(home: InvestigationEditScreen())),
+      ProviderScope(
+        overrides: [
+          adminInvestigationRepositoryProvider.overrideWithValue(fakeRepo),
+        ],
+        child: const MaterialApp(home: InvestigationEditScreen()),
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -118,14 +125,13 @@ void main() {
   );
 }
 
+final GraphQLClient _fakeGraphQLClient = GraphQLClient(
+  link: HttpLink('http://localhost'),
+  cache: GraphQLCache(),
+);
+
 class _FakeAdminInvestigationRepository extends AdminInvestigationRepository {
-  _FakeAdminInvestigationRepository()
-    : super(
-        // Client jamais utilisé car les méthodes sont surchargées.
-        // On passe nulls en utilisant un cast dynamique pour éviter de dépendre
-        // de la vraie implémentation GraphQL.
-        (null as dynamic),
-      );
+  _FakeAdminInvestigationRepository() : super(_fakeGraphQLClient);
 
   bool createCalled = false;
 

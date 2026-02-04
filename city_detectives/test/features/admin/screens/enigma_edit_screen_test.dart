@@ -7,6 +7,7 @@ import 'package:city_detectives/features/investigation/models/enigma.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:graphql_flutter/graphql_flutter.dart';
 
 void main() {
   const existingEnigma = Enigma(
@@ -106,6 +107,7 @@ void main() {
       'words',
     );
 
+    await tester.ensureVisible(find.text('Enregistrer'));
     await tester.tap(find.text('Enregistrer'));
     await tester.pumpAndSettle();
 
@@ -113,8 +115,13 @@ void main() {
   });
 }
 
+final GraphQLClient _fakeGraphQLClient = GraphQLClient(
+  link: HttpLink('http://localhost'),
+  cache: GraphQLCache(),
+);
+
 class _FakeAdminEnigmaRepository extends AdminEnigmaRepository {
-  _FakeAdminEnigmaRepository() : super((null as dynamic));
+  _FakeAdminEnigmaRepository() : super(_fakeGraphQLClient);
 
   bool createCalled = false;
 
