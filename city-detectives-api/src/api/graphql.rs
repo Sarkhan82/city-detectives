@@ -31,6 +31,7 @@ use uuid::Uuid;
 
 pub type AppSchema = Schema<QueryRoot, MutationRoot, EmptySubscription>;
 
+#[allow(clippy::too_many_arguments)]
 pub fn create_schema(
     auth_service: Arc<AuthService>,
     investigation_service: Arc<InvestigationService>,
