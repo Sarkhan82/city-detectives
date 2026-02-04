@@ -126,8 +126,8 @@ class AdminInvestigationRepository {
       'isFree': isFree,
       'status': status,
       if (!isFree && priceAmount != null) 'priceAmount': priceAmount,
-      if (!isFree && priceCurrency != null && priceCurrency.isNotEmpty)
-        'priceCurrency': priceCurrency,
+      if (!isFree && (priceCurrency?.isNotEmpty ?? false))
+        'priceCurrency': priceCurrency!,
       if (centerLat != null) 'centerLat': centerLat,
       if (centerLng != null) 'centerLng': centerLng,
     };
@@ -167,18 +167,16 @@ class AdminInvestigationRepository {
     String? status,
   }) async {
     final input = <String, dynamic>{
-      if (titre != null && titre.isNotEmpty) 'titre': titre,
-      if (description != null && description.isNotEmpty)
-        'description': description,
+      if (titre?.isNotEmpty ?? false) 'titre': titre!,
+      if (description?.isNotEmpty ?? false) 'description': description!,
       if (durationEstimate != null) 'durationEstimate': durationEstimate,
-      if (difficulte != null && difficulte.isNotEmpty) 'difficulte': difficulte,
+      if (difficulte?.isNotEmpty ?? false) 'difficulte': difficulte!,
       if (isFree != null) 'isFree': isFree,
       if (priceAmount != null) 'priceAmount': priceAmount,
-      if (priceCurrency != null && priceCurrency.isNotEmpty)
-        'priceCurrency': priceCurrency,
+      if (priceCurrency?.isNotEmpty ?? false) 'priceCurrency': priceCurrency!,
       if (centerLat != null) 'centerLat': centerLat,
       if (centerLng != null) 'centerLng': centerLng,
-      if (status != null && status.isNotEmpty) 'status': status,
+      if (status?.isNotEmpty ?? false) 'status': status!,
     };
 
     final result = await _client.mutate(

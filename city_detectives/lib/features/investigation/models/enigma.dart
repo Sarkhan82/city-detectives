@@ -82,8 +82,7 @@ class Enigma {
       hintSolution: json['hintSolution']?.toString(),
       historicalExplanation: json['historicalExplanation']?.toString(),
       educationalContent: json['educationalContent']?.toString(),
-      historicalContentValidated:
-          json['historicalContentValidated'] as bool? ?? null,
+      historicalContentValidated: json['historicalContentValidated'] as bool?,
     );
   }
 }

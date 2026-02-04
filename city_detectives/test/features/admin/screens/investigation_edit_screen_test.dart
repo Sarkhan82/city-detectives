@@ -123,6 +123,30 @@ void main() {
       expect(fakeRepo.createCalled, isTrue);
     },
   );
+
+  testWidgets(
+    'InvestigationEditScreen (edit) calls updateInvestigation on save',
+    (WidgetTester tester) async {
+      final fakeRepo = _FakeAdminInvestigationRepository();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            adminInvestigationRepositoryProvider.overrideWithValue(fakeRepo),
+          ],
+          child: const MaterialApp(
+            home: InvestigationEditScreen(investigation: existing),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Enregistrer'));
+      await tester.pumpAndSettle();
+
+      expect(fakeRepo.updateCalled, isTrue);
+    },
+  );
 }
 
 final GraphQLClient _fakeGraphQLClient = GraphQLClient(
@@ -134,6 +158,7 @@ class _FakeAdminInvestigationRepository extends AdminInvestigationRepository {
   _FakeAdminInvestigationRepository() : super(_fakeGraphQLClient);
 
   bool createCalled = false;
+  bool updateCalled = false;
 
   @override
   Future<Investigation> createInvestigation({
@@ -161,6 +186,36 @@ class _FakeAdminInvestigationRepository extends AdminInvestigationRepository {
       centerLat: centerLat,
       centerLng: centerLng,
       status: status,
+    );
+  }
+
+  @override
+  Future<Investigation> updateInvestigation(
+    String id, {
+    String? titre,
+    String? description,
+    int? durationEstimate,
+    String? difficulte,
+    bool? isFree,
+    int? priceAmount,
+    String? priceCurrency,
+    double? centerLat,
+    double? centerLng,
+    String? status,
+  }) async {
+    updateCalled = true;
+    return Investigation(
+      id: id,
+      titre: titre ?? 'test',
+      description: description ?? '',
+      durationEstimate: durationEstimate ?? 30,
+      difficulte: difficulte ?? 'facile',
+      isFree: isFree ?? true,
+      priceAmount: priceAmount,
+      priceCurrency: priceCurrency,
+      centerLat: centerLat,
+      centerLng: centerLng,
+      status: status ?? 'draft',
     );
   }
 }

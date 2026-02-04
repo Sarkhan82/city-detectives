@@ -3,7 +3,7 @@
 **Story ID:** 7.2  
 **Epic:** 7 – Admin & Content Management  
 **Story Key:** 7-2-creation-edition-enquetes-enigmes  
-**Status:** in-progress  
+**Status:** done  
 **Depends on:** Story 7.1  
 **Parallelizable with:** Story 2.2  
 **Lane:** B  
@@ -148,6 +148,7 @@ So that **le catalogue reste à jour et fiable**.
 - **Task 3.2 (Flutter – FR64)** : Ajout de l’écran `EnigmaEditScreen` (admin) avec case à cocher « Contenu historique validé » reliée au champ `historicalContentValidated` et aux mutations admin (`createEnigma`, `updateEnigma`). L’état de validation est affiché et modifiable en édition.
 - **Task 4 (Flutter – FR62, FR63, FR64)** : Ajout de `InvestigationEditScreen` (création/édition enquête) accessible depuis le dashboard (« Créer une enquête ») et depuis le détail enquête (« Modifier l’enquête »). Intégration d’une section « Énigmes de cette enquête » qui liste les énigmes et permet d’ouvrir `EnigmaEditScreen`. Repositories admin (`AdminInvestigationRepository`, `AdminEnigmaRepository`) étendus pour appeler `createInvestigation`, `updateInvestigation`, `createEnigma`, `updateEnigma`, `validateEnigmaHistoricalContent`. Providers Riverpod mis à jour (`adminEnigmaRepositoryProvider`, `adminInvestigationWithEnigmasProvider`). Design cohérent avec le dashboard (labels, listes, boutons avec Semantics).
 - **Task 5.2–5.4 (Qualité, tests, accessibilité)** : Ajout des tests widget `investigation_edit_screen_test.dart` et `enigma_edit_screen_test.dart` (présence des champs clés, état de validation historique). `dart analyze` et `flutter test` verts via `scripts/check-local.ps1 -FlutterOnly`. Accessibilité : labels Semantics pour les boutons principaux (« Enregistrer », navigation, création/édition), checkbox de validation historique, sections de formulaires.
+- **Code review (2026-02-04)** : Corrections appliquées automatiquement (option 1). (1) create_enigma utilise désormais input.consigne en fallback de hint_suggestion (HIGH). (2) EnigmaEditScreen : usage de BuildContext après async corrigé (ScaffoldMessenger.maybeOf(context) après if (!mounted) return) ; décocher « Contenu historique validé » appelle updateEnigma(historicalContentValidated: false) pour persister (MEDIUM). (3) dart analyze : enigma.dart (unnecessary_null), investigation_preview_screen (unnecessary_to_list_in_spreads), admin_investigation_list_screen_test (unnecessary_underscores), repos admin (null-aware conditions pour chaînes). (4) Tests widget : ajout « EnigmaEditScreen (edit) calls updateEnigma on save » et « InvestigationEditScreen (edit) calls updateInvestigation on save ». Quelques infos use_null_aware_elements restent dans les repos (LOW).
 - **Code review (2026-02-03)** : Corrections appliquées : (1) Tests validateEnigmaHistoricalContent (admin OK, user 403). (2) updateInvestigation rejette difficulte vide. (3) get_investigation_by_id_with_enigmas appelle get_enigmas_for_investigation via spawn_blocking pour éviter blocage async. (4) File List complétée avec sprint-status.yaml. (5) create_enigma valide order_index >= 1.
 
 ### File List
@@ -159,7 +160,7 @@ So that **le catalogue reste à jour et fiable**.
 - city-detectives-api/src/services/enigma_service.rs
 - city-detectives-api/src/api/graphql.rs
 - city-detectives-api/tests/api/admin_test.rs
-- _bmad-output/implementation-artifacts/sprint-status.yaml (suivi : statut story in-progress)
+- _bmad-output/implementation-artifacts/sprint-status.yaml (suivi statut story)
 - city_detectives/lib/features/investigation/models/enigma.dart
 - city_detectives/lib/features/admin/repositories/admin_investigation_repository.dart
 - city_detectives/lib/features/admin/repositories/admin_enigma_repository.dart
@@ -170,6 +171,8 @@ So that **le catalogue reste à jour et fiable**.
 - city_detectives/lib/features/admin/screens/investigation_edit_screen.dart
 - city_detectives/lib/features/admin/screens/enigma_edit_screen.dart
 - city_detectives/test/features/admin/screens/investigation_edit_screen_test.dart
+- city_detectives/lib/features/admin/screens/investigation_preview_screen.dart
+- city_detectives/test/features/admin/screens/admin_investigation_list_screen_test.dart
 - city_detectives/test/features/admin/screens/enigma_edit_screen_test.dart
 
 ---
@@ -187,6 +190,46 @@ So that **le catalogue reste à jour et fiable**.
 - [x] [MEDIUM] get_investigation_by_id_with_enigmas utilise spawn_blocking pour EnigmaService
 - [x] [MEDIUM] File List + sprint-status.yaml
 - [x] [MEDIUM] create_enigma / update_enigma valident order_index >= 1
+
+---
+
+## Senior Developer Review (AI) – 2026-02-04
+
+**Story :** 7-2-creation-edition-enquetes-enigmes  
+**Git vs File List :** Aucun écart (code déjà committé ; seules la story et sprint-status sont modifiées).  
+**Problèmes relevés :** 1 HIGH, 4 MEDIUM, 3 LOW — **Corrections automatiques appliquées (2026-02-04).**  
+
+### HIGH
+
+1. **create_enigma n’utilise jamais `input.consigne`** [city-detectives-api/src/services/enigma_service.rs]  
+   - `CreateEnigmaInput` contient `consigne` et le Flutter envoie le champ « Consigne / instruction ».  
+   - Dans `create_enigma`, seuls `hint_suggestion`, `hint_hint`, `hint_solution` sont lus ; `input.consigne` est ignoré.  
+   - **Impact :** la consigne saisie à la création n’est pas persistée. À la création, il faut utiliser `input.consigne` (ex. comme fallback pour `hint_suggestion`).
+
+### MEDIUM
+
+2. **Usage de `BuildContext` après gap async** [city_detectives/lib/features/admin/screens/enigma_edit_screen.dart:229, :238]  
+   - `ScaffoldMessenger.of(context)` est utilisé après `await` dans le `onChanged` de la checkbox « Contenu historique validé ».  
+   - `dart analyze` signale `use_build_context_synchronously`. Il faut revérifier `mounted` immédiatement avant chaque usage de `context` (ex. avant chaque `showSnackBar`).
+
+3. **Décocher « Contenu historique validé » ne persiste pas sans Enregistrer**  
+   - Cocher appelle `validateEnigmaHistoricalContent` ; décocher ne fait que `setState`. La valeur décochée n’est envoyée qu’au clic sur « Enregistrer ». Comportement acceptable mais à documenter ou harmoniser (ex. appeler `updateEnigma` avec `historicalContentValidated: false` au décochage).
+
+4. **`dart analyze` : 22 infos**  
+   - use_null_aware_elements (repos admin), unnecessary_to_list_in_spreads, unnecessary_null_in_if_null_operators, unnecessary_underscores en test. La story exige un analyse vert ; traiter les infos pour un code plus propre.
+
+5. **Tests widget : pas de scénario update**  
+   - `enigma_edit_screen_test` ne couvre que create (createEnigma on save) ; pas de test « updateEnigma on save » en édition. Idem `investigation_edit_screen_test` (pas de test updateInvestigation). Recommandation : ajouter au moins un test par écran pour le flux d’édition.
+
+### LOW
+
+6. **File List : commentaire obsolète** — **CORRIGÉ** : commentaire sprint-status mis à jour.
+
+7. **Structure des mutations GraphQL**  
+   - Les Dev Notes mentionnent des fichiers `create_investigation.graphql` etc. ; l’implémentation utilise des chaînes inline dans les repositories. Pas bloquant ; à noter ou aligner la doc.
+
+8. **Semantics / accessibilité**  
+   - Vérifier que tous les champs de formulaire (InvestigationEditScreen, EnigmaEditScreen) ont bien un label ou un `Semantics` explicite pour les lecteurs d’écran (WCAG 2.1 Level A).
 
 ---
 
