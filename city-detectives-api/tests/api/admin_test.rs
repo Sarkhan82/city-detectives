@@ -664,7 +664,11 @@ async fn create_enigma_succeeds_when_admin_jwt() {
         .get("createEnigma")
         .and_then(|v| v.as_object())
         .expect("createEnigma object");
-    assert!(!enigma.get("id").and_then(|v| v.as_str()).unwrap().is_empty());
+    assert!(!enigma
+        .get("id")
+        .and_then(|v| v.as_str())
+        .unwrap()
+        .is_empty());
     assert_eq!(enigma.get("orderIndex").and_then(|v| v.as_u64()), Some(4));
     assert_eq!(enigma.get("type").and_then(|v| v.as_str()), Some("words"));
     assert_eq!(

@@ -77,9 +77,8 @@ async fn register_push_token_succeeds_when_jwt() {
 #[tokio::test]
 async fn register_push_token_requires_auth() {
     let schema = make_schema();
-    let request = Request::new(
-        r#"mutation { registerPushToken(token: "fcm-token-456", platform: "ios") }"#,
-    );
+    let request =
+        Request::new(r#"mutation { registerPushToken(token: "fcm-token-456", platform: "ios") }"#);
     let res = schema.execute(request).await;
     let data = res.data.into_json().unwrap();
     assert!(
@@ -98,19 +97,26 @@ async fn register_push_token_upsert_updates_token() {
     let token = get_user_token(&schema).await;
     let bearer = BearerToken(Some(token));
 
-    let req1 = Request::new(
-        r#"mutation { registerPushToken(token: "fcm-first", platform: "android") }"#,
-    )
-    .data(bearer.clone());
+    let req1 =
+        Request::new(r#"mutation { registerPushToken(token: "fcm-first", platform: "android") }"#)
+            .data(bearer.clone());
     let res1 = schema.execute(req1).await;
-    assert!(res1.is_ok(), "first register must succeed: {:?}", res1.errors);
+    assert!(
+        res1.is_ok(),
+        "first register must succeed: {:?}",
+        res1.errors
+    );
 
     let req2 = Request::new(
         r#"mutation { registerPushToken(token: "fcm-updated", platform: "android") }"#,
     )
     .data(bearer);
     let res2 = schema.execute(req2).await;
-    assert!(res2.is_ok(), "second register (upsert) must succeed: {:?}", res2.errors);
+    assert!(
+        res2.is_ok(),
+        "second register (upsert) must succeed: {:?}",
+        res2.errors
+    );
     let data = res2.data.into_json().unwrap();
     assert_eq!(
         data.get("registerPushToken").and_then(|v| v.as_bool()),

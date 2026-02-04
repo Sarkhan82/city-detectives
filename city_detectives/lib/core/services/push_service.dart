@@ -22,7 +22,8 @@ const String _registerPushTokenMutation = r'''
 typedef OnNotificationOpened = void Function(RemoteMessage message);
 
 /// Callback optionnel pour tests : appelé quand [registerWithBackend] est invoqué (Task 5.2).
-typedef OnRegisterWithBackendCalled = void Function(String authToken, String? fcmToken);
+typedef OnRegisterWithBackendCalled =
+    void Function(String authToken, String? fcmToken);
 
 /// Service push (Story 8.1). Initialisation FCM, permission, token, enregistrement backend, écoute messages.
 /// Si Firebase n'est pas configuré (ex. tests), [initialize] est no-op et [getToken] retourne null.
@@ -37,12 +38,13 @@ class PushService {
     Future<String?> Function()? getTokenOverride,
     bool ensureInitializedForTest = false,
     OnRegisterWithBackendCalled? onRegisterWithBackendCalled,
-  })  : _createClient = createClient ?? ((String? t) => createGraphQLClient(authToken: t)),
-        _getAuthToken = getAuthToken,
-        _onNotificationOpened = onNotificationOpened,
-        _getTokenOverride = getTokenOverride,
-        _ensureInitializedForTest = ensureInitializedForTest,
-        _onRegisterWithBackendCalled = onRegisterWithBackendCalled;
+  }) : _createClient =
+           createClient ?? ((String? t) => createGraphQLClient(authToken: t)),
+       _getAuthToken = getAuthToken,
+       _onNotificationOpened = onNotificationOpened,
+       _getTokenOverride = getTokenOverride,
+       _ensureInitializedForTest = ensureInitializedForTest,
+       _onRegisterWithBackendCalled = onRegisterWithBackendCalled;
 
   final GraphQLClient Function(String? authToken) _createClient;
   final GetAuthToken? _getAuthToken;
@@ -66,7 +68,9 @@ class PushService {
       return true;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('PushService: Firebase non configuré ($e) – push désactivé.');
+        debugPrint(
+          'PushService: Firebase non configuré ($e) – push désactivé.',
+        );
       }
       return false;
     }
@@ -101,7 +105,9 @@ class PushService {
   void _setupMessageHandlers() {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (kDebugMode) {
-        debugPrint('PushService: message reçu (foreground) ${message.notification?.title}');
+        debugPrint(
+          'PushService: message reçu (foreground) ${message.notification?.title}',
+        );
       }
     });
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {

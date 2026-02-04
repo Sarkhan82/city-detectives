@@ -401,7 +401,10 @@ class _TechnicalMetricsSection extends StatelessWidget {
                   if (uri == null) return;
                   try {
                     if (await canLaunchUrl(uri)) {
-                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      await launchUrl(
+                        uri,
+                        mode: LaunchMode.externalApplication,
+                      );
                     }
                   } catch (_) {
                     // Échec silencieux (environnement peut bloquer l'ouverture)
@@ -507,17 +510,13 @@ class _CompletionRatesSection extends StatelessWidget {
             ],
             rows: rates.map((r) {
               final ratePercent = (r.completionRate * 100).toStringAsFixed(1);
-              final title =
-                  r.investigationTitle.isNotEmpty
-                      ? r.investigationTitle
-                      : r.investigationId;
+              final title = r.investigationTitle.isNotEmpty
+                  ? r.investigationTitle
+                  : r.investigationId;
               return DataRow(
                 cells: [
                   DataCell(
-                    Semantics(
-                      label: 'Enquête : $title',
-                      child: Text(title),
-                    ),
+                    Semantics(label: 'Enquête : $title', child: Text(title)),
                   ),
                   DataCell(
                     Semantics(

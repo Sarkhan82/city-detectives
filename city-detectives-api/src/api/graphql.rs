@@ -560,8 +560,11 @@ impl MutationRoot {
         let inv = svc.publish_investigation(id).await.map_err(Error::from)?;
         let push_svc = ctx.data::<Arc<PushService>>();
         if let Ok(push) = push_svc {
-            let tokens: Vec<String> =
-                push.list_all_tokens().into_iter().map(|e| e.token).collect();
+            let tokens: Vec<String> = push
+                .list_all_tokens()
+                .into_iter()
+                .map(|e| e.token)
+                .collect();
             let mut data = std::collections::HashMap::new();
             data.insert("investigation_id".to_string(), inv.id.to_string());
             data.insert("type".to_string(), "new_investigation".to_string());

@@ -11,55 +11,60 @@ import 'package:city_detectives/core/services/push_provider.dart';
 import 'package:city_detectives/core/services/push_service.dart';
 
 void main() {
-  test('push registration calls registerWithBackend with auth token when user is logged in',
-      () async {
-    bool registerWithBackendCalled = false;
-    String? capturedAuthToken;
-    String? capturedFcmToken;
+  test(
+    'push registration calls registerWithBackend with auth token when user is logged in',
+    () async {
+      bool registerWithBackendCalled = false;
+      String? capturedAuthToken;
+      String? capturedFcmToken;
 
-    final pushService = PushService(
-      createClient: (_) => _StubGraphQLClient(),
-      getAuthToken: () async => 'jwt-test',
-      getTokenOverride: () async => 'fake-fcm-token',
-      ensureInitializedForTest: true,
-      onRegisterWithBackendCalled: (authToken, fcmToken) {
-        registerWithBackendCalled = true;
-        capturedAuthToken = authToken;
-        capturedFcmToken = fcmToken;
-      },
-    );
+      final pushService = PushService(
+        createClient: (_) => _StubGraphQLClient(),
+        getAuthToken: () async => 'jwt-test',
+        getTokenOverride: () async => 'fake-fcm-token',
+        ensureInitializedForTest: true,
+        onRegisterWithBackendCalled: (authToken, fcmToken) {
+          registerWithBackendCalled = true;
+          capturedAuthToken = authToken;
+          capturedFcmToken = fcmToken;
+        },
+      );
 
-    final container = ProviderContainer(
-      overrides: [
-        currentUserProvider.overrideWith(
-          (ref) => Future.value(const CurrentUser(id: 'user-1', isAdmin: false)),
-        ),
-        authServiceProvider.overrideWithValue(_FakeAuthWithToken('jwt-test')),
-        pushServiceProvider.overrideWithValue(pushService),
-      ],
-    );
-    addTearDown(container.dispose);
+      final container = ProviderContainer(
+        overrides: [
+          currentUserProvider.overrideWith(
+            (ref) =>
+                Future.value(const CurrentUser(id: 'user-1', isAdmin: false)),
+          ),
+          authServiceProvider.overrideWithValue(_FakeAuthWithToken('jwt-test')),
+          pushServiceProvider.overrideWithValue(pushService),
+        ],
+      );
+      addTearDown(container.dispose);
 
-    final result = await container.read(pushRegistrationProvider.future);
+      final result = await container.read(pushRegistrationProvider.future);
 
-    expect(result, isTrue);
-    expect(registerWithBackendCalled, isTrue,
-        reason: 'registerWithBackend doit être appelé après login');
-    expect(capturedAuthToken, 'jwt-test');
-    expect(capturedFcmToken, 'fake-fcm-token');
-  });
+      expect(result, isTrue);
+      expect(
+        registerWithBackendCalled,
+        isTrue,
+        reason: 'registerWithBackend doit être appelé après login',
+      );
+      expect(capturedAuthToken, 'jwt-test');
+      expect(capturedFcmToken, 'fake-fcm-token');
+    },
+  );
 }
 
 /// Client stub qui retourne un succès pour registerPushToken (évite appel réseau).
 class _StubGraphQLClient extends GraphQLClient {
   _StubGraphQLClient()
-      : super(
-          link: HttpLink('http://localhost/graphql'),
-          cache: GraphQLCache(),
-        );
+    : super(link: HttpLink('http://localhost/graphql'), cache: GraphQLCache());
 
   @override
-  Future<QueryResult<TParsed>> mutate<TParsed>(MutationOptions<TParsed> options) {
+  Future<QueryResult<TParsed>> mutate<TParsed>(
+    MutationOptions<TParsed> options,
+  ) {
     return Future.value(
       QueryResult<TParsed>(
         options: options,
@@ -82,8 +87,7 @@ class _FakeAuthWithToken implements AuthService {
   Future<String> register({
     required String email,
     required String password,
-  }) async =>
-      throw UnimplementedError();
+  }) async => throw UnimplementedError();
 
   @override
   Future<void> signOut() async {}

@@ -24,11 +24,14 @@ void main() {
       expect(ok, isFalse);
     });
 
-    test('registerWithBackend returns false when fcm token is null and getToken would return null', () async {
-      final push = PushService();
-      await push.ensureInitialized();
-      final ok = await push.registerWithBackend('jwt');
-      expect(ok, isFalse);
-    });
+    test(
+      'registerWithBackend returns false when fcm token is null and getToken would return null',
+      () async {
+        final push = PushService();
+        await push.ensureInitialized();
+        final ok = await push.registerWithBackend('jwt');
+        expect(ok, isFalse);
+      },
+    );
   });
 }
