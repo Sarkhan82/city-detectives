@@ -52,9 +52,18 @@ async fn get_admin_token(schema: &city_detectives_api::api::graphql::AppSchema) 
 
 /// Enregistre un utilisateur normal et retourne le JWT.
 async fn get_user_token(schema: &city_detectives_api::api::graphql::AppSchema) -> String {
-    let request = Request::new(
-        r#"mutation { register(email: "user-dashboard-test@example.com", password: "password123") }"#,
-    );
+    get_user_token_with_email(schema, "user-dashboard-test@example.com").await
+}
+
+/// Enregistre un utilisateur avec l'email donné et retourne le JWT (pour tests nécessitant plusieurs users).
+async fn get_user_token_with_email(
+    schema: &city_detectives_api::api::graphql::AppSchema,
+    email: &str,
+) -> String {
+    let request = Request::new(format!(
+        r#"mutation {{ register(email: "{}", password: "password123") }}"#,
+        email
+    ));
     let res = schema.execute(request).await;
     assert!(res.is_ok(), "register user must succeed: {:?}", res.errors);
     let data = res.data.into_json().unwrap();
@@ -202,6 +211,76 @@ async fn get_user_analytics_returns_data_when_admin_jwt() {
     assert!(analytics.get("totalCompletions").is_some());
 }
 
+/// Analytics utilisateurs reflètent bien les événements démarré/complété (Story 7.4 – FR69, FR70).
+#[tokio::test]
+async fn get_user_analytics_counts_reflect_started_and_completed_events() {
+    let schema = make_schema();
+
+    // Utilisateur normal pour enregistrer les événements analytics.
+    let user_token = get_user_token(&schema).await;
+    let admin_token = get_admin_token(&schema).await;
+    let inv_id = "11111111-1111-1111-1111-111111111111";
+
+    // Enregistre "enquête démarrée".
+    let start_mutation = format!(
+        r#"mutation {{ recordInvestigationStarted(investigationId: "{}") }}"#,
+        inv_id
+    );
+    let start_req =
+        Request::new(start_mutation).data(BearerToken(Some(user_token.clone())));
+    let start_res = schema.execute(start_req).await;
+    assert!(
+        start_res.is_ok(),
+        "recordInvestigationStarted must succeed: {:?}",
+        start_res.errors
+    );
+
+    // Enregistre "enquête complétée".
+    let complete_mutation = format!(
+        r#"mutation {{ recordInvestigationCompleted(investigationId: "{}") }}"#,
+        inv_id
+    );
+    let complete_req =
+        Request::new(complete_mutation).data(BearerToken(Some(user_token.clone())));
+    let complete_res = schema.execute(complete_req).await;
+    assert!(
+        complete_res.is_ok(),
+        "recordInvestigationCompleted must succeed: {:?}",
+        complete_res.errors
+    );
+
+    // Interroge les analytics avec JWT admin.
+    let analytics_req = Request::new(
+        r#"query { getUserAnalytics { activeUserCount totalCompletions } }"#,
+    )
+    .data(BearerToken(Some(admin_token)));
+    let analytics_res = schema.execute(analytics_req).await;
+    assert!(
+        analytics_res.is_ok(),
+        "getUserAnalytics must succeed after events: {:?}",
+        analytics_res.errors
+    );
+    let data = analytics_res.data.into_json().unwrap();
+    let analytics = data
+        .get("getUserAnalytics")
+        .and_then(|v| v.as_object())
+        .expect("getUserAnalytics object");
+    assert_eq!(
+        analytics
+            .get("activeUserCount")
+            .and_then(|v| v.as_u64()),
+        Some(1),
+        "activeUserCount must be 1 after single user events"
+    );
+    assert_eq!(
+        analytics
+            .get("totalCompletions")
+            .and_then(|v| v.as_u64()),
+        Some(1),
+        "totalCompletions must be 1 after single completion"
+    );
+}
+
 #[tokio::test]
 async fn get_user_analytics_returns_forbidden_when_user_jwt() {
     let schema = make_schema();
@@ -237,6 +316,140 @@ async fn get_completion_rates_returns_data_when_admin_jwt() {
     assert!(
         !rates.is_empty(),
         "mock investigations => at least one entry"
+    );
+}
+
+/// Taux de complétion et parcours utilisateur cohérents avec les événements (Story 7.4 – FR70, FR71).
+#[tokio::test]
+async fn completion_rates_and_journey_match_recorded_events() {
+    let schema = make_schema();
+
+    // Deux utilisateurs pour enrichir le funnel (emails distincts).
+    let user_token_1 = get_user_token_with_email(&schema, "user-journey-1@example.com").await;
+    let user_token_2 = get_user_token_with_email(&schema, "user-journey-2@example.com").await;
+    let admin_token = get_admin_token(&schema).await;
+    let inv_id = "22222222-2222-2222-2222-222222222222";
+
+    // user1 : start + complete
+    let start1 = format!(
+        r#"mutation {{ recordInvestigationStarted(investigationId: "{}") }}"#,
+        inv_id
+    );
+    let complete1 = format!(
+        r#"mutation {{ recordInvestigationCompleted(investigationId: "{}") }}"#,
+        inv_id
+    );
+    let _ = schema
+        .execute(
+            Request::new(start1).data(BearerToken(Some(user_token_1.clone()))),
+        )
+        .await;
+    let _ = schema
+        .execute(
+            Request::new(complete1).data(BearerToken(Some(user_token_1.clone()))),
+        )
+        .await;
+
+    // user2 : start uniquement
+    let start2 = format!(
+        r#"mutation {{ recordInvestigationStarted(investigationId: "{}") }}"#,
+        inv_id
+    );
+    let _ = schema
+        .execute(
+            Request::new(start2).data(BearerToken(Some(user_token_2.clone()))),
+        )
+        .await;
+
+    // Vérifie getCompletionRates pour cette enquête.
+    let rates_req = Request::new(
+        r#"query { getCompletionRates { investigationId startedCount completedCount completionRate } }"#,
+    )
+    .data(BearerToken(Some(admin_token.clone())));
+    let rates_res = schema.execute(rates_req).await;
+    assert!(
+        rates_res.is_ok(),
+        "getCompletionRates must succeed after events: {:?}",
+        rates_res.errors
+    );
+    let data = rates_res.data.into_json().unwrap();
+    let rates = data
+        .get("getCompletionRates")
+        .and_then(|v| v.as_array())
+        .expect("getCompletionRates array");
+    let entry = rates
+        .iter()
+        .find(|v| {
+            v.get("investigationId")
+                .and_then(|x| x.as_str())
+                == Some(inv_id)
+        })
+        .expect("entry for inv_id");
+    let started = entry
+        .get("startedCount")
+        .and_then(|v| v.as_u64())
+        .expect("startedCount");
+    let completed = entry
+        .get("completedCount")
+        .and_then(|v| v.as_u64())
+        .expect("completedCount");
+    let rate = entry
+        .get("completionRate")
+        .and_then(|v| v.as_f64())
+        .expect("completionRate");
+    assert_eq!(started, 2, "two users have started the investigation");
+    assert_eq!(completed, 1, "only one user has completed the investigation");
+    assert!(
+        (rate - 0.5).abs() < f64::EPSILON,
+        "completionRate must be 0.5 (1/2), got {}",
+        rate
+    );
+
+    // Vérifie getUserJourneyAnalytics après ces événements.
+    let journey_req = Request::new(
+        r#"query { getUserJourneyAnalytics { funnelSteps { label userCount } } }"#,
+    )
+    .data(BearerToken(Some(admin_token)));
+    let journey_res = schema.execute(journey_req).await;
+    assert!(
+        journey_res.is_ok(),
+        "getUserJourneyAnalytics must succeed after events: {:?}",
+        journey_res.errors
+    );
+    let data = journey_res.data.into_json().unwrap();
+    let journey = data
+        .get("getUserJourneyAnalytics")
+        .and_then(|v| v.as_object())
+        .expect("getUserJourneyAnalytics object");
+    let steps = journey
+        .get("funnelSteps")
+        .and_then(|v| v.as_array())
+        .expect("funnelSteps array");
+
+    let started_step = steps
+        .iter()
+        .find(|s| s.get("label").and_then(|v| v.as_str()) == Some("Enquête démarrée"))
+        .expect("Enquête démarrée step");
+    let completed_step = steps
+        .iter()
+        .find(|s| s.get("label").and_then(|v| v.as_str()) == Some("Enquête complétée"))
+        .expect("Enquête complétée step");
+
+    assert_eq!(
+        started_step
+            .get("userCount")
+            .and_then(|v| v.as_u64())
+            .unwrap_or(0),
+        2,
+        "funnel started count must be 2"
+    );
+    assert_eq!(
+        completed_step
+            .get("userCount")
+            .and_then(|v| v.as_u64())
+            .unwrap_or(0),
+        1,
+        "funnel completed count must be 1"
     );
 }
 
