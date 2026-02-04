@@ -11,6 +11,7 @@ import 'package:city_detectives/features/admin/models/user_journey_analytics.dar
 import 'package:city_detectives/features/investigation/models/investigation.dart';
 import 'package:city_detectives/features/investigation/models/investigation_with_enigmas.dart';
 import 'package:city_detectives/features/investigation/repositories/investigation_repository.dart';
+import 'package:city_detectives/features/admin/repositories/admin_enigma_repository.dart';
 import 'package:city_detectives/features/admin/repositories/admin_investigation_repository.dart';
 import 'package:city_detectives/features/admin/repositories/dashboard_repository.dart';
 
@@ -73,6 +74,12 @@ final adminInvestigationRepositoryProvider =
       return AdminInvestigationRepository(client);
     });
 
+/// Repository admin pour création/édition d’énigmes et validation historique (Story 7.2 – FR63, FR64).
+final adminEnigmaRepositoryProvider = Provider<AdminEnigmaRepository>((ref) {
+  final client = ref.watch(_dashboardGraphqlClientProvider);
+  return AdminEnigmaRepository(client);
+});
+
 /// Liste des enquêtes pour l'admin (toutes, avec status) – Story 7.3.
 final adminInvestigationListProvider = FutureProvider<List<Investigation>>((
   ref,
@@ -84,6 +91,14 @@ final adminInvestigationListProvider = FutureProvider<List<Investigation>>((
 
 /// Données de prévisualisation d'une enquête (admin) – FR65.
 final investigationPreviewProvider =
+    FutureProvider.family<InvestigationWithEnigmas?, String>((ref, id) async {
+      final repo = ref.watch(adminInvestigationRepositoryProvider);
+      return repo.getInvestigationForPreview(id);
+    });
+
+/// Détail enquête + énigmes pour l’admin (édition) – réutilise la query de
+/// prévisualisation admin (tous les champs nécessaires à l’édition).
+final adminInvestigationWithEnigmasProvider =
     FutureProvider.family<InvestigationWithEnigmas?, String>((ref, id) async {
       final repo = ref.watch(adminInvestigationRepositoryProvider);
       return repo.getInvestigationForPreview(id);

@@ -218,4 +218,227 @@ void main() {
     expect(find.text('Accès réservé aux administrateurs.'), findsOneWidget);
     expect(find.text('Retour à l\'accueil'), findsOneWidget);
   });
+
+  testWidgets('DashboardScreen shows error card when technical metrics fail', (
+    WidgetTester tester,
+  ) async {
+    const overview = DashboardOverview(
+      investigationCount: 1,
+      publishedCount: 1,
+      draftCount: 0,
+      enigmaCount: 1,
+    );
+    final router = GoRouter(
+      initialLocation: AppRouter.adminDashboard,
+      routes: [
+        GoRoute(
+          path: AppRouter.adminDashboard,
+          builder: (context, state) => const DashboardScreen(),
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          adminDashboardProvider.overrideWith((ref) => Future.value(overview)),
+          adminTechnicalMetricsProvider.overrideWith(
+            (ref) => Future.error(Exception('Erreur techniques')),
+          ),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Impossible de charger les métriques techniques.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('DashboardScreen shows error card when user analytics fail', (
+    WidgetTester tester,
+  ) async {
+    const overview = DashboardOverview(
+      investigationCount: 1,
+      publishedCount: 1,
+      draftCount: 0,
+      enigmaCount: 1,
+    );
+    const technicalMetrics = TechnicalMetrics(
+      healthStatus: 'ok',
+      apiLatencyAvgMs: null,
+      apiLatencyP95Ms: null,
+      errorRate: 0.0,
+      crashCount: 0,
+      sentryDashboardUrl: null,
+    );
+    final router = GoRouter(
+      initialLocation: AppRouter.adminDashboard,
+      routes: [
+        GoRoute(
+          path: AppRouter.adminDashboard,
+          builder: (context, state) => const DashboardScreen(),
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          adminDashboardProvider.overrideWith((ref) => Future.value(overview)),
+          adminTechnicalMetricsProvider.overrideWith(
+            (ref) => Future.value(technicalMetrics),
+          ),
+          adminUserAnalyticsProvider.overrideWith(
+            (ref) => Future.error(Exception('Erreur analytics')),
+          ),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Analytics utilisateurs'),
+      500,
+      scrollable: find.byType(Scrollable),
+    );
+    expect(find.text('Impossible de charger les analytics.'), findsOneWidget);
+  });
+
+  testWidgets('DashboardScreen shows error card when completion rates fail', (
+    WidgetTester tester,
+  ) async {
+    const overview = DashboardOverview(
+      investigationCount: 1,
+      publishedCount: 1,
+      draftCount: 0,
+      enigmaCount: 1,
+    );
+    const technicalMetrics = TechnicalMetrics(
+      healthStatus: 'ok',
+      apiLatencyAvgMs: null,
+      apiLatencyP95Ms: null,
+      errorRate: 0.0,
+      crashCount: 0,
+      sentryDashboardUrl: null,
+    );
+    const userAnalytics = UserAnalytics(
+      activeUserCount: 1,
+      totalCompletions: 0,
+    );
+    final router = GoRouter(
+      initialLocation: AppRouter.adminDashboard,
+      routes: [
+        GoRoute(
+          path: AppRouter.adminDashboard,
+          builder: (context, state) => const DashboardScreen(),
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          adminDashboardProvider.overrideWith((ref) => Future.value(overview)),
+          adminTechnicalMetricsProvider.overrideWith(
+            (ref) => Future.value(technicalMetrics),
+          ),
+          adminUserAnalyticsProvider.overrideWith(
+            (ref) => Future.value(userAnalytics),
+          ),
+          adminCompletionRatesProvider.overrideWith(
+            (ref) => Future.error(Exception('Erreur taux')),
+          ),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Taux de complétion'),
+      500,
+      scrollable: find.byType(Scrollable),
+    );
+    expect(
+      find.text('Impossible de charger les taux de complétion.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets(
+    'DashboardScreen shows error card when user journey analytics fail',
+    (WidgetTester tester) async {
+      const overview = DashboardOverview(
+        investigationCount: 1,
+        publishedCount: 1,
+        draftCount: 0,
+        enigmaCount: 1,
+      );
+      const technicalMetrics = TechnicalMetrics(
+        healthStatus: 'ok',
+        apiLatencyAvgMs: null,
+        apiLatencyP95Ms: null,
+        errorRate: 0.0,
+        crashCount: 0,
+        sentryDashboardUrl: null,
+      );
+      const userAnalytics = UserAnalytics(
+        activeUserCount: 1,
+        totalCompletions: 1,
+      );
+      const completionRates = <CompletionRateEntry>[
+        CompletionRateEntry(
+          investigationId: 'inv-1',
+          investigationTitle: 'Enquête 1',
+          startedCount: 1,
+          completedCount: 1,
+          completionRate: 1.0,
+        ),
+      ];
+      final router = GoRouter(
+        initialLocation: AppRouter.adminDashboard,
+        routes: [
+          GoRoute(
+            path: AppRouter.adminDashboard,
+            builder: (context, state) => const DashboardScreen(),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            adminDashboardProvider.overrideWith(
+              (ref) => Future.value(overview),
+            ),
+            adminTechnicalMetricsProvider.overrideWith(
+              (ref) => Future.value(technicalMetrics),
+            ),
+            adminUserAnalyticsProvider.overrideWith(
+              (ref) => Future.value(userAnalytics),
+            ),
+            adminCompletionRatesProvider.overrideWith(
+              (ref) => Future.value(completionRates),
+            ),
+            adminUserJourneyAnalyticsProvider.overrideWith(
+              (ref) => Future.error(Exception('Erreur parcours')),
+            ),
+          ],
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final verticalScrollable = find.byWidgetPredicate(
+        (w) => w is Scrollable && w.axisDirection == AxisDirection.down,
+      );
+      await tester.scrollUntilVisible(
+        find.text('Parcours utilisateur'),
+        500,
+        scrollable: verticalScrollable,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Impossible de charger le parcours.'), findsOneWidget);
+    },
+  );
 }

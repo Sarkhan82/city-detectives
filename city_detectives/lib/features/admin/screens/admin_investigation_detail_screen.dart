@@ -133,6 +133,18 @@ class _AdminInvestigationDetailScreenState
           ),
           const SizedBox(height: 24),
           Semantics(
+            label: 'Modifier l’enquête et gérer ses énigmes',
+            child: OutlinedButton.icon(
+              onPressed: () => context.push(
+                AppRouter.adminInvestigationEditPath(inv.id),
+                extra: inv,
+              ),
+              icon: const Icon(Icons.edit),
+              label: const Text('Modifier l’enquête'),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Semantics(
             label: 'Ouvrir la prévisualisation de l\'enquête',
             child: FilledButton.icon(
               onPressed: () =>

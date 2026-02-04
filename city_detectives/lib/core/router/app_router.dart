@@ -7,9 +7,12 @@ import 'package:city_detectives/features/admin/screens/admin_investigation_list_
 import 'package:city_detectives/features/admin/screens/dashboard_screen.dart';
 import 'package:city_detectives/features/admin/screens/investigation_preview_screen.dart';
 import 'package:city_detectives/features/admin/widgets/admin_route_guard.dart';
+import 'package:city_detectives/features/admin/screens/enigma_edit_screen.dart';
+import 'package:city_detectives/features/admin/screens/investigation_edit_screen.dart';
 import 'package:city_detectives/features/enigma/screens/enigma_explanation_screen.dart';
 import 'package:city_detectives/features/enigma/screens/lore_screen.dart';
 import 'package:city_detectives/features/investigation/models/investigation.dart';
+import 'package:city_detectives/features/investigation/models/enigma.dart';
 import 'package:city_detectives/features/investigation/screens/investigation_detail_screen.dart';
 import 'package:city_detectives/features/investigation/screens/investigation_list_screen.dart';
 import 'package:city_detectives/features/investigation/screens/investigation_play_screen.dart';
@@ -54,6 +57,10 @@ class AppRouter {
   static const String adminInvestigationDetail = '/admin/investigations/:id';
   static const String adminInvestigationPreview =
       '/admin/investigations/:id/preview';
+  static const String adminInvestigationCreate = '/admin/investigations/new';
+  static const String adminInvestigationEdit = '/admin/investigations/:id/edit';
+  static const String adminEnigmaEdit =
+      '/admin/investigations/:id/enigmas/:enigmaId/edit';
 
   static const String home = '/home';
 
@@ -69,6 +76,11 @@ class AppRouter {
       '/admin/investigations/$id';
   static String adminInvestigationPreviewPath(String id) =>
       '/admin/investigations/$id/preview';
+  static String adminInvestigationCreatePath() => adminInvestigationCreate;
+  static String adminInvestigationEditPath(String id) =>
+      '/admin/investigations/$id/edit';
+  static String adminEnigmaEditPath(String investigationId, String enigmaId) =>
+      '/admin/investigations/$investigationId/enigmas/$enigmaId/edit';
 
   static GoRouter createRouter() {
     return GoRouter(
@@ -189,6 +201,10 @@ class AppRouter {
                   builder: (context, _) => const AdminInvestigationListScreen(),
                   routes: [
                     GoRoute(
+                      path: 'new',
+                      builder: (context, _) => const InvestigationEditScreen(),
+                    ),
+                    GoRoute(
                       path: ':id',
                       builder: (context, state) {
                         final extra = state.extra;
@@ -222,6 +238,49 @@ class AppRouter {
                             }
                             return InvestigationPreviewScreen(
                               investigationId: id,
+                            );
+                          },
+                        ),
+                        GoRoute(
+                          path: 'edit',
+                          builder: (context, state) {
+                            final extra = state.extra;
+                            final inv = extra is Investigation ? extra : null;
+                            if (inv == null) {
+                              return Scaffold(
+                                appBar: AppBar(
+                                  title: const Text('Éditer enquête'),
+                                ),
+                                body: const Center(
+                                  child: Text('Enquête introuvable.'),
+                                ),
+                              );
+                            }
+                            return InvestigationEditScreen(investigation: inv);
+                          },
+                        ),
+                        GoRoute(
+                          path: 'enigmas/:enigmaId/edit',
+                          builder: (context, state) {
+                            final investigationId =
+                                state.pathParameters['id'] ?? '';
+                            final extra = state.extra;
+                            final Enigma? enigma = extra is Enigma
+                                ? extra
+                                : null;
+                            if (investigationId.isEmpty) {
+                              return Scaffold(
+                                appBar: AppBar(
+                                  title: const Text('Éditer l’énigme'),
+                                ),
+                                body: const Center(
+                                  child: Text('ID enquête manquant.'),
+                                ),
+                              );
+                            }
+                            return EnigmaEditScreen(
+                              investigationId: investigationId,
+                              enigma: enigma,
                             );
                           },
                         ),

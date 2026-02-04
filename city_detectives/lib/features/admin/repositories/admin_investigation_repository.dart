@@ -4,7 +4,8 @@ import 'package:city_detectives/features/investigation/models/enigma.dart';
 import 'package:city_detectives/features/investigation/models/investigation.dart';
 import 'package:city_detectives/features/investigation/models/investigation_with_enigmas.dart';
 
-/// Repository admin pour prévisualisation, publication et rollback (Story 7.3 – FR65, FR66, FR67).
+/// Repository admin pour CRUD enquêtes + prévisualisation, publication et
+/// rollback (Story 7.2 – FR62, 7.3 – FR65, FR66, FR67).
 class AdminInvestigationRepository {
   AdminInvestigationRepository(this._client);
 
@@ -28,10 +29,58 @@ class AdminInvestigationRepository {
         }
         enigmas {
           id
+          investigationId
           orderIndex
           type
           titre
+          consigne
+          targetLat
+          targetLng
+          toleranceMeters
+          referencePhotoUrl
+          hintSuggestion
+          hintHint
+          hintSolution
+          historicalExplanation
+          educationalContent
+          historicalContentValidated
         }
+      }
+    }
+  ''';
+
+  static const String _createMutation = r'''
+    mutation CreateInvestigation($input: CreateInvestigationInput!) {
+      createInvestigation(input: $input) {
+        id
+        titre
+        description
+        durationEstimate
+        difficulte
+        isFree
+        priceAmount
+        priceCurrency
+        centerLat
+        centerLng
+        status
+      }
+    }
+  ''';
+
+  static const String _updateMutation = r'''
+    mutation UpdateInvestigation($id: String!, $input: UpdateInvestigationInput!) {
+      updateInvestigation(id: $id, input: $input) {
+        id
+        titre
+        description
+        durationEstimate
+        difficulte
+        isFree
+        priceAmount
+        priceCurrency
+        centerLat
+        centerLng
+        status
       }
     }
   ''';
@@ -55,6 +104,102 @@ class AdminInvestigationRepository {
       }
     }
   ''';
+
+  /// Crée une enquête (admin – Story 7.2, FR62).
+  Future<Investigation> createInvestigation({
+    required String titre,
+    required String description,
+    required int durationEstimate,
+    required String difficulte,
+    required bool isFree,
+    int? priceAmount,
+    String? priceCurrency,
+    double? centerLat,
+    double? centerLng,
+    String status = 'draft',
+  }) async {
+    final input = <String, dynamic>{
+      'titre': titre,
+      'description': description,
+      'durationEstimate': durationEstimate,
+      'difficulte': difficulte,
+      'isFree': isFree,
+      'status': status,
+      if (!isFree && priceAmount != null) 'priceAmount': priceAmount,
+      if (!isFree && priceCurrency != null && priceCurrency.isNotEmpty)
+        'priceCurrency': priceCurrency,
+      if (centerLat != null) 'centerLat': centerLat,
+      if (centerLng != null) 'centerLng': centerLng,
+    };
+
+    final result = await _client.mutate(
+      MutationOptions(
+        document: gql(_createMutation),
+        variables: <String, dynamic>{'input': input},
+      ),
+    );
+
+    if (result.hasException) {
+      final errors = result.exception?.graphqlErrors ?? [];
+      final message = errors.isNotEmpty
+          ? errors.first.message
+          : result.exception?.linkException?.toString() ??
+                'Erreur lors de la création de l’enquête';
+      throw Exception(message);
+    }
+    final data = result.data?['createInvestigation'] as Map<String, dynamic>?;
+    if (data == null) throw Exception('Réponse invalide');
+    return Investigation.fromJson(data);
+  }
+
+  /// Met à jour une enquête existante (admin – Story 7.2, FR62).
+  Future<Investigation> updateInvestigation(
+    String id, {
+    String? titre,
+    String? description,
+    int? durationEstimate,
+    String? difficulte,
+    bool? isFree,
+    int? priceAmount,
+    String? priceCurrency,
+    double? centerLat,
+    double? centerLng,
+    String? status,
+  }) async {
+    final input = <String, dynamic>{
+      if (titre != null && titre.isNotEmpty) 'titre': titre,
+      if (description != null && description.isNotEmpty)
+        'description': description,
+      if (durationEstimate != null) 'durationEstimate': durationEstimate,
+      if (difficulte != null && difficulte.isNotEmpty) 'difficulte': difficulte,
+      if (isFree != null) 'isFree': isFree,
+      if (priceAmount != null) 'priceAmount': priceAmount,
+      if (priceCurrency != null && priceCurrency.isNotEmpty)
+        'priceCurrency': priceCurrency,
+      if (centerLat != null) 'centerLat': centerLat,
+      if (centerLng != null) 'centerLng': centerLng,
+      if (status != null && status.isNotEmpty) 'status': status,
+    };
+
+    final result = await _client.mutate(
+      MutationOptions(
+        document: gql(_updateMutation),
+        variables: <String, dynamic>{'id': id, 'input': input},
+      ),
+    );
+
+    if (result.hasException) {
+      final errors = result.exception?.graphqlErrors ?? [];
+      final message = errors.isNotEmpty
+          ? errors.first.message
+          : result.exception?.linkException?.toString() ??
+                'Erreur lors de la mise à jour de l’enquête';
+      throw Exception(message);
+    }
+    final data = result.data?['updateInvestigation'] as Map<String, dynamic>?;
+    if (data == null) throw Exception('Réponse invalide');
+    return Investigation.fromJson(data);
+  }
 
   /// Prévisualisation d'une enquête (brouillon ou publiée) – admin uniquement (FR65).
   Future<InvestigationWithEnigmas?> getInvestigationForPreview(

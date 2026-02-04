@@ -265,6 +265,17 @@ class _DashboardContent extends StatelessWidget {
             onTap: () => context.push(AppRouter.adminInvestigationListPath()),
           ),
         ),
+        const SizedBox(height: 8),
+        Semantics(
+          label: 'Créer une nouvelle enquête',
+          child: ListTile(
+            leading: const Icon(Icons.add),
+            title: const Text('Créer une enquête'),
+            subtitle: const Text('Nouvelle enquête et énigmes associées'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRouter.adminInvestigationCreatePath()),
+          ),
+        ),
       ],
     );
   }
