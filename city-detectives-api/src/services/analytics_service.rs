@@ -1,4 +1,6 @@
 //! Service analytics (Story 7.4 – FR69, FR70) – événements enquête démarrée/complétée, agrégations.
+//! MVP : persistance en mémoire uniquement (Vec). Redémarrage serveur = perte des données.
+//! En suite : persister en base (table événements ou champs alignés 3.x/5.x) pour production.
 
 use async_graphql::*;
 use std::collections::HashMap;

@@ -1,8 +1,8 @@
-# Résumé d'automatisation – City Detectives (Stories 1.2–6.1)
+# Résumé d'automatisation – City Detectives (Stories 1.2–7.4)
 
-**Date :** 2026-02-03  
-**Stories couvertes :** 1.2 (Création de compte), 2.1 (Parcourir et consulter les enquêtes), 2.2 (Sélection enquête, gratuit/payant), 3.1 (Démarrer enquête et navigation énigmes), 3.2 (Progression, carte interactive et position), 3.3 (Pause, reprise, abandon, sauvegarde), 4.1 (Énigmes photo et géolocalisation), 4.2 (Énigmes mots et puzzle), 4.3 (Aide contextuelle et explications historiques), 4.4 (LORE et option de saut), 5.1 (Statut completion et historique), 5.2 (Badges, compétences, leaderboard), 6.1 (Première enquête gratuite, visibilité payant et prix), **7.1 (Accès dashboard admin)**, **7.2 (Création et édition enquêtes/énigmes – API backend)**, **7.3 (Prévisualisation, publication et rollback)**  
-**Mode :** Standalone / Auto-discover  
+**Date :** 2026-02-04  
+**Stories couvertes :** 1.2 (Création de compte), 2.1 (Parcourir et consulter les enquêtes), 2.2 (Sélection enquête, gratuit/payant), 3.1 (Démarrer enquête et navigation énigmes), 3.2 (Progression, carte interactive et position), 3.3 (Pause, reprise, abandon, sauvegarde), 4.1 (Énigmes photo et géolocalisation), 4.2 (Énigmes mots et puzzle), 4.3 (Aide contextuelle et explications historiques), 4.4 (LORE et option de saut), 5.1 (Statut completion et historique), 5.2 (Badges, compétences, leaderboard), 6.1 (Première enquête gratuite, visibilité payant et prix), **7.1 (Accès dashboard admin)**, **7.2 (Création et édition enquêtes/énigmes – API backend)**, **7.3 (Prévisualisation, publication et rollback)**, **7.4 (Monitoring et analytics)**  
+**Mode :** BMad-Integrated (workflow testarch-automate, story 7-4)  
 **Cible de couverture :** critical-paths  
 
 ---
@@ -26,7 +26,7 @@
 | `tests/api/investigations_test.rs` | Intégration HTTP | `--ignored` (serveur 8080) | 2 tests : listInvestigations retourne un tableau ; items ont les champs requis (dont priceAmount, priceCurrency – Story 6.1). |
 | `tests/api/enigmas_test.rs` | In-process GraphQL | `cargo test` | **Story 4.1** – 4 tests : validateEnigmaResponse (géoloc/photo). **Story 4.2** – 4 tests : validateEnigmaResponse (words/puzzle). **Story 4.3** – 3 tests : getEnigmaHints, getEnigmaExplanation, getEnigmaHints (ID inconnu). Auth Bearer requise. **Total : 11 tests.** (Story 4.4 LORE couverte par graphql.rs in-process.) |
 | `tests/api/gamification_test.rs` | In-process GraphQL | `cargo test` | **Story 5.2** – 4 tests : getUserBadges, getUserSkills, getUserPostcards, getLeaderboard (auth requise). |
-| `tests/api/admin_test.rs` | In-process GraphQL | `cargo test` | **Story 7.1** – 3 tests : me { id isAdmin }, getAdminDashboard (admin → données, user → FORBIDDEN). **Story 7.2** – 10 tests : createInvestigation / updateInvestigation, createEnigma / updateEnigma, validateEnigmaHistoricalContent (admin → succès, user → FORBIDDEN). **Story 7.3** – 6 tests : investigationForPreview (admin → brouillon, user → FORBIDDEN) ; listInvestigations sans token → uniquement published ; publishInvestigation → visible au catalogue ; rollbackInvestigation → masquée du catalogue. **Total admin_test : 19 tests.** |
+| `tests/api/admin_test.rs` | In-process GraphQL | `cargo test` | **Story 7.1** – 3 tests : me { id isAdmin }, getAdminDashboard (admin → données, user → FORBIDDEN). **Story 7.2** – 10 tests : createInvestigation / updateInvestigation, createEnigma / updateEnigma, validateEnigmaHistoricalContent (admin → succès, user → FORBIDDEN). **Story 7.3** – 6 tests : investigationForPreview (admin → brouillon, user → FORBIDDEN) ; listInvestigations sans token → uniquement published ; publishInvestigation → visible au catalogue ; rollbackInvestigation → masquée du catalogue. **Story 7.4** – 9 tests : getTechnicalMetrics (admin → données, user → FORBIDDEN) ; getUserAnalytics (admin → données, user → FORBIDDEN) ; getCompletionRates (admin → tableau, user → FORBIDDEN) ; getUserJourneyAnalytics (admin → funnelSteps, user → FORBIDDEN) ; completion_rates_and_journey_match_recorded_events (recordInvestigationStarted/Completed puis vérification analytics). **Total admin_test : 28 tests.** |
 
 **Rust – Unitaires (exécutés par défaut)**
 
@@ -62,7 +62,7 @@
 | `features/profile/screens/progression_screen_test.dart` | **Story 5.1** – Écran Ma progression : titre, statut par enquête, enquêtes complétées, progression globale ; enquête complétée affichée ; tap enquête en cours → détail ; CompletedInvestigationRepository + InvestigationProgressRepository mockés. |
 | `features/profile/screens/gamification_screen_test.dart` | **Story 5.2** – Écran Gamification : titres sections (Badges, Compétences, Cartes postales, Classement), contenu mocké (badges, skills, postcards, leaderboard), scroll pour afficher toutes les sections. |
 | `features/investigation/repositories/completed_investigation_repository_test.dart` | **Story 5.1** – TU CompletedInvestigationRepository (forTest) : isCompleted, getCompletedOrderedByDate, markCompleted, overwrite, ordre plus récent en premier. 8 tests. |
-| `features/admin/screens/dashboard_screen_test.dart` | **Story 7.1** – 2 tests : DashboardScreen avec données mockées (titres, métriques) ; accès refusé 403 (message + bouton Retour). |
+| `features/admin/screens/dashboard_screen_test.dart` | **Story 7.1** – vue d’ensemble et accès refusé 403. **Story 7.4** – 9 tests : vue d’ensemble ; sections Métriques techniques, Analytics utilisateurs, Taux de complétion, Parcours utilisateur (données mockées) ; lien « Voir Sentry » (FR68) ; tableau taux de complétion accessible (Task 4.5 WCAG 2.1) ; accès refusé 403 ; cartes d’erreur pour échec chargement métriques techniques, analytics, taux de complétion, parcours. |
 | `features/admin/widgets/admin_route_guard_test.dart` | **Story 7.1** – 2 tests : redirection vers home si utilisateur non-admin ; affichage dashboard si utilisateur admin. |
 | `features/admin/screens/investigation_preview_screen_test.dart` | **Story 7.3** – 3 tests : prévisualisation avec enquête + énigmes (FR65) ; état « introuvable » ; état erreur + bouton Retour au dashboard. |
 | `features/admin/screens/admin_investigation_list_screen_test.dart` | **Story 7.3** – 2 tests : liste avec libellés Brouillon / Publiée ; liste vide. |
@@ -169,10 +169,15 @@
    - ✅ **Flutter :** `investigation_preview_screen_test.dart` (3 tests), `admin_investigation_list_screen_test.dart` (2 tests), `admin_investigation_detail_screen_test.dart` (3 tests) – Prévisualiser, Publier, Rollback, confirmation.
    - Pas de gap identifié pour 7.3.
 
-15. **E2E**
+15. **Story 7.4 (monitoring et analytics – FR68, FR69, FR70, FR71)**
+   - ✅ **Rust :** `tests/api/admin_test.rs` – 9 tests in-process : getTechnicalMetrics (admin → healthStatus/crashCount, user → FORBIDDEN) ; getUserAnalytics (admin → activeUserCount/totalCompletions, user → FORBIDDEN) ; getCompletionRates (admin → tableau, user → FORBIDDEN) ; getUserJourneyAnalytics (admin → funnelSteps, user → FORBIDDEN) ; completion_rates_and_journey_match_recorded_events (enregistrement recordInvestigationStarted/Completed puis vérification getUserAnalytics, getCompletionRates, getUserJourneyAnalytics).
+   - ✅ **Flutter :** `dashboard_screen_test.dart` – 9 tests : vue d’ensemble ; sections Métriques techniques, Analytics utilisateurs, Taux de complétion, Parcours utilisateur (FR68–FR71) ; **lien Sentry** affiché quand sentryDashboardUrl est défini (FR68) ; **tableau taux de complétion** avec données et labels (Task 4.5 WCAG 2.1) ; accès refusé 403 ; erreurs de chargement pour chaque section (métriques techniques, analytics, taux de complétion, parcours).
+   - Pas de gap identifié pour 7.4.
+
+17. **E2E**
    - Aucun test E2E (Flutter `integration_test` ou scénario réel API + app). À prévoir si une story le demande (ex. parcours complet inscription → liste enquêtes).
 
-16. **CI**
+18. **CI**
    - Rust : `cargo test` exécute unitaires + test in-process GraphQL ; tests `#[ignore]` à lancer avec serveur sur 8080.
    - Flutter : `flutter test` à exécuter en CI ; environnement SDK à configurer.
 
@@ -317,6 +322,8 @@ flutter test
 - [x] **2026-02-03 testarch-automate** : Story 7.1 documentée – admin_test.rs (3 tests : me isAdmin, getAdminDashboard admin/user), auth_service.rs (test unitaire admin seed), dashboard_screen_test.dart (2 tests), admin_route_guard_test.dart (2 tests) ; inventaire, plan de couverture et résultats à jour (116 Flutter, 29 Rust).
 - [x] **2026-02-03 testarch-automate** : Story 7.2 (backend) documentée – admin_test.rs (13 tests : 3 pour 7.1 + 10 pour 7.2 : create/update investigation, create/update enigma, validateEnigmaHistoricalContent, avec JWT admin vs user) ; inventaire, gaps (UI Flutter à venir) et résultats d'exécution mis à jour.
 - [x] **2026-02-03 testarch-automate** : Story 7.3 documentée – admin_test.rs (19 tests : +6 prévisualisation/publication/rollback) ; Flutter investigation_preview_screen_test (3), admin_investigation_list_screen_test (2), admin_investigation_detail_screen_test (3) ; inventaire, plan de couverture, résultats d’exécution mis à jour.
+- [x] **2026-02-04 testarch-automate** : Story 7.4 (monitoring et analytics) – analyse couverture BMad-Integrated ; test widget ajouté (lien Sentry quand sentryDashboardUrl défini, FR68) ; inventaire et automation-summary mis à jour.
+- [x] **2026-02-04 testarch-automate (7-4-monitoring-analytics)** : Test widget ajouté – « DashboardScreen exposes accessible completion rate table (Story 7.4 Task 4.5 WCAG 2.1) » : données de taux de complétion non vides, scroll vers la section, assertions sur le contenu du tableau (Enquête test, 10, 6, 60.0 %, colonnes Enquête/Démarrées/Complétées). Valide l’affichage du DataTable avec labels accessibles (implémentation Semantics déjà en place dans dashboard_screen.dart). **Total dashboard_screen_test : 9 tests.**
 
 ---
 
@@ -355,8 +362,8 @@ flutter test
 | `city_detectives/test/features/profile/screens/gamification_screen_test.dart` | **Story 5.2** – Écran Gamification (badges, compétences, cartes postales, leaderboard). |
 | `city_detectives/test/features/investigation/repositories/completed_investigation_repository_test.dart` | **Story 5.1** – TU CompletedInvestigationRepository (8 tests). |
 | `city-detectives-api/tests/api/gamification_test.rs` | **Story 5.2** – getUserBadges, getUserSkills, getUserPostcards, getLeaderboard (4 tests). |
-| `city-detectives-api/tests/api/admin_test.rs` | **Story 7.1** (3), **7.2** (10), **7.3** (6 : prévisualisation, publication, rollback). |
-| `city_detectives/test/features/admin/screens/dashboard_screen_test.dart` | **Story 7.1** – DashboardScreen : vue d’ensemble, accès refusé 403 (2 tests). |
+| `city-detectives-api/tests/api/admin_test.rs` | **Story 7.1** (3), **7.2** (10), **7.3** (6), **7.4** (9 : getTechnicalMetrics, getUserAnalytics, getCompletionRates, getUserJourneyAnalytics, completion_rates_and_journey_match_recorded_events). |
+| `city_detectives/test/features/admin/screens/dashboard_screen_test.dart` | **Story 7.1** – vue d’ensemble, accès refusé 403. **Story 7.4** – 9 tests : sections métriques/analytics/parcours, lien Sentry (FR68), tableau taux de complétion accessible (Task 4.5 WCAG 2.1), erreurs de chargement. |
 | `city_detectives/test/features/admin/widgets/admin_route_guard_test.dart` | **Story 7.1** – AdminRouteGuard : redirection non-admin, affichage si admin (2 tests). |
 | `city_detectives/test/features/admin/screens/investigation_preview_screen_test.dart` | **Story 7.3** – Prévisualisation (3 tests). |
 | `city_detectives/test/features/admin/screens/admin_investigation_list_screen_test.dart` | **Story 7.3** – Liste enquêtes admin (2 tests). |
@@ -382,6 +389,20 @@ flutter test
 
 ---
 
+## Pattern réutilisable – tests admin (tableaux / sections)
+
+Pour ajouter des tests sur d’autres **tableaux ou sections admin** (nouvelles stories, écrans avec DataTable ou listes longues) :
+
+1. **Données** : préparer des données mockées cohérentes (ex. `CompletionRateEntry`, listes d’enquêtes) et les injecter via les overrides de providers (`adminXxxProvider.overrideWith(...)`).
+2. **Scroll** : si la section est en dessous du fold, utiliser `tester.scrollUntilVisible(find.text('Titre de la section'), 500, scrollable: find.byType(Scrollable))` puis `tester.pumpAndSettle()`.
+3. **Assertions contenu** : vérifier les textes visibles (titres de colonnes, valeurs de lignes) avec `expect(find.text('...'), findsOneWidget)` ou `findsWidgets`. Pour les tableaux, vérifier au moins une ligne de données complète (évite les tests trop fragiles sur la structure seule).
+4. **Accessibilité (WCAG 2.1)** : si l’écran expose des `Semantics` (labels pour tableaux/sections), l’implémentation suffit ; un test qui valide le **contenu visible** du tableau/section valide indirectement que le bloc est rendu (les labels sont dans le code). Pour des assertions explicites sur les sémantiques, utiliser `find.bySemanticsLabel('...')` si les labels ne sont pas fusionnés par le framework.
+5. **Erreurs** : ajouter un test par section qui fait échouer le provider (`Future.error(...)`) et vérifie le message d’erreur affiché.
+
+**Référence** : `dashboard_screen_test.dart` – tests « technical metrics and analytics sections », « exposes accessible completion rate table », et les quatre « shows error card when … fail ».
+
+---
+
 ## Prochaines étapes
 
 1. Lancer en local : `cargo test` (Rust), `flutter test` (Flutter) ; optionnel : tests `--ignored` avec API sur 8080.
@@ -396,11 +417,11 @@ flutter test
 
 ---
 
-## Résultats d'exécution (2026-02-03)
+## Résultats d'exécution (2026-02-04)
 
-- **Rust** (`cargo test`) : 46 tests passés (13 unit/lib, 18 admin_test [3 pour 7.1 + 10 pour 7.2 + 6 pour 7.3], 11 enigmas_test, 4 gamification_test) ; auth_test (4) et investigations_test (2) ignorés (serveur 8080).
-- **Flutter** (`flutter test`) : 126 tests au total ; 123 passent (dont Story 7.3 : prévisualisation, liste admin, détail admin). 3 échecs connus dans `widget_test.dart` (hors 7.3, à traiter manuellement). Des `ClientException` (tile.openstreetmap.org 400) peuvent apparaître en log sans faire échouer les tests.
+- **Rust** (`cargo test`) : 50+ tests passés (unit/lib, admin_test [dont 9 pour 7.4], enigmas_test, gamification_test, push_test) ; auth_test et investigations_test ignorés (serveur 8080).
+- **Flutter** (`flutter test`) : 146 tests au total (dont 9 dans dashboard_screen_test pour 7.1/7.4). Tous les tests dashboard_screen_test passent, dont « Sentry link when sentryDashboardUrl is set » (FR68) et « exposes accessible completion rate table » (Task 4.5 WCAG 2.1).
 
 ---
 
-*Workflow : `_bmad/bmm/workflows/testarch/automate` (testarch-automate). Dernière mise à jour : 2026-02-03 (Story 7.3 – prévisualisation, publication, rollback ; résultats Rust 46, Flutter 126 dont 123 passants).*
+*Workflow : `_bmad/bmm/workflows/testarch/automate` (testarch-automate). Dernière mise à jour : 2026-02-04 (Story 7-4-monitoring-analytics – test widget tableau taux de complétion Task 4.5 WCAG 2.1 ; 9 tests dashboard_screen_test).*

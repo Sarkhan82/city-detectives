@@ -15,3 +15,4 @@ pub use services::gamification_service::GamificationService;
 pub use services::investigation_service::InvestigationService;
 pub use services::lore_service::LoreService;
 pub use services::payment_service::PaymentService;
+pub use services::push_service::PushService;

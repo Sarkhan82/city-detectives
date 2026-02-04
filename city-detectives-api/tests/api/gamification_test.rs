@@ -12,6 +12,7 @@ use city_detectives_api::services::gamification_service::GamificationService;
 use city_detectives_api::services::investigation_service::InvestigationService;
 use city_detectives_api::services::lore_service::LoreService;
 use city_detectives_api::services::payment_service::PaymentService;
+use city_detectives_api::services::push_service::PushService;
 use std::sync::Arc;
 
 fn make_schema() -> city_detectives_api::api::graphql::AppSchema {
@@ -23,6 +24,7 @@ fn make_schema() -> city_detectives_api::api::graphql::AppSchema {
     let payment_svc = Arc::new(PaymentService::new());
     let admin_svc = Arc::new(AdminService::new(inv_svc.clone(), enigma_svc.clone()));
     let analytics_svc = Arc::new(AnalyticsService::new(inv_svc.clone()));
+    let push_svc = Arc::new(PushService::new());
     create_schema(
         auth,
         inv_svc,
@@ -32,6 +34,7 @@ fn make_schema() -> city_detectives_api::api::graphql::AppSchema {
         payment_svc,
         admin_svc,
         analytics_svc,
+        push_svc,
     )
 }
 

@@ -26,6 +26,12 @@ Pipeline qualité (Flutter + Rust) : analyse, format, tests, burn-in, artefacts.
 - **Flutter** : en cas d’échec des tests, `city_detectives/coverage` est uploadé (rétention 30 jours).
 - **Burn-in** : idem en cas d’échec pendant le burn-in.
 
+## Tests inclus et régressions
+
+- **Flutter** : la commande `flutter test --coverage` exécute **tous** les tests (unitaires, widget, repositories), dont `test/features/admin/screens/dashboard_screen_test.dart` (Story 7.1 / 7.4 – 9 tests) et les autres suites. Aucun filtre par répertoire : toute régression sur les tests existants fait échouer le job.
+- **Surveillance des régressions** : chaque push/PR sur `main`, `master`, `develop`, `feature/**` lance le pipeline ; en cas d’échec, les artefacts (coverage) sont conservés 30 jours. Reproduire en local avec les commandes ci‑dessous avant de pousser.
+- **Burn-in** (si configuré) : exécuter plusieurs fois `flutter test` (ex. 3 itérations) pour détecter les tests flaky avant merge.
+
 ## Reproduire en local
 
 ```bash

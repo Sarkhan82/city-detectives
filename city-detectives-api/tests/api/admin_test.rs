@@ -13,6 +13,7 @@ use city_detectives_api::services::gamification_service::GamificationService;
 use city_detectives_api::services::investigation_service::InvestigationService;
 use city_detectives_api::services::lore_service::LoreService;
 use city_detectives_api::services::payment_service::PaymentService;
+use city_detectives_api::services::push_service::PushService;
 use std::sync::Arc;
 
 fn make_schema() -> city_detectives_api::api::graphql::AppSchema {
@@ -24,6 +25,7 @@ fn make_schema() -> city_detectives_api::api::graphql::AppSchema {
     let payment_svc = Arc::new(PaymentService::new());
     let admin_svc = Arc::new(AdminService::new(inv_svc.clone(), enigma_svc.clone()));
     let analytics_svc = Arc::new(AnalyticsService::new(inv_svc.clone()));
+    let push_svc = Arc::new(PushService::new());
     create_schema(
         auth,
         inv_svc,
@@ -33,6 +35,7 @@ fn make_schema() -> city_detectives_api::api::graphql::AppSchema {
         payment_svc,
         admin_svc,
         analytics_svc,
+        push_svc,
     )
 }
 
@@ -548,7 +551,7 @@ async fn create_investigation_succeeds_when_admin_jwt() {
         .get("createInvestigation")
         .and_then(|v| v.as_object())
         .expect("createInvestigation object");
-    assert!(inv.get("id").and_then(|v| v.as_str()).unwrap().len() > 0);
+    assert!(!inv.get("id").and_then(|v| v.as_str()).unwrap().is_empty());
     assert_eq!(
         inv.get("titre").and_then(|v| v.as_str()),
         Some("Nouvelle enquête")
@@ -661,7 +664,7 @@ async fn create_enigma_succeeds_when_admin_jwt() {
         .get("createEnigma")
         .and_then(|v| v.as_object())
         .expect("createEnigma object");
-    assert!(enigma.get("id").and_then(|v| v.as_str()).unwrap().len() > 0);
+    assert!(!enigma.get("id").and_then(|v| v.as_str()).unwrap().is_empty());
     assert_eq!(enigma.get("orderIndex").and_then(|v| v.as_u64()), Some(4));
     assert_eq!(enigma.get("type").and_then(|v| v.as_str()), Some("words"));
     assert_eq!(

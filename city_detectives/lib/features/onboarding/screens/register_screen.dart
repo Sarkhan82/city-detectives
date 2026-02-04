@@ -63,6 +63,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       final auth = ref.read(authServiceProvider);
       await auth.register(email: email, password: password);
       if (!mounted) return;
+      ref.invalidate(currentUserProvider);
       context.go(AppRouter.onboarding);
     } catch (e, st) {
       if (!mounted) return;

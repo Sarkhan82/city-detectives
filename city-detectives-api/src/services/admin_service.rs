@@ -85,6 +85,8 @@ impl AdminService {
     }
 
     /// Métriques techniques pour le dashboard admin (Story 7.4 – FR68). Health, latence, crashs, lien Sentry.
+    /// Limites MVP : health_status en dur "ok" (pas de health check réel) ; crash_count à 0 tant qu'aucune
+    /// ingestion Sentry (webhook/API) ; api_latency_p95_ms non calculé (métriques actuelles = moyenne uniquement).
     pub fn get_technical_metrics(&self) -> TechnicalMetrics {
         let sentry_dashboard_url = std::env::var("SENTRY_DASHBOARD_URL")
             .ok()
@@ -102,10 +104,11 @@ impl AdminService {
         } else {
             0.0
         };
+        let api_latency_p95_ms = metrics::p95_latency_ms();
         TechnicalMetrics {
             health_status: "ok".to_string(),
             api_latency_avg_ms,
-            api_latency_p95_ms: None,
+            api_latency_p95_ms,
             error_rate,
             crash_count: 0,
             sentry_dashboard_url,
