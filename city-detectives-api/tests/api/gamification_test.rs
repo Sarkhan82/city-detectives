@@ -5,6 +5,7 @@ use async_graphql::Request;
 use city_detectives_api::api::graphql::create_schema;
 use city_detectives_api::api::middleware::auth::BearerToken;
 use city_detectives_api::services::admin_service::AdminService;
+use city_detectives_api::services::analytics_service::AnalyticsService;
 use city_detectives_api::services::auth_service::AuthService;
 use city_detectives_api::services::enigma_service::EnigmaService;
 use city_detectives_api::services::gamification_service::GamificationService;
@@ -21,6 +22,7 @@ fn make_schema() -> city_detectives_api::api::graphql::AppSchema {
     let gamification_svc = Arc::new(GamificationService::new());
     let payment_svc = Arc::new(PaymentService::new());
     let admin_svc = Arc::new(AdminService::new(inv_svc.clone(), enigma_svc.clone()));
+    let analytics_svc = Arc::new(AnalyticsService::new(inv_svc.clone()));
     create_schema(
         auth,
         inv_svc,
@@ -29,6 +31,7 @@ fn make_schema() -> city_detectives_api::api::graphql::AppSchema {
         gamification_svc,
         payment_svc,
         admin_svc,
+        analytics_svc,
     )
 }
 

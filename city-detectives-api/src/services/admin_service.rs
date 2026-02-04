@@ -1,9 +1,11 @@
-//! Service admin (Story 7.1 – FR61, 7.2) – agrégation vue d'ensemble dashboard (enquêtes, énigmes, métriques).
+//! Service admin (Story 7.1 – FR61, 7.2, 7.4 – FR68–FR71) – agrégation vue d'ensemble dashboard (enquêtes, énigmes, métriques).
 
 use async_graphql::*;
+use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use uuid::Uuid;
 
+use crate::api::metrics;
 use crate::services::enigma_service::EnigmaService;
 use crate::services::investigation_service::InvestigationService;
 
@@ -19,6 +21,24 @@ pub struct DashboardOverview {
     pub draft_count: u32,
     #[graphql(name = "enigmaCount")]
     pub enigma_count: u32,
+}
+
+/// Métriques techniques pour l'admin (Story 7.4 – FR68). Santé, latence API, crashs, lien Sentry.
+#[derive(Debug, Clone, SimpleObject)]
+#[graphql(name = "TechnicalMetrics")]
+pub struct TechnicalMetrics {
+    #[graphql(name = "healthStatus")]
+    pub health_status: String,
+    #[graphql(name = "apiLatencyAvgMs")]
+    pub api_latency_avg_ms: Option<f64>,
+    #[graphql(name = "apiLatencyP95Ms")]
+    pub api_latency_p95_ms: Option<f64>,
+    #[graphql(name = "errorRate")]
+    pub error_rate: f64,
+    #[graphql(name = "crashCount")]
+    pub crash_count: u32,
+    #[graphql(name = "sentryDashboardUrl")]
+    pub sentry_dashboard_url: Option<String>,
 }
 
 pub struct AdminService {
@@ -61,6 +81,34 @@ impl AdminService {
             published_count,
             draft_count,
             enigma_count,
+        }
+    }
+
+    /// Métriques techniques pour le dashboard admin (Story 7.4 – FR68). Health, latence, crashs, lien Sentry.
+    pub fn get_technical_metrics(&self) -> TechnicalMetrics {
+        let sentry_dashboard_url = std::env::var("SENTRY_DASHBOARD_URL")
+            .ok()
+            .filter(|s| !s.is_empty());
+        let total_requests = metrics::REQUEST_COUNT.load(Ordering::Relaxed);
+        let total_latency_ms = metrics::TOTAL_LATENCY_MS.load(Ordering::Relaxed);
+        let error_count = metrics::ERROR_COUNT.load(Ordering::Relaxed);
+        let api_latency_avg_ms = if total_requests > 0 {
+            Some(total_latency_ms as f64 / total_requests as f64)
+        } else {
+            None
+        };
+        let error_rate = if total_requests > 0 {
+            error_count as f64 / total_requests as f64
+        } else {
+            0.0
+        };
+        TechnicalMetrics {
+            health_status: "ok".to_string(),
+            api_latency_avg_ms,
+            api_latency_p95_ms: None,
+            error_rate,
+            crash_count: 0,
+            sentry_dashboard_url,
         }
     }
 }

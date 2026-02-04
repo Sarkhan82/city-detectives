@@ -15,6 +15,7 @@ import 'package:city_detectives/features/investigation/providers/investigation_p
 import 'package:city_detectives/features/profile/providers/user_progress_provider.dart';
 import 'package:city_detectives/features/investigation/repositories/completed_investigation_repository.dart';
 import 'package:city_detectives/features/investigation/repositories/investigation_progress_repository.dart';
+import 'package:city_detectives/features/investigation/providers/investigation_analytics_provider.dart';
 import 'package:city_detectives/core/router/app_router.dart';
 import 'package:city_detectives/features/investigation/widgets/investigation_map_sheet.dart';
 import 'package:city_detectives/shared/widgets/connectivity_status_indicator.dart';
@@ -48,6 +49,7 @@ class InvestigationPlayScreen extends ConsumerStatefulWidget {
 class _InvestigationPlayScreenState
     extends ConsumerState<InvestigationPlayScreen> {
   bool _progressRestored = false;
+  bool _analyticsStartedSent = false;
 
   /// Story 4.4 : index de séquences LORE déjà affichés (0 = intro, 1+ = entre énigmes).
   final Set<int> _shownLoreSequenceIndexes = {};
@@ -93,6 +95,20 @@ class _InvestigationPlayScreenState
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
             setState(() => _progressRestored = true);
+          });
+        }
+        // Story 7.4 : enregistrer un événement « enquête démarrée » pour analytics (best-effort).
+        if (data != null && !_analyticsStartedSent) {
+          _analyticsStartedSent = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            if (!mounted) return;
+            final analyticsRepo =
+                ref.read(investigationAnalyticsRepositoryProvider);
+            try {
+              await analyticsRepo.recordInvestigationStarted(investigationId);
+            } catch (_) {
+              // Analytics non bloquants : ignorer les erreurs côté UI.
+            }
           });
         }
         return _buildContent(context, ref, data, currentIndex, investigationId);
@@ -337,6 +353,19 @@ class _InvestigationPlayScreenState
                                 }
                                 if (safeIndex < total - 1) {
                                   _saveProgress(ref, investigationId);
+                                } else {
+                                  // Story 7.4 – FR70 : marquer l'enquête complétée côté analytics (best-effort).
+                                  final analyticsRepo = ref.read(
+                                    investigationAnalyticsRepositoryProvider,
+                                  );
+                                  try {
+                                    await analyticsRepo
+                                        .recordInvestigationCompleted(
+                                      investigationId,
+                                    );
+                                  } catch (_) {
+                                    // Analytics non bloquants.
+                                  }
                                 }
                               },
                             ),
