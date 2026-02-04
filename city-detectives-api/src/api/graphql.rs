@@ -27,6 +27,7 @@ use crate::services::gamification_service::GamificationService;
 use crate::services::investigation_service::InvestigationService;
 use crate::services::lore_service::LoreService;
 use crate::services::payment_service::PaymentService;
+use crate::services::push_service::PushService;
 use uuid::Uuid;
 
 pub type AppSchema = Schema<QueryRoot, MutationRoot, EmptySubscription>;
@@ -41,6 +42,7 @@ pub fn create_schema(
     payment_service: Arc<PaymentService>,
     admin_service: Arc<AdminService>,
     analytics_service: Arc<AnalyticsService>,
+    push_service: Arc<PushService>,
 ) -> AppSchema {
     Schema::build(QueryRoot, MutationRoot, EmptySubscription)
         .data(auth_service)
@@ -51,6 +53,7 @@ pub fn create_schema(
         .data(payment_service)
         .data(admin_service)
         .data(analytics_service)
+        .data(push_service)
         .finish()
 }
 
@@ -497,6 +500,27 @@ impl MutationRoot {
         Ok(true)
     }
 
+    /// Enregistre le token push FCM/APNs pour l'utilisateur connecté (Story 8.1 – FR85, FR86, FR87).
+    /// Upsert par (user_id, platform). Requiert authentification.
+    async fn register_push_token(
+        &self,
+        ctx: &Context<'_>,
+        token: String,
+        platform: String,
+    ) -> Result<bool, Error> {
+        let auth = ctx.data::<Arc<AuthService>>()?;
+        let bearer = ctx.data::<BearerToken>().ok().and_then(|t| t.0.clone());
+        let bearer = bearer
+            .as_deref()
+            .ok_or_else(|| Error::new("Authentification requise"))?;
+        let user_id = auth.validate_token(bearer).map_err(Error::from)?;
+        let push_svc = ctx.data::<Arc<PushService>>()?;
+        push_svc
+            .register_token(user_id, token, platform)
+            .map_err(Error::from)?;
+        Ok(true)
+    }
+
     /// Crée une enquête (admin, Story 7.2 – FR62). Réservé aux admins.
     async fn create_investigation(
         &self,
@@ -524,6 +548,7 @@ impl MutationRoot {
     }
 
     /// Publie une enquête (draft → published) – admin uniquement (Story 7.3 – FR66).
+    /// Story 8.1 (FR85) : envoie une notification push « Nouvelle enquête » aux tokens enregistrés.
     async fn publish_investigation(
         &self,
         ctx: &Context<'_>,
@@ -532,7 +557,30 @@ impl MutationRoot {
         let _admin_id = require_admin(ctx)?;
         let id = Uuid::parse_str(&id).map_err(|_| Error::new("ID enquête invalide"))?;
         let svc = ctx.data::<Arc<InvestigationService>>()?;
-        svc.publish_investigation(id).await.map_err(Error::from)
+        let inv = svc.publish_investigation(id).await.map_err(Error::from)?;
+        let push_svc = ctx.data::<Arc<PushService>>();
+        if let Ok(push) = push_svc {
+            let tokens: Vec<String> = push
+                .list_all_tokens()
+                .into_iter()
+                .map(|e| e.token)
+                .collect();
+            let mut data = std::collections::HashMap::new();
+            data.insert("investigation_id".to_string(), inv.id.to_string());
+            data.insert("type".to_string(), "new_investigation".to_string());
+            if let Err(e) = push
+                .send_notification(
+                    &tokens,
+                    &format!("Nouvelle enquête : {}", inv.titre),
+                    "Une nouvelle enquête est disponible.",
+                    Some(data),
+                )
+                .await
+            {
+                tracing::warn!("Push after publish failed: {}", e);
+            }
+        }
+        Ok(inv)
     }
 
     /// Dépublie une enquête (published → draft) – admin uniquement (Story 7.3 – FR67).
@@ -646,6 +694,7 @@ mod tests {
             Arc::new(PaymentService::new()),
             admin_svc,
             analytics_svc,
+            Arc::new(PushService::new()),
         );
         let request = async_graphql::Request::new(
             r#"query { listInvestigations { id titre description durationEstimate difficulte isFree priceAmount priceCurrency } }"#,
@@ -712,6 +761,7 @@ mod tests {
             Arc::new(PaymentService::new()),
             admin_svc,
             analytics_svc,
+            Arc::new(PushService::new()),
         );
         let id_paid = "22222222-2222-2222-2222-222222222222";
         let request = async_graphql::Request::new(format!(
@@ -757,6 +807,7 @@ mod tests {
             Arc::new(PaymentService::new()),
             admin_svc,
             analytics_svc,
+            Arc::new(PushService::new()),
         );
         let id = "11111111-1111-1111-1111-111111111111";
         let request = async_graphql::Request::new(format!(
@@ -807,6 +858,7 @@ mod tests {
             Arc::new(PaymentService::new()),
             admin_svc,
             analytics_svc,
+            Arc::new(PushService::new()),
         );
         let id = "11111111-1111-1111-1111-111111111111";
         let request = async_graphql::Request::new(format!(
@@ -860,6 +912,7 @@ mod tests {
             Arc::new(PaymentService::new()),
             admin_svc,
             analytics_svc,
+            Arc::new(PushService::new()),
         );
         let id = "11111111-1111-1111-1111-111111111111";
         let request = async_graphql::Request::new(format!(
@@ -895,6 +948,7 @@ mod tests {
             Arc::new(PaymentService::new()),
             admin_svc,
             analytics_svc,
+            Arc::new(PushService::new()),
         );
         let id = "11111111-1111-1111-1111-111111111111";
         let request = async_graphql::Request::new(format!(
@@ -935,6 +989,7 @@ mod tests {
             payment_svc,
             admin_svc,
             analytics_svc,
+            Arc::new(PushService::new()),
         );
 
         let register_req = async_graphql::Request::new(

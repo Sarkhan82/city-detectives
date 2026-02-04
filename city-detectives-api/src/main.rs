@@ -8,7 +8,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use city_detectives_api::{
     api, auth_service, create_schema, AdminService, AnalyticsService, AuthService, EnigmaService,
-    GamificationService, InvestigationService, LoreService, PaymentService,
+    GamificationService, InvestigationService, LoreService, PaymentService, PushService,
 };
 
 #[tokio::main]
@@ -34,6 +34,7 @@ async fn main() {
         enigma_service.clone(),
     ));
     let analytics_service = Arc::new(AnalyticsService::new(investigation_service.clone()));
+    let push_service = Arc::new(PushService::new());
     let schema = create_schema(
         auth_service,
         investigation_service,
@@ -43,6 +44,7 @@ async fn main() {
         payment_service,
         admin_service,
         analytics_service,
+        push_service,
     );
 
     let app = Router::new()

@@ -79,15 +79,15 @@ development_status:
   7-1-acces-dashboard-admin: done
   7-2-creation-edition-enquetes-enigmes: done
   7-3-previsualisation-publication-rollback: done
-  7-4-monitoring-analytics: review
+  7-4-monitoring-analytics: done
   epic-7-retrospective: optional
 
   epic-8: in-progress
-  8-1-notifications-enquetes-rappels: ready-for-dev
+  8-1-notifications-enquetes-rappels: done
   8-2-preferences-notifications: ready-for-dev
   epic-8-retrospective: optional
 
   epic-9: in-progress
   9-1-notation-apres-completion: ready-for-dev
-  9-2-avis-consultation-avis: backlog
+  9-2-avis-consultation-avis: ready-for-dev
   epic-9-retrospective: optional

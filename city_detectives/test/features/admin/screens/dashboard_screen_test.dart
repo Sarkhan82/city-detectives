@@ -189,6 +189,155 @@ void main() {
     },
   );
 
+  testWidgets(
+    'DashboardScreen shows Sentry link when sentryDashboardUrl is set (Story 7.4 FR68)',
+    (WidgetTester tester) async {
+      const overview = DashboardOverview(
+        investigationCount: 1,
+        publishedCount: 1,
+        draftCount: 0,
+        enigmaCount: 1,
+      );
+      const technicalMetrics = TechnicalMetrics(
+        healthStatus: 'ok',
+        apiLatencyAvgMs: null,
+        apiLatencyP95Ms: null,
+        errorRate: 0.0,
+        crashCount: 3,
+        sentryDashboardUrl: 'https://sentry.io/org/project',
+      );
+      const userAnalytics = UserAnalytics(
+        activeUserCount: 1,
+        totalCompletions: 0,
+      );
+      const completionRates = <CompletionRateEntry>[];
+      const userJourney = UserJourneyAnalytics(
+        funnelSteps: [JourneyStep(label: 'Enquête démarrée', userCount: 1)],
+      );
+
+      final router = GoRouter(
+        initialLocation: AppRouter.adminDashboard,
+        routes: [
+          GoRoute(
+            path: AppRouter.adminDashboard,
+            builder: (context, state) => const DashboardScreen(),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            adminDashboardProvider.overrideWith(
+              (ref) => Future.value(overview),
+            ),
+            adminTechnicalMetricsProvider.overrideWith(
+              (ref) => Future.value(technicalMetrics),
+            ),
+            adminUserAnalyticsProvider.overrideWith(
+              (ref) => Future.value(userAnalytics),
+            ),
+            adminCompletionRatesProvider.overrideWith(
+              (ref) => Future.value(completionRates),
+            ),
+            adminUserJourneyAnalyticsProvider.overrideWith(
+              (ref) => Future.value(userJourney),
+            ),
+          ],
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Métriques techniques'), findsOneWidget);
+      expect(find.text('Voir Sentry'), findsOneWidget);
+      expect(find.text('Détails des crashs'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'DashboardScreen exposes accessible completion rate table (Story 7.4 Task 4.5 WCAG 2.1)',
+    (WidgetTester tester) async {
+      const overview = DashboardOverview(
+        investigationCount: 1,
+        publishedCount: 1,
+        draftCount: 0,
+        enigmaCount: 1,
+      );
+      const technicalMetrics = TechnicalMetrics(
+        healthStatus: 'ok',
+        apiLatencyAvgMs: null,
+        apiLatencyP95Ms: null,
+        errorRate: 0.0,
+        crashCount: 0,
+        sentryDashboardUrl: null,
+      );
+      const userAnalytics = UserAnalytics(
+        activeUserCount: 1,
+        totalCompletions: 1,
+      );
+      const completionRates = <CompletionRateEntry>[
+        CompletionRateEntry(
+          investigationId: 'inv-1',
+          investigationTitle: 'Enquête test',
+          startedCount: 10,
+          completedCount: 6,
+          completionRate: 0.6,
+        ),
+      ];
+      const userJourney = UserJourneyAnalytics(
+        funnelSteps: [JourneyStep(label: 'Enquête démarrée', userCount: 1)],
+      );
+
+      final router = GoRouter(
+        initialLocation: AppRouter.adminDashboard,
+        routes: [
+          GoRoute(
+            path: AppRouter.adminDashboard,
+            builder: (context, state) => const DashboardScreen(),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            adminDashboardProvider.overrideWith(
+              (ref) => Future.value(overview),
+            ),
+            adminTechnicalMetricsProvider.overrideWith(
+              (ref) => Future.value(technicalMetrics),
+            ),
+            adminUserAnalyticsProvider.overrideWith(
+              (ref) => Future.value(userAnalytics),
+            ),
+            adminCompletionRatesProvider.overrideWith(
+              (ref) => Future.value(completionRates),
+            ),
+            adminUserJourneyAnalyticsProvider.overrideWith(
+              (ref) => Future.value(userJourney),
+            ),
+          ],
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text('Taux de complétion'),
+        500,
+        scrollable: find.byType(Scrollable),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Enquête test'), findsOneWidget);
+      expect(find.text('10'), findsWidgets);
+      expect(find.text('6'), findsWidgets);
+      expect(find.text('60.0 %'), findsOneWidget);
+      expect(find.text('Enquête'), findsOneWidget);
+      expect(find.text('Démarrées'), findsOneWidget);
+      expect(find.text('Complétées'), findsOneWidget);
+    },
+  );
+
   testWidgets('DashboardScreen shows access denied for non-admin (403)', (
     WidgetTester tester,
   ) async {

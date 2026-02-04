@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:city_detectives/core/router/app_router.dart';
 import 'package:city_detectives/features/admin/models/completion_rate_entry.dart';
@@ -359,6 +360,16 @@ class _TechnicalMetricsSection extends StatelessWidget {
                   'Latence API moyenne : ${metrics.apiLatencyAvgMs!.toStringAsFixed(0)} millisecondes',
             ),
           ],
+          if (metrics.apiLatencyP95Ms != null) ...[
+            const SizedBox(height: 12),
+            _MetricCard(
+              label: 'Latence API (p95)',
+              value: '${metrics.apiLatencyP95Ms!.toStringAsFixed(0)} ms',
+              icon: Icons.speed,
+              semanticLabel:
+                  'Latence API p95 : ${metrics.apiLatencyP95Ms!.toStringAsFixed(0)} millisecondes',
+            ),
+          ],
           const SizedBox(height: 12),
           _MetricCard(
             label: 'Taux d\'erreur',
@@ -383,8 +394,21 @@ class _TechnicalMetricsSection extends StatelessWidget {
                 leading: const Icon(Icons.open_in_new),
                 title: const Text('Voir Sentry'),
                 subtitle: const Text('Détails des crashs'),
-                onTap: () {
-                  // Lien externe : en production utiliser url_launcher
+                onTap: () async {
+                  final url = metrics.sentryDashboardUrl;
+                  if (url == null || url.isEmpty) return;
+                  final uri = Uri.tryParse(url);
+                  if (uri == null) return;
+                  try {
+                    if (await canLaunchUrl(uri)) {
+                      await launchUrl(
+                        uri,
+                        mode: LaunchMode.externalApplication,
+                      );
+                    }
+                  } catch (_) {
+                    // Échec silencieux (environnement peut bloquer l'ouverture)
+                  }
                 },
               ),
             ),
@@ -458,26 +482,60 @@ class _CompletionRatesSection extends StatelessWidget {
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: DataTable(
-            columns: const [
-              DataColumn(label: Text('Enquête')),
-              DataColumn(label: Text('Démarrées')),
-              DataColumn(label: Text('Complétées')),
-              DataColumn(label: Text('Taux %')),
+            columns: [
+              DataColumn(
+                label: Semantics(
+                  label: 'Colonne Enquête',
+                  child: const Text('Enquête'),
+                ),
+              ),
+              DataColumn(
+                label: Semantics(
+                  label: 'Colonne Démarrées',
+                  child: const Text('Démarrées'),
+                ),
+              ),
+              DataColumn(
+                label: Semantics(
+                  label: 'Colonne Complétées',
+                  child: const Text('Complétées'),
+                ),
+              ),
+              DataColumn(
+                label: Semantics(
+                  label: 'Colonne Taux pour cent',
+                  child: const Text('Taux %'),
+                ),
+              ),
             ],
             rows: rates.map((r) {
               final ratePercent = (r.completionRate * 100).toStringAsFixed(1);
+              final title = r.investigationTitle.isNotEmpty
+                  ? r.investigationTitle
+                  : r.investigationId;
               return DataRow(
                 cells: [
                   DataCell(
-                    Text(
-                      r.investigationTitle.isNotEmpty
-                          ? r.investigationTitle
-                          : r.investigationId,
+                    Semantics(label: 'Enquête : $title', child: Text(title)),
+                  ),
+                  DataCell(
+                    Semantics(
+                      label: 'Démarrées : ${r.startedCount}',
+                      child: Text(r.startedCount.toString()),
                     ),
                   ),
-                  DataCell(Text(r.startedCount.toString())),
-                  DataCell(Text(r.completedCount.toString())),
-                  DataCell(Text('$ratePercent %')),
+                  DataCell(
+                    Semantics(
+                      label: 'Complétées : ${r.completedCount}',
+                      child: Text(r.completedCount.toString()),
+                    ),
+                  ),
+                  DataCell(
+                    Semantics(
+                      label: 'Taux : $ratePercent pour cent',
+                      child: Text('$ratePercent %'),
+                    ),
+                  ),
                 ],
               );
             }).toList(),
