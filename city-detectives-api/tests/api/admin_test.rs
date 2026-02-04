@@ -1,5 +1,6 @@
-//! Tests d'intégration API admin (Story 7.1 – FR61, 7.2 – FR62).
+//! Tests d'intégration API admin (Story 7.1 – FR61, 7.2 – FR62, 7.3 – FR65, FR66, FR67).
 //! getAdminDashboard, createInvestigation, updateInvestigation : JWT admin → succès ; JWT user → 403.
+//! investigationForPreview, publishInvestigation, rollbackInvestigation ; listInvestigations filtre published pour non-admin.
 
 use async_graphql::Request;
 use city_detectives_api::api::graphql::create_schema;
@@ -482,4 +483,227 @@ async fn update_enigma_returns_forbidden_when_user_jwt() {
             })
     });
     assert_eq!(code, Some("FORBIDDEN"));
+}
+
+// --- Story 7.3 – FR65, FR66, FR67 ---
+
+#[tokio::test]
+async fn investigation_for_preview_returns_draft_when_admin_jwt() {
+    let schema = make_schema();
+    let token = get_admin_token(&schema).await;
+    let create = r#"mutation {
+        createInvestigation(input: {
+            titre: "Brouillon preview"
+            description: "Desc"
+            durationEstimate: 30
+            difficulte: "facile"
+            isFree: true
+            status: "draft"
+        }) { id titre status }
+    }"#;
+    let req = Request::new(create).data(BearerToken(Some(token.clone())));
+    let res = schema.execute(req).await;
+    assert!(res.is_ok(), "create must succeed: {:?}", res.errors);
+    let data = res.data.into_json().unwrap();
+    let inv = data
+        .get("createInvestigation")
+        .and_then(|v| v.as_object())
+        .expect("createInvestigation");
+    let id = inv.get("id").and_then(|v| v.as_str()).expect("id");
+    let preview = format!(
+        r#"query {{ investigationForPreview(id: "{}") {{ investigation {{ id titre status }} enigmas {{ id }} }} }}"#,
+        id
+    );
+    let req = Request::new(preview).data(BearerToken(Some(token)));
+    let res = schema.execute(req).await;
+    assert!(
+        res.is_ok(),
+        "investigationForPreview must succeed for admin: {:?}",
+        res.errors
+    );
+    let data = res.data.into_json().unwrap();
+    let root = data
+        .get("investigationForPreview")
+        .and_then(|v| v.as_object())
+        .expect("investigationForPreview");
+    let inv_out = root
+        .get("investigation")
+        .and_then(|v| v.as_object())
+        .expect("investigation");
+    assert_eq!(
+        inv_out.get("status").and_then(|v| v.as_str()),
+        Some("draft")
+    );
+}
+
+#[tokio::test]
+async fn investigation_for_preview_returns_forbidden_when_user_jwt() {
+    let schema = make_schema();
+    let token = get_user_token(&schema).await;
+    let request = Request::new(
+        r#"query { investigationForPreview(id: "11111111-1111-1111-1111-111111111111") { investigation { id } } }"#,
+    )
+    .data(BearerToken(Some(token)));
+    let res = schema.execute(request).await;
+    assert!(
+        !res.is_ok(),
+        "investigationForPreview must fail for non-admin"
+    );
+    let code = res.errors.first().and_then(|e| {
+        e.extensions
+            .as_ref()
+            .and_then(|ext| ext.get("code"))
+            .and_then(|v| match v {
+                async_graphql::Value::String(s) => Some(s.as_str()),
+                _ => None,
+            })
+    });
+    assert_eq!(code, Some("FORBIDDEN"));
+}
+
+#[tokio::test]
+async fn list_investigations_without_token_returns_only_published() {
+    let schema = make_schema();
+    let request = Request::new(r#"query { listInvestigations { id status } }"#);
+    let res = schema.execute(request).await;
+    assert!(
+        res.is_ok(),
+        "listInvestigations without token: {:?}",
+        res.errors
+    );
+    let data = res.data.into_json().unwrap();
+    let list = data
+        .get("listInvestigations")
+        .and_then(|v| v.as_array())
+        .expect("list");
+    for item in list {
+        let obj = item.as_object().expect("item object");
+        assert_eq!(
+            obj.get("status").and_then(|v| v.as_str()),
+            Some("published"),
+            "non-admin must see only published"
+        );
+    }
+}
+
+#[tokio::test]
+async fn publish_investigation_succeeds_then_visible_in_catalog() {
+    let schema = make_schema();
+    let token = get_admin_token(&schema).await;
+    let create = r#"mutation {
+        createInvestigation(input: {
+            titre: "To publish"
+            description: "D"
+            durationEstimate: 10
+            difficulte: "facile"
+            isFree: true
+            status: "draft"
+        }) { id status }
+    }"#;
+    let res = schema
+        .execute(Request::new(create).data(BearerToken(Some(token.clone()))))
+        .await;
+    assert!(res.is_ok(), "create: {:?}", res.errors);
+    let data = res.data.into_json().unwrap();
+    let id = data
+        .get("createInvestigation")
+        .and_then(|v| v.as_object())
+        .and_then(|o| o.get("id"))
+        .and_then(|v| v.as_str())
+        .expect("id")
+        .to_string();
+    let list_before = Request::new(r#"query { listInvestigations { id } }"#);
+    let _count_before = schema
+        .execute(list_before)
+        .await
+        .data
+        .into_json()
+        .unwrap()
+        .get("listInvestigations")
+        .and_then(|v| v.as_array())
+        .map(|a| a.len())
+        .unwrap_or(0);
+    let publish = format!(
+        r#"mutation {{ publishInvestigation(id: "{}") {{ id status }} }}"#,
+        id
+    );
+    let res = schema
+        .execute(Request::new(publish).data(BearerToken(Some(token))))
+        .await;
+    assert!(res.is_ok(), "publishInvestigation: {:?}", res.errors);
+    let data = res.data.into_json().unwrap();
+    assert_eq!(
+        data.get("publishInvestigation")
+            .and_then(|v| v.as_object())
+            .and_then(|o| o.get("status"))
+            .and_then(|v| v.as_str()),
+        Some("published")
+    );
+    let list_after = Request::new(r#"query { listInvestigations { id } }"#);
+    let binding = schema.execute(list_after).await.data.into_json().unwrap();
+    let list = binding
+        .get("listInvestigations")
+        .and_then(|v| v.as_array())
+        .expect("list");
+    assert!(
+        list.iter()
+            .any(|v| v.get("id").and_then(|x| x.as_str()) == Some(id.as_str())),
+        "after publish, listInvestigations (no auth) must include the investigation"
+    );
+}
+
+#[tokio::test]
+async fn rollback_investigation_succeeds_then_hidden_from_catalog() {
+    let schema = make_schema();
+    let token = get_admin_token(&schema).await;
+    let create = r#"mutation {
+        createInvestigation(input: {
+            titre: "To rollback"
+            description: "D"
+            durationEstimate: 10
+            difficulte: "facile"
+            isFree: true
+            status: "published"
+        }) { id status }
+    }"#;
+    let res = schema
+        .execute(Request::new(create).data(BearerToken(Some(token.clone()))))
+        .await;
+    assert!(res.is_ok(), "create: {:?}", res.errors);
+    let data = res.data.into_json().unwrap();
+    let id = data
+        .get("createInvestigation")
+        .and_then(|v| v.as_object())
+        .and_then(|o| o.get("id"))
+        .and_then(|v| v.as_str())
+        .expect("id")
+        .to_string();
+    let rollback = format!(
+        r#"mutation {{ rollbackInvestigation(id: "{}") {{ id status }} }}"#,
+        id
+    );
+    let res = schema
+        .execute(Request::new(rollback).data(BearerToken(Some(token))))
+        .await;
+    assert!(res.is_ok(), "rollbackInvestigation: {:?}", res.errors);
+    let data = res.data.into_json().unwrap();
+    assert_eq!(
+        data.get("rollbackInvestigation")
+            .and_then(|v| v.as_object())
+            .and_then(|o| o.get("status"))
+            .and_then(|v| v.as_str()),
+        Some("draft")
+    );
+    let list_after = Request::new(r#"query { listInvestigations { id } }"#);
+    let binding = schema.execute(list_after).await.data.into_json().unwrap();
+    let list = binding
+        .get("listInvestigations")
+        .and_then(|v| v.as_array())
+        .expect("list");
+    assert!(
+        !list
+            .iter()
+            .any(|v| v.get("id").and_then(|x| x.as_str()) == Some(id.as_str())),
+        "after rollback, listInvestigations (no auth) must not include the investigation"
+    );
 }

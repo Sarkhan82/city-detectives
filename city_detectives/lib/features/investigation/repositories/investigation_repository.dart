@@ -27,6 +27,7 @@ class InvestigationRepository {
         isFree
         priceAmount
         priceCurrency
+        status
       }
     }
   ''';
@@ -106,6 +107,7 @@ class InvestigationRepository {
     'priceCurrency': i.priceCurrency,
     'centerLat': i.centerLat,
     'centerLng': i.centerLng,
+    'status': i.status,
   };
 
   Future<List<Investigation>> _fetchListFromApi() async {

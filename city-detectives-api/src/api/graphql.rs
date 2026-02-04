@@ -110,21 +110,72 @@ impl QueryRoot {
         Ok(admin_svc.get_dashboard_overview().await)
     }
 
-    /// Liste des enquêtes disponibles (Story 2.1) – durée, difficulté, description.
+    /// Liste des enquêtes disponibles (Story 2.1). Les non-admins ne voient que les enquêtes publiées (Story 7.3 – FR66).
     async fn list_investigations(
         &self,
         ctx: &Context<'_>,
     ) -> Result<Vec<crate::models::investigation::Investigation>, Error> {
         let svc = ctx.data::<Arc<InvestigationService>>()?;
-        Ok(svc.list_investigations().await)
+        let list = svc.list_investigations().await;
+        let is_admin = ctx
+            .data::<BearerToken>()
+            .ok()
+            .and_then(|t| t.0.as_deref())
+            .filter(|s| !s.is_empty())
+            .and_then(|token| {
+                let auth = ctx.data::<Arc<AuthService>>().ok()?;
+                auth.validate_token_claims(token).ok()
+            })
+            .map(|(_, role)| role == Role::Admin)
+            .unwrap_or(false);
+        let list = if is_admin {
+            list
+        } else {
+            list.into_iter()
+                .filter(|i| i.status == "published")
+                .collect()
+        };
+        Ok(list)
     }
 
     /// Enquête par id avec liste ordonnée d'énigmes (Story 3.1) – pour écran « enquête en cours ».
+    /// Les non-admins ne voient pas les enquêtes brouillon (Story 7.3 – FR66).
     async fn investigation(
         &self,
         ctx: &Context<'_>,
         id: String,
     ) -> Result<Option<crate::models::investigation::InvestigationWithEnigmas>, Error> {
+        let id = Uuid::parse_str(&id).map_err(|_| Error::new("ID enquête invalide"))?;
+        let svc = ctx.data::<Arc<InvestigationService>>()?;
+        let result = svc.get_investigation_by_id_with_enigmas(id).await;
+        if let Some(ref r) = result {
+            if r.investigation.status == "draft" {
+                let is_admin = ctx
+                    .data::<BearerToken>()
+                    .ok()
+                    .and_then(|t| t.0.as_deref())
+                    .filter(|s| !s.is_empty())
+                    .and_then(|token| {
+                        let auth = ctx.data::<Arc<AuthService>>().ok()?;
+                        auth.validate_token_claims(token).ok()
+                    })
+                    .map(|(_, role)| role == Role::Admin)
+                    .unwrap_or(false);
+                if !is_admin {
+                    return Ok(None);
+                }
+            }
+        }
+        Ok(result)
+    }
+
+    /// Prévisualisation d'une enquête (brouillon ou publiée) avec énigmes – admin uniquement (Story 7.3 – FR65).
+    async fn investigation_for_preview(
+        &self,
+        ctx: &Context<'_>,
+        id: String,
+    ) -> Result<Option<crate::models::investigation::InvestigationWithEnigmas>, Error> {
+        let _admin_id = require_admin(ctx)?;
         let id = Uuid::parse_str(&id).map_err(|_| Error::new("ID enquête invalide"))?;
         let svc = ctx.data::<Arc<InvestigationService>>()?;
         Ok(svc.get_investigation_by_id_with_enigmas(id).await)
@@ -371,6 +422,30 @@ impl MutationRoot {
         svc.update_investigation(id, input)
             .await
             .map_err(Error::from)
+    }
+
+    /// Publie une enquête (draft → published) – admin uniquement (Story 7.3 – FR66).
+    async fn publish_investigation(
+        &self,
+        ctx: &Context<'_>,
+        id: String,
+    ) -> Result<crate::models::investigation::Investigation, Error> {
+        let _admin_id = require_admin(ctx)?;
+        let id = Uuid::parse_str(&id).map_err(|_| Error::new("ID enquête invalide"))?;
+        let svc = ctx.data::<Arc<InvestigationService>>()?;
+        svc.publish_investigation(id).await.map_err(Error::from)
+    }
+
+    /// Dépublie une enquête (published → draft) – admin uniquement (Story 7.3 – FR67).
+    async fn rollback_investigation(
+        &self,
+        ctx: &Context<'_>,
+        id: String,
+    ) -> Result<crate::models::investigation::Investigation, Error> {
+        let _admin_id = require_admin(ctx)?;
+        let id = Uuid::parse_str(&id).map_err(|_| Error::new("ID enquête invalide"))?;
+        let svc = ctx.data::<Arc<InvestigationService>>()?;
+        svc.rollback_investigation(id).await.map_err(Error::from)
     }
 
     /// Crée une énigme (admin, Story 7.2 – FR63). Réservé aux admins.

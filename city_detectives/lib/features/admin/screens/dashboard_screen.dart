@@ -121,6 +121,18 @@ class _DashboardContent extends StatelessWidget {
           icon: Icons.extension,
           semanticLabel: 'Nombre total d\'énigmes : ${overview.enigmaCount}',
         ),
+        const SizedBox(height: 24),
+        Semantics(
+          label:
+              'Ouvrir la liste des enquêtes pour prévisualiser, publier ou dépublier',
+          child: ListTile(
+            leading: const Icon(Icons.list),
+            title: const Text('Liste des enquêtes'),
+            subtitle: const Text('Prévisualiser, publier, rollback'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRouter.adminInvestigationListPath()),
+          ),
+        ),
       ],
     );
   }

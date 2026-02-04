@@ -218,6 +218,40 @@ impl InvestigationService {
         guard[pos] = updated.clone();
         Ok(updated)
     }
+
+    /// Publie une enquête (draft → published) – admin uniquement (Story 7.3 – FR66).
+    pub async fn publish_investigation(&self, id: Uuid) -> Result<Investigation, String> {
+        let mut guard = self.store.write().await;
+        let pos = guard
+            .iter()
+            .position(|i| i.id == id.to_string())
+            .ok_or("Enquête introuvable")?;
+        let inv = &guard[pos];
+        if inv.status == "published" {
+            return Err("L'enquête est déjà publiée".to_string());
+        }
+        let mut updated = inv.clone();
+        updated.status = "published".to_string();
+        guard[pos] = updated.clone();
+        Ok(updated)
+    }
+
+    /// Dépublie une enquête (published → draft) – admin uniquement (Story 7.3 – FR67).
+    pub async fn rollback_investigation(&self, id: Uuid) -> Result<Investigation, String> {
+        let mut guard = self.store.write().await;
+        let pos = guard
+            .iter()
+            .position(|i| i.id == id.to_string())
+            .ok_or("Enquête introuvable")?;
+        let inv = &guard[pos];
+        if inv.status == "draft" {
+            return Err("L'enquête est déjà en brouillon".to_string());
+        }
+        let mut updated = inv.clone();
+        updated.status = "draft".to_string();
+        guard[pos] = updated.clone();
+        Ok(updated)
+    }
 }
 
 fn parse_status(s: &str) -> Option<InvestigationStatus> {
