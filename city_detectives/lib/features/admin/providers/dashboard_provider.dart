@@ -33,8 +33,9 @@ final adminDashboardProvider = FutureProvider<DashboardOverview>((ref) async {
 });
 
 /// Métriques techniques pour le dashboard admin (Story 7.4 – FR68).
-final adminTechnicalMetricsProvider =
-    FutureProvider<TechnicalMetrics>((ref) async {
+final adminTechnicalMetricsProvider = FutureProvider<TechnicalMetrics>((
+  ref,
+) async {
   final client = ref.watch(_dashboardGraphqlClientProvider);
   final repo = DashboardRepository(client);
   return repo.getTechnicalMetrics();
@@ -48,16 +49,18 @@ final adminUserAnalyticsProvider = FutureProvider<UserAnalytics>((ref) async {
 });
 
 /// Taux de complétion par enquête pour le dashboard admin (Story 7.4 – FR70).
-final adminCompletionRatesProvider =
-    FutureProvider<List<CompletionRateEntry>>((ref) async {
+final adminCompletionRatesProvider = FutureProvider<List<CompletionRateEntry>>((
+  ref,
+) async {
   final client = ref.watch(_dashboardGraphqlClientProvider);
   final repo = DashboardRepository(client);
   return repo.getCompletionRates();
 });
 
 /// Parcours utilisateur (funnel) pour le dashboard admin (Story 7.4 – FR71).
-final adminUserJourneyAnalyticsProvider =
-    FutureProvider<UserJourneyAnalytics>((ref) async {
+final adminUserJourneyAnalyticsProvider = FutureProvider<UserJourneyAnalytics>((
+  ref,
+) async {
   final client = ref.watch(_dashboardGraphqlClientProvider);
   final repo = DashboardRepository(client);
   return repo.getUserJourneyAnalytics();

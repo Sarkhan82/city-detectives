@@ -19,7 +19,6 @@ final _authTokenForAnalyticsProvider = FutureProvider<String?>((ref) async {
 /// Repository analytics d'enquête (Story 7.4 – FR69, FR70).
 final investigationAnalyticsRepositoryProvider =
     Provider<InvestigationAnalyticsRepository>((ref) {
-  final client = ref.watch(_analyticsGraphqlClientProvider);
-  return InvestigationAnalyticsRepository(client);
-});
-
+      final client = ref.watch(_analyticsGraphqlClientProvider);
+      return InvestigationAnalyticsRepository(client);
+    });

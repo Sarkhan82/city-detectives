@@ -1,9 +1,6 @@
 /// Étape du parcours utilisateur (Story 7.4 – FR71).
 class JourneyStep {
-  const JourneyStep({
-    required this.label,
-    required this.userCount,
-  });
+  const JourneyStep({required this.label, required this.userCount});
 
   final String label;
   final int userCount;

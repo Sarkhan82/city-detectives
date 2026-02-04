@@ -94,97 +94,100 @@ void main() {
     expect(find.text('Énigmes'), findsOneWidget);
   });
 
-  testWidgets('DashboardScreen shows technical metrics and analytics sections (Story 7.4)', (
-    WidgetTester tester,
-  ) async {
-    const overview = DashboardOverview(
-      investigationCount: 2,
-      publishedCount: 1,
-      draftCount: 1,
-      enigmaCount: 4,
-    );
-    const technicalMetrics = TechnicalMetrics(
-      healthStatus: 'ok',
-      apiLatencyAvgMs: 120.0,
-      apiLatencyP95Ms: null,
-      errorRate: 0.01,
-      crashCount: 2,
-      sentryDashboardUrl: null,
-    );
-    const userAnalytics = UserAnalytics(
-      activeUserCount: 15,
-      totalCompletions: 9,
-    );
-    const completionRates = <CompletionRateEntry>[];
-    const userJourney = UserJourneyAnalytics(
-      funnelSteps: [
-        JourneyStep(label: 'Enquête démarrée', userCount: 12),
-        JourneyStep(label: 'Enquête complétée', userCount: 9),
-      ],
-    );
+  testWidgets(
+    'DashboardScreen shows technical metrics and analytics sections (Story 7.4)',
+    (WidgetTester tester) async {
+      const overview = DashboardOverview(
+        investigationCount: 2,
+        publishedCount: 1,
+        draftCount: 1,
+        enigmaCount: 4,
+      );
+      const technicalMetrics = TechnicalMetrics(
+        healthStatus: 'ok',
+        apiLatencyAvgMs: 120.0,
+        apiLatencyP95Ms: null,
+        errorRate: 0.01,
+        crashCount: 2,
+        sentryDashboardUrl: null,
+      );
+      const userAnalytics = UserAnalytics(
+        activeUserCount: 15,
+        totalCompletions: 9,
+      );
+      const completionRates = <CompletionRateEntry>[];
+      const userJourney = UserJourneyAnalytics(
+        funnelSteps: [
+          JourneyStep(label: 'Enquête démarrée', userCount: 12),
+          JourneyStep(label: 'Enquête complétée', userCount: 9),
+        ],
+      );
 
-    final router = GoRouter(
-      initialLocation: AppRouter.adminDashboard,
-      routes: [
-        GoRoute(
-          path: AppRouter.adminDashboard,
-          builder: (context, state) => const DashboardScreen(),
-        ),
-      ],
-    );
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          adminDashboardProvider.overrideWith((ref) => Future.value(overview)),
-          adminTechnicalMetricsProvider.overrideWith(
-            (ref) => Future.value(technicalMetrics),
-          ),
-          adminUserAnalyticsProvider.overrideWith(
-            (ref) => Future.value(userAnalytics),
-          ),
-          adminCompletionRatesProvider.overrideWith(
-            (ref) => Future.value(completionRates),
-          ),
-          adminUserJourneyAnalyticsProvider.overrideWith(
-            (ref) => Future.value(userJourney),
+      final router = GoRouter(
+        initialLocation: AppRouter.adminDashboard,
+        routes: [
+          GoRoute(
+            path: AppRouter.adminDashboard,
+            builder: (context, state) => const DashboardScreen(),
           ),
         ],
-        child: MaterialApp.router(routerConfig: router),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            adminDashboardProvider.overrideWith(
+              (ref) => Future.value(overview),
+            ),
+            adminTechnicalMetricsProvider.overrideWith(
+              (ref) => Future.value(technicalMetrics),
+            ),
+            adminUserAnalyticsProvider.overrideWith(
+              (ref) => Future.value(userAnalytics),
+            ),
+            adminCompletionRatesProvider.overrideWith(
+              (ref) => Future.value(completionRates),
+            ),
+            adminUserJourneyAnalyticsProvider.overrideWith(
+              (ref) => Future.value(userJourney),
+            ),
+          ],
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('Métriques techniques'), findsOneWidget);
-    expect(find.text('Santé'), findsOneWidget);
-    expect(find.text('ok'), findsOneWidget);
-    expect(find.text('Crashs récents'), findsOneWidget);
-    expect(find.text('2'), findsWidgets);
+      expect(find.text('Métriques techniques'), findsOneWidget);
+      expect(find.text('Santé'), findsOneWidget);
+      expect(find.text('ok'), findsOneWidget);
+      expect(find.text('Crashs récents'), findsOneWidget);
+      expect(find.text('2'), findsWidgets);
 
-    await tester.scrollUntilVisible(
-      find.text('Analytics utilisateurs'),
-      500,
-      scrollable: find.byType(Scrollable),
-    );
-    expect(find.text('Analytics utilisateurs'), findsOneWidget);
-    expect(find.text('Utilisateurs actifs'), findsOneWidget);
-    expect(find.text('15'), findsWidgets);
+      await tester.scrollUntilVisible(
+        find.text('Analytics utilisateurs'),
+        500,
+        scrollable: find.byType(Scrollable),
+      );
+      expect(find.text('Analytics utilisateurs'), findsOneWidget);
+      expect(find.text('Utilisateurs actifs'), findsOneWidget);
+      expect(find.text('15'), findsWidgets);
 
-    await tester.scrollUntilVisible(
-      find.text('Taux de complétion'),
-      500,
-      scrollable: find.byType(Scrollable),
-    );
-    expect(find.text('Taux de complétion'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Taux de complétion'),
+        500,
+        scrollable: find.byType(Scrollable),
+      );
+      expect(find.text('Taux de complétion'), findsOneWidget);
 
-    await tester.scrollUntilVisible(
-      find.text('Parcours utilisateur'),
-      500,
-      scrollable: find.byType(Scrollable),
-    );
-    expect(find.text('Parcours utilisateur'), findsOneWidget);
-    expect(find.text('Enquête démarrée'), findsOneWidget);
-    expect(find.text('Enquête complétée'), findsOneWidget);
-  });
+      await tester.scrollUntilVisible(
+        find.text('Parcours utilisateur'),
+        500,
+        scrollable: find.byType(Scrollable),
+      );
+      expect(find.text('Parcours utilisateur'), findsOneWidget);
+      expect(find.text('Enquête démarrée'), findsOneWidget);
+      expect(find.text('Enquête complétée'), findsOneWidget);
+    },
+  );
 
   testWidgets('DashboardScreen shows access denied for non-admin (403)', (
     WidgetTester tester,

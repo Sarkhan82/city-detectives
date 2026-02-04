@@ -393,7 +393,8 @@ class _UserAnalyticsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: 'Analytics utilisateurs : utilisateurs actifs et complétions totales',
+      label:
+          'Analytics utilisateurs : utilisateurs actifs et complétions totales',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

@@ -102,8 +102,9 @@ class _InvestigationPlayScreenState
           _analyticsStartedSent = true;
           WidgetsBinding.instance.addPostFrameCallback((_) async {
             if (!mounted) return;
-            final analyticsRepo =
-                ref.read(investigationAnalyticsRepositoryProvider);
+            final analyticsRepo = ref.read(
+              investigationAnalyticsRepositoryProvider,
+            );
             try {
               await analyticsRepo.recordInvestigationStarted(investigationId);
             } catch (_) {
@@ -361,8 +362,8 @@ class _InvestigationPlayScreenState
                                   try {
                                     await analyticsRepo
                                         .recordInvestigationCompleted(
-                                      investigationId,
-                                    );
+                                          investigationId,
+                                        );
                                   } catch (_) {
                                     // Analytics non bloquants.
                                   }

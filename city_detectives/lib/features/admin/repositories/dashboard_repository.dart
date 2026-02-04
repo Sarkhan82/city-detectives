@@ -129,7 +129,8 @@ class DashboardRepository {
           : null;
       final message = errors.isNotEmpty
           ? errors.first.message
-          : result.exception?.linkException?.toString() ?? 'Erreur chargement analytics';
+          : result.exception?.linkException?.toString() ??
+                'Erreur chargement analytics';
       if (code == 'FORBIDDEN' || message.toLowerCase().contains('réservé')) {
         throw DashboardForbiddenException(message);
       }
@@ -152,7 +153,8 @@ class DashboardRepository {
           : null;
       final message = errors.isNotEmpty
           ? errors.first.message
-          : result.exception?.linkException?.toString() ?? 'Erreur chargement taux';
+          : result.exception?.linkException?.toString() ??
+                'Erreur chargement taux';
       if (code == 'FORBIDDEN' || message.toLowerCase().contains('réservé')) {
         throw DashboardForbiddenException(message);
       }
@@ -177,13 +179,15 @@ class DashboardRepository {
           : null;
       final message = errors.isNotEmpty
           ? errors.first.message
-          : result.exception?.linkException?.toString() ?? 'Erreur chargement parcours';
+          : result.exception?.linkException?.toString() ??
+                'Erreur chargement parcours';
       if (code == 'FORBIDDEN' || message.toLowerCase().contains('réservé')) {
         throw DashboardForbiddenException(message);
       }
       throw Exception(message);
     }
-    final data = result.data?['getUserJourneyAnalytics'] as Map<String, dynamic>?;
+    final data =
+        result.data?['getUserJourneyAnalytics'] as Map<String, dynamic>?;
     if (data == null) throw Exception('Réponse invalide du serveur');
     return UserJourneyAnalytics.fromJson(data);
   }
