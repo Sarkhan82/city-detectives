@@ -1,5 +1,5 @@
-/// Modèle Investigation (Story 2.1, 3.2, 6.1) – aligné sur le schéma GraphQL.
-/// Champs : id, titre, description, durationEstimate, difficulte, isFree, priceAmount, priceCurrency, centerLat, centerLng.
+/// Modèle Investigation (Story 2.1, 3.2, 6.1, 7.2, 7.3) – aligné sur le schéma GraphQL.
+/// Champs : id, titre, description, durationEstimate, difficulte, isFree, priceAmount, priceCurrency, centerLat, centerLng, status (admin).
 class Investigation {
   const Investigation({
     required this.id,
@@ -12,6 +12,7 @@ class Investigation {
     this.priceCurrency,
     this.centerLat,
     this.centerLng,
+    this.status,
   });
 
   final String id;
@@ -36,6 +37,9 @@ class Investigation {
 
   /// Centre longitude pour la carte (Story 3.2, optionnel).
   final double? centerLng;
+
+  /// Statut brouillon/publié (Story 7.2, 7.3 – présent pour les appels admin).
+  final String? status;
 
   /// Formatte le prix pour affichage (ex. "2,99 €"). Retourne null si pas de prix.
   String? get formattedPrice {
@@ -86,6 +90,7 @@ class Investigation {
       priceCurrency: json['priceCurrency']?.toString(),
       centerLat: centerLat,
       centerLng: centerLng,
+      status: json['status']?.toString(),
     );
   }
 }

@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:city_detectives/core/screens/home_screen.dart';
+import 'package:city_detectives/features/admin/screens/admin_investigation_detail_screen.dart';
+import 'package:city_detectives/features/admin/screens/admin_investigation_list_screen.dart';
+import 'package:city_detectives/features/admin/screens/dashboard_screen.dart';
+import 'package:city_detectives/features/admin/screens/investigation_preview_screen.dart';
 import 'package:city_detectives/features/admin/widgets/admin_route_guard.dart';
 import 'package:city_detectives/features/enigma/screens/enigma_explanation_screen.dart';
 import 'package:city_detectives/features/enigma/screens/lore_screen.dart';
@@ -43,7 +47,13 @@ class AppRouter {
   static const String gamification = '/profile/gamification';
 
   /// Dashboard admin (Story 7.1 – FR61). Accès réservé aux admins.
-  static const String adminDashboard = '/admin';
+  static const String adminDashboard = '/admin/dashboard';
+
+  /// Liste des enquêtes admin (Story 7.3 – prévisualisation, publication, rollback).
+  static const String adminInvestigationList = '/admin/investigations';
+  static const String adminInvestigationDetail = '/admin/investigations/:id';
+  static const String adminInvestigationPreview =
+      '/admin/investigations/:id/preview';
 
   static const String home = '/home';
 
@@ -53,6 +63,12 @@ class AppRouter {
       '/investigations/$id/start';
   static String investigationPurchasePath(String id) =>
       '/investigations/$id/purchase';
+
+  static String adminInvestigationListPath() => adminInvestigationList;
+  static String adminInvestigationDetailPath(String id) =>
+      '/admin/investigations/$id';
+  static String adminInvestigationPreviewPath(String id) =>
+      '/admin/investigations/$id/preview';
 
   static GoRouter createRouter() {
     return GoRouter(
@@ -157,9 +173,65 @@ class AppRouter {
           path: gamification,
           builder: (context, _) => const GamificationScreen(),
         ),
-        GoRoute(
-          path: adminDashboard,
-          builder: (context, _) => const AdminRouteGuard(),
+        ShellRoute(
+          builder: (context, state, child) => AdminRouteGuard(child: child),
+          routes: [
+            GoRoute(
+              path: '/admin',
+              redirect: (context, state) => adminDashboard,
+              routes: [
+                GoRoute(
+                  path: 'dashboard',
+                  builder: (context, _) => const DashboardScreen(),
+                ),
+                GoRoute(
+                  path: 'investigations',
+                  builder: (context, _) => const AdminInvestigationListScreen(),
+                  routes: [
+                    GoRoute(
+                      path: ':id',
+                      builder: (context, state) {
+                        final extra = state.extra;
+                        final inv = extra is Investigation ? extra : null;
+                        if (inv == null) {
+                          return Scaffold(
+                            appBar: AppBar(title: const Text('Enquête')),
+                            body: const Center(
+                              child: Text('Enquête introuvable.'),
+                            ),
+                          );
+                        }
+                        return AdminInvestigationDetailScreen(
+                          investigation: inv,
+                        );
+                      },
+                      routes: [
+                        GoRoute(
+                          path: 'preview',
+                          builder: (context, state) {
+                            final id = state.pathParameters['id'] ?? '';
+                            if (id.isEmpty) {
+                              return Scaffold(
+                                appBar: AppBar(
+                                  title: const Text('Prévisualisation'),
+                                ),
+                                body: const Center(
+                                  child: Text('ID enquête manquant.'),
+                                ),
+                              );
+                            }
+                            return InvestigationPreviewScreen(
+                              investigationId: id,
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
         ),
         GoRoute(path: home, builder: (context, _) => const HomeScreen()),
       ],

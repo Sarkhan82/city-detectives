@@ -6,11 +6,12 @@ import 'package:city_detectives/core/router/app_router.dart';
 import 'package:city_detectives/core/services/auth_provider.dart';
 import 'package:city_detectives/features/admin/screens/dashboard_screen.dart';
 
-/// Garde de route admin (Story 7.1 – FR61). Redirige vers home si l'utilisateur n'est pas admin.
-/// En cas d'erreur (réseau, token expiré), redirige aussi vers home pour éviter d'exposer l'écran
-/// sans données ; un admin légitime peut réessayer depuis l'accueil après reconnexion.
+/// Garde de route admin (Story 7.1 – FR61, 7.3). Redirige vers home si l'utilisateur n'est pas admin.
+/// Quand [child] est fourni (ShellRoute), affiche l'enfant ; sinon le dashboard.
 class AdminRouteGuard extends ConsumerWidget {
-  const AdminRouteGuard({super.key});
+  const AdminRouteGuard({super.key, this.child});
+
+  final Widget? child;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -26,7 +27,7 @@ class AdminRouteGuard extends ConsumerWidget {
             body: Center(child: CircularProgressIndicator()),
           );
         }
-        return const DashboardScreen();
+        return child ?? const DashboardScreen();
       },
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
